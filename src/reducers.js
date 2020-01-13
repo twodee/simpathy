@@ -33,6 +33,21 @@ function evaluator(state = initialState.evaluator, action) {
       return {
         ...state,
         activeSubexpression: action.payload,
+        isEvaluating: true,
+      };
+    case Action.StartShakingSubexpression:
+      return {
+        ...state,
+        activeSubexpression: action.payload,
+        hoveredSubexpression: null,
+        isShaking: true,
+        isEvaluating: false,
+      };
+    case Action.StopShakingSubexpression:
+      return {
+        ...state,
+        activeSubexpression: null,
+        isShaking: false,
       };
     default:
       return state;

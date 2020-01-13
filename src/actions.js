@@ -4,6 +4,8 @@ export const Action = Object.freeze({
   ShowMessage: 'ShowMessage',
   LoadExpression: 'LoadExpression',
   EvaluateSubexpression: 'EvaluateSubexpression',
+  StartShakingSubexpression: 'StartShakingSubexpression',
+  StopShakingSubexpression: 'StopShakingSubexpression',
 });
 
 // --------------------------------------------------------------------------- 
@@ -57,6 +59,23 @@ export function evaluateSubexpression(expression) {
   return {
     type: Action.EvaluateSubexpression,
     payload: expression,
+  };
+}
+
+// --------------------------------------------------------------------------- 
+
+export function startShakingSubexpression(expression) {
+  return {
+    type: Action.StartShakingSubexpression,
+    payload: expression,
+  };
+}
+
+// --------------------------------------------------------------------------- 
+
+export function stopShakingSubexpression() {
+  return {
+    type: Action.StopShakingSubexpression,
   };
 }
 

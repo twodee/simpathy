@@ -32,17 +32,18 @@ class ExpressionBinaryOperator extends Expression {
 
   reactify(props) {
     return (
-      <span className={`subexpression ${props.activeSubexpression === this ? 'active' : ''}`}>
+      <span className={`subexpression ${props.isEvaluating && props.activeSubexpression === this ? 'active' : ''}`}>
         {this.a.reactify(props)}
         <span
-          className={`operator ${this === props.hoveredSubexpression ? 'hovered' : ''}`}
+          className={`operator ${this === props.hoveredSubexpression ? 'hovered' : ''} ${props.isShaking && this === props.activeSubexpression ? 'shaking' : ''}`}
+          onAnimationEnd={props.onStopShaking}
           onMouseOver={e => props.onHover(e, this)}
           onMouseOut={e => props.onUnhover(e, this)}
           onClick={e => props.onClick(props.expression, this)}
         >{this.operator}</span>
         {this.b.reactify(props)}
 
-        {props.activeSubexpression === this && (
+        {props.isEvaluating && props.activeSubexpression === this && (
           <div className="evaluate-box">
             <input type="text" />
           </div>

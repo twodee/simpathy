@@ -2,9 +2,11 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import {
-  showMessage,
   evaluateSubexpression,
   hoverSubexpression,
+  showMessage,
+  startShakingSubexpression,
+  stopShakingSubexpression,
   unhoverSubexpression,
 } from '../actions';
 
@@ -25,6 +27,8 @@ const mapStateToProps = state => {
     expression: state.evaluator.expression,
     hoveredSubexpression: state.evaluator.hoveredSubexpression,
     activeSubexpression: state.evaluator.activeSubexpression,
+    isShaking: state.evaluator.isShaking,
+    isEvaluating: state.evaluator.isEvaluating,
   };
 };
 
@@ -39,13 +43,16 @@ const mapDispatchToProps = dispatch => {
       dispatch(unhoverSubexpression(expression));
     },
     onClick: (expression, subexpression) => {
-      console.log("subexpression:", subexpression);
       if (expression.nextNonterminal === subexpression) {
         dispatch(showMessage("Solve."));
         dispatch(evaluateSubexpression(subexpression));
       } else {
         dispatch(showMessage("No, that's not it."));
+        dispatch(startShakingSubexpression(subexpression));
       }
+    },
+    onStopShaking: () => {
+      dispatch(stopShakingSubexpression());
     },
   };
 };
