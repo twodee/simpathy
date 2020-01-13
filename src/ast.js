@@ -10,6 +10,14 @@ class Expression {
   get nextNonterminal() {
     return null;
   }
+
+  // reactify(props) {
+    // return (
+      // <span className="subexpression">
+        // {this.reactifyHelper(props)}
+      // </span>
+    // );
+  // }
 }
 
 // --------------------------------------------------------------------------- 
@@ -24,7 +32,7 @@ class ExpressionBinaryOperator extends Expression {
 
   reactify(props) {
     return (
-      <span>
+      <span className={`subexpression ${props.activeSubexpression === this ? 'active' : ''}`}>
         {this.a.reactify(props)}
         <span
           className={`operator ${this === props.hoveredSubexpression ? 'hovered' : ''}`}
@@ -33,6 +41,12 @@ class ExpressionBinaryOperator extends Expression {
           onClick={e => props.onClick(props.expression, this)}
         >{this.operator}</span>
         {this.b.reactify(props)}
+
+        {props.activeSubexpression === this && (
+          <div className="evaluate-box">
+            <input type="text" />
+          </div>
+        )}
       </span>
     )
   }

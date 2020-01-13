@@ -1,3 +1,7 @@
+/* * { */
+  /* box-sizing: border-box; */
+/* } */
+
 .App {
   position: fixed;
   left: 0;
@@ -53,6 +57,26 @@
 
 .hovered {
   background-color: gray;
+}
+
+.subexpression {
+  display: inline-block;
+}
+
+.active {
+  border: 1px solid black;
+}
+
+.subexpression {
+  position: relative;
+}
+
+.evaluate-box {
+  position: absolute;
+  background-color: red;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
 }
 
 #memory {

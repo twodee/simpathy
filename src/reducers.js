@@ -29,11 +29,11 @@ function evaluator(state = initialState.evaluator, action) {
         ...state,
         expression: action.payload,
       };
-    // case Action.ClickSubexpression:
-      // return {
-        // ...state,
-        // message: state.expression.nextNonterminal === action.payload ? "That's right." : "That's not it.",
-      // };
+    case Action.EvaluateSubexpression:
+      return {
+        ...state,
+        activeSubexpression: action.payload,
+      };
     default:
       return state;
   }

@@ -3,7 +3,7 @@ export const Action = Object.freeze({
   UnhoverSubexpression: 'UnhoverSubexpression',
   ShowMessage: 'ShowMessage',
   LoadExpression: 'LoadExpression',
-  ClickSubexpression: 'ClickSubexpression',
+  EvaluateSubexpression: 'EvaluateSubexpression',
 });
 
 // --------------------------------------------------------------------------- 
@@ -53,9 +53,9 @@ export function loadExpression(expression) {
 
 // --------------------------------------------------------------------------- 
 
-export function clickSubexpression(expression) {
+export function evaluateSubexpression(expression) {
   return {
-    type: Action.ClickSubexpression,
+    type: Action.EvaluateSubexpression,
     payload: expression,
   };
 }

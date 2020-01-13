@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import {
   showMessage,
-  clickSubexpression,
+  evaluateSubexpression,
   hoverSubexpression,
   unhoverSubexpression,
 } from '../actions';
@@ -22,8 +22,9 @@ class Evaluator extends React.Component {
 
 const mapStateToProps = state => {
   return {
-    hoveredSubexpression: state.evaluator.hoveredSubexpression,
     expression: state.evaluator.expression,
+    hoveredSubexpression: state.evaluator.hoveredSubexpression,
+    activeSubexpression: state.evaluator.activeSubexpression,
   };
 };
 
@@ -38,11 +39,10 @@ const mapDispatchToProps = dispatch => {
       dispatch(unhoverSubexpression(expression));
     },
     onClick: (expression, subexpression) => {
-      console.log("expression.nextNonterminal:", expression.nextNonterminal);
       console.log("subexpression:", subexpression);
       if (expression.nextNonterminal === subexpression) {
         dispatch(showMessage("Solve."));
-        dispatch(clickSubexpression(expression));
+        dispatch(evaluateSubexpression(subexpression));
       } else {
         dispatch(showMessage("No, that's not it."));
       }
