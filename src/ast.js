@@ -61,6 +61,7 @@ class ExpressionBinaryOperator extends Expression {
               type="text"
               size="8"
               autoFocus
+              autoComplete="off"
               className={props.isShakingEvaluation ? 'shaking' : ''}
               onAnimationEnd={props.onStopShakingEvaluation}
               onChange={e => props.onEditValue(e.target.value)}
