@@ -2,13 +2,23 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import {
-  evaluateSubexpression,
+  editValue,
+  evaluateCorrectly,
+  evaluateIncorrectly,
+  selectSubexpression,
   hoverSubexpression,
   showMessage,
-  startShakingSubexpression,
-  stopShakingSubexpression,
+  startShakingOperation,
+  stopShakingOperation,
+  stopShakingEvaluation,
   unhoverSubexpression,
 } from '../actions';
+
+import {
+  ExpressionInteger,
+  ExpressionReal,
+  ExpressionString,
+} from '../ast';
 
 class Evaluator extends React.Component {
   render() {
@@ -27,8 +37,10 @@ const mapStateToProps = state => {
     expression: state.evaluator.expression,
     hoveredSubexpression: state.evaluator.hoveredSubexpression,
     activeSubexpression: state.evaluator.activeSubexpression,
-    isShaking: state.evaluator.isShaking,
+    isShakingOperation: state.evaluator.isShakingOperation,
+    isShakingEvaluation: state.evaluator.isShakingEvaluation,
     isEvaluating: state.evaluator.isEvaluating,
+    value: state.evaluator.value,
   };
 };
 
@@ -45,15 +57,37 @@ const mapDispatchToProps = dispatch => {
     onClick: (expression, subexpression) => {
       if (expression.nextNonterminal === subexpression) {
         dispatch(showMessage("Solve."));
-        dispatch(evaluateSubexpression(subexpression));
+        dispatch(selectSubexpression(subexpression));
       } else {
         dispatch(showMessage("No, that's not it."));
-        dispatch(startShakingSubexpression(subexpression));
+        dispatch(startShakingOperation(subexpression));
       }
     },
-    onStopShaking: () => {
-      dispatch(stopShakingSubexpression());
-    },
+    onStopShakingOperation: () => dispatch(stopShakingOperation()),
+    onStopShakingEvaluation: () => dispatch(stopShakingEvaluation()),
+    onEditValue: value => dispatch(editValue(value)),
+    onKeyDown: (e, expression, value) => {
+      if (e.key === 'Enter') {
+        const expected = expression.evaluate();
+
+        let actual;
+        if (value.match(/^-?\d+$/)) {
+          actual = new ExpressionInteger(parseInt(value));
+        } else if (value.match(/^-?(\d+\.\d*|\d*.\d+)$/)) {
+          actual = new ExpressionReal(parseFloat(value));
+        } else if (value.match(/^".*"$/)) {
+          actual = new ExpressionString(value.slice(1, -1));
+        } else {
+          actual = new ExpressionString(value);
+        }
+
+        if (expected.equals(actual)) {
+          dispatch(evaluateCorrectly(actual));
+        } else {
+          dispatch(evaluateIncorrectly(actual));
+        }
+      }
+    }
   };
 };
 

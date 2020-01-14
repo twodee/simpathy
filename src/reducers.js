@@ -6,6 +6,9 @@ const initialState = {
     expression: null,
     hoveredSubexpression: null,
     activeSubexpression: null,
+    value: '',
+    isShakingOperation: false,
+    isShakingEvaluation: false,
   },
   prompter: {
     message: null,
@@ -29,25 +32,49 @@ function evaluator(state = initialState.evaluator, action) {
         ...state,
         expression: action.payload,
       };
-    case Action.EvaluateSubexpression:
+    case Action.EditValue:
       return {
         ...state,
-        activeSubexpression: action.payload,
-        isEvaluating: true,
+        value: action.payload,
       };
-    case Action.StartShakingSubexpression:
+    case Action.SelectSubexpression:
       return {
         ...state,
         activeSubexpression: action.payload,
         hoveredSubexpression: null,
-        isShaking: true,
+        isEvaluating: true,
+      };
+    case Action.StartShakingOperation:
+      return {
+        ...state,
+        activeSubexpression: action.payload,
+        hoveredSubexpression: null,
+        isShakingOperation: true,
         isEvaluating: false,
       };
-    case Action.StopShakingSubexpression:
+    case Action.StopShakingOperation:
       return {
         ...state,
         activeSubexpression: null,
-        isShaking: false,
+        isShakingOperation: false,
+      };
+    case Action.EvaluateCorrectly:
+      return {
+        ...state,
+        activeSubexpression: null,
+        isEvaluating: false,
+        value: '',
+        expression: state.expression.simplify(state.activeSubexpression, action.payload),
+      };
+    case Action.EvaluateIncorrectly:
+      return {
+        ...state,
+        isShakingEvaluation: true,
+      };
+    case Action.StopShakingEvaluation:
+      return {
+        ...state,
+        isShakingEvaluation: false,
       };
     default:
       return state;

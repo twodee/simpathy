@@ -3,9 +3,14 @@ export const Action = Object.freeze({
   UnhoverSubexpression: 'UnhoverSubexpression',
   ShowMessage: 'ShowMessage',
   LoadExpression: 'LoadExpression',
-  EvaluateSubexpression: 'EvaluateSubexpression',
-  StartShakingSubexpression: 'StartShakingSubexpression',
-  StopShakingSubexpression: 'StopShakingSubexpression',
+  SelectSubexpression: 'SelectSubexpression',
+  StartShakingOperation: 'StartShakingOperation',
+  StopShakingOperation: 'StopShakingOperation',
+  StartShakingEvaluation: 'StartShakingEvaluation',
+  StopShakingEvaluation: 'StopShakingEvaluation',
+  EditValue: 'EditValue',
+  EvaluateCorrectly: 'EvaluateCorrectly',
+  EvaluateIncorrectly: 'EvaluateIncorrectly',
 });
 
 // --------------------------------------------------------------------------- 
@@ -55,27 +60,62 @@ export function loadExpression(expression) {
 
 // --------------------------------------------------------------------------- 
 
-export function evaluateSubexpression(expression) {
+export function selectSubexpression(expression) {
   return {
-    type: Action.EvaluateSubexpression,
+    type: Action.SelectSubexpression,
     payload: expression,
   };
 }
 
 // --------------------------------------------------------------------------- 
 
-export function startShakingSubexpression(expression) {
+export function startShakingOperation(expression) {
   return {
-    type: Action.StartShakingSubexpression,
+    type: Action.StartShakingOperation,
     payload: expression,
   };
 }
 
 // --------------------------------------------------------------------------- 
 
-export function stopShakingSubexpression() {
+export function stopShakingOperation() {
   return {
-    type: Action.StopShakingSubexpression,
+    type: Action.StopShakingOperation,
+  };
+}
+
+// --------------------------------------------------------------------------- 
+
+export function stopShakingEvaluation() {
+  return {
+    type: Action.StopShakingEvaluation,
+  };
+}
+
+// --------------------------------------------------------------------------- 
+
+export function editValue(value) {
+  return {
+    type: Action.EditValue,
+    payload: value,
+  };
+}
+
+// --------------------------------------------------------------------------- 
+
+export function evaluateCorrectly(value) {
+  return {
+    type: Action.EvaluateCorrectly,
+    payload: value,
+  };
+}
+
+// --------------------------------------------------------------------------- 
+
+export function evaluateIncorrectly(value) {
+  return {
+    type: Action.EvaluateIncorrectly,
+    payload: value,
   };
 }
 
