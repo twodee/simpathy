@@ -7,12 +7,16 @@ const Precedence = Object.freeze({
   Additive: 70,
   And: 60,
   Or: 59,
+  Relational: 50,
+  Equality: 45,
 });
+
 // --------------------------------------------------------------------------- 
 
 class Expression {
-  constructor(precedence) {
+  constructor(precedence, where = null) {
     this.precedence = precedence;
+    this.where = where;
   }
 
   get nextNonterminal() {
@@ -57,8 +61,8 @@ class Expression {
 // --------------------------------------------------------------------------- 
 
 class ExpressionUnaryOperator extends Expression {
-  constructor(precedence, operator, a) {
-    super(precedence);
+  constructor(precedence, operator, a, where = null) {
+    super(precedence, where);
     this.a = a;
     this.operator = operator;
   }
@@ -81,6 +85,14 @@ class ExpressionUnaryOperator extends Expression {
     )
   }
 
+  simplify(expression, value) {
+    if (this === expression) {
+      return value;
+    } else {
+      return new this.constructor(this.a.simplify(expression, value));
+    }
+  }
+
   get nextNonterminal() {
     let node = this.a.nextNonterminal;
     if (!node) {
@@ -93,8 +105,8 @@ class ExpressionUnaryOperator extends Expression {
 // --------------------------------------------------------------------------- 
 
 class ExpressionBinaryOperator extends Expression {
-  constructor(precedence, operator, a, b) {
-    super(precedence);
+  constructor(precedence, operator, a, b, where = null) {
+    super(precedence, where);
     this.a = a;
     this.b = b;
     this.operator = operator;
@@ -129,11 +141,19 @@ class ExpressionBinaryOperator extends Expression {
     }
     return node;
   }
+
+  simplify(expression, value) {
+    if (this === expression) {
+      return value;
+    } else {
+      return new this.constructor(this.a.simplify(expression, value), this.b.simplify(expression, value));
+    }
+  }
 }
 
 export class ExpressionAdd extends ExpressionBinaryOperator {
-  constructor(a, b) {
-    super(70, '+', a, b);
+  constructor(a, b, where) {
+    super(70, '+', a, b, where);
   }
 
   evaluate() {
@@ -151,19 +171,11 @@ export class ExpressionAdd extends ExpressionBinaryOperator {
       throw new Error('bad types');
     }
   }
-
-  simplify(expression, value) {
-    if (this === expression) {
-      return value;
-    } else {
-      return new ExpressionAdd(this.a.simplify(expression, value), this.b.simplify(expression, value));
-    }
-  }
 }
 
 export class ExpressionMultiply extends ExpressionBinaryOperator {
-  constructor(a, b) {
-    super(Precedence.Multiplicative, '*', a, b);
+  constructor(a, b, where) {
+    super(Precedence.Multiplicative, '*', a, b, where);
   }
 
   evaluate() {
@@ -179,19 +191,11 @@ export class ExpressionMultiply extends ExpressionBinaryOperator {
       throw new Error('bad types');
     }
   }
-
-  simplify(expression, value) {
-    if (this === expression) {
-      return value;
-    } else {
-      return new ExpressionMultiply(this.a.simplify(expression, value), this.b.simplify(expression, value));
-    }
-  }
 }
 
 export class ExpressionModulus extends ExpressionBinaryOperator {
-  constructor(a, b) {
-    super(Precedence.Multiplicative, '%', a, b);
+  constructor(a, b, where) {
+    super(Precedence.Multiplicative, '%', a, b, where);
   }
 
   evaluate() {
@@ -204,18 +208,10 @@ export class ExpressionModulus extends ExpressionBinaryOperator {
       throw new Error('bad types');
     }
   }
-
-  simplify(expression, value) {
-    if (this === expression) {
-      return value;
-    } else {
-      return new ExpressionModulus(this.a.simplify(expression, value), this.b.simplify(expression, value));
-    }
-  }
 }
 
 export class ExpressionDivide extends ExpressionBinaryOperator {
-  constructor(a, b) {
+  constructor(a, b, where) {
     super(Precedence.Multiplicative, '/', a, b);
   }
 
@@ -232,21 +228,13 @@ export class ExpressionDivide extends ExpressionBinaryOperator {
       throw new Error('bad types');
     }
   }
-
-  simplify(expression, value) {
-    if (this === expression) {
-      return value;
-    } else {
-      return new ExpressionDivide(this.a.simplify(expression, value), this.b.simplify(expression, value));
-    }
-  }
 }
 
 // --------------------------------------------------------------------------- 
 
 export class ExpressionAnd extends ExpressionBinaryOperator {
-  constructor(a, b) {
-    super(Precedence.And, '&&', a, b);
+  constructor(a, b, where) {
+    super(Precedence.And, '&&', a, b, where);
   }
 
   evaluate() {
@@ -260,20 +248,28 @@ export class ExpressionAnd extends ExpressionBinaryOperator {
     }
   }
 
-  simplify(expression, value) {
-    if (this === expression) {
-      return value;
-    } else {
-      return new ExpressionAnd(this.a.simplify(expression, value), this.b.simplify(expression, value));
+  get nextNonterminal() {
+    // If a is literal false, we don't consider b.
+    let node = this.a.nextNonterminal;
+    if (!node) {
+      if (this.a.equals(new ExpressionBoolean(false))) {
+        node = this;
+      } else {
+        node = this.b.nextNonterminal;
+        if (!node) {
+          node = this;
+        }
+      }
     }
+    return node;
   }
 }
 
 // --------------------------------------------------------------------------- 
 
 export class ExpressionOr extends ExpressionBinaryOperator {
-  constructor(a, b) {
-    super(Precedence.Or, '||', a, b);
+  constructor(a, b, where) {
+    super(Precedence.Or, '||', a, b, where);
   }
 
   evaluate() {
@@ -287,11 +283,99 @@ export class ExpressionOr extends ExpressionBinaryOperator {
     }
   }
 
-  simplify(expression, value) {
-    if (this === expression) {
-      return value;
+  get nextNonterminal() {
+    // If a is literal false, we don't consider b.
+    let node = this.a.nextNonterminal;
+    if (!node) {
+      if (this.a.equals(new ExpressionBoolean(true))) {
+        node = this;
+      } else {
+        node = this.b.nextNonterminal;
+        if (!node) {
+          node = this;
+        }
+      }
+    }
+    return node;
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionMore extends ExpressionBinaryOperator {
+  constructor(a, b, where) {
+    super(Precedence.Relational, '>', a, b, where);
+  }
+
+  evaluate() {
+    const valueA = this.a.evaluate();
+    const valueB = this.b.evaluate();
+
+    if ((valueA instanceof ExpressionInteger || valueA instanceof ExpressionReal) &&
+        (valueB instanceof ExpressionInteger || valueB instanceof ExpressionReal)) {
+      return new ExpressionBoolean(valueA.value > valueB.value);
     } else {
-      return new ExpressionOr(this.a.simplify(expression, value), this.b.simplify(expression, value));
+      throw new Error('bad types');
+    }
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionMoreEqual extends ExpressionBinaryOperator {
+  constructor(a, b, where) {
+    super(Precedence.Relational, '>=', a, b, where);
+  }
+
+  evaluate() {
+    const valueA = this.a.evaluate();
+    const valueB = this.b.evaluate();
+
+    if ((valueA instanceof ExpressionInteger || valueA instanceof ExpressionReal) &&
+        (valueB instanceof ExpressionInteger || valueB instanceof ExpressionReal)) {
+      return new ExpressionBoolean(valueA.value >= valueB.value);
+    } else {
+      throw new Error('bad types');
+    }
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionLess extends ExpressionBinaryOperator {
+  constructor(a, b, where) {
+    super(Precedence.Relational, '<', a, b, where);
+  }
+
+  evaluate() {
+    const valueA = this.a.evaluate();
+    const valueB = this.b.evaluate();
+
+    if ((valueA instanceof ExpressionInteger || valueA instanceof ExpressionReal) &&
+        (valueB instanceof ExpressionInteger || valueB instanceof ExpressionReal)) {
+      return new ExpressionBoolean(valueA.value < valueB.value);
+    } else {
+      throw new Error('bad types');
+    }
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionLessEqual extends ExpressionBinaryOperator {
+  constructor(a, b, where) {
+    super(Precedence.Relational, '<=', a, b, where);
+  }
+
+  evaluate() {
+    const valueA = this.a.evaluate();
+    const valueB = this.b.evaluate();
+
+    if ((valueA instanceof ExpressionInteger || valueA instanceof ExpressionReal) &&
+        (valueB instanceof ExpressionInteger || valueB instanceof ExpressionReal)) {
+      return new ExpressionBoolean(valueA.value <= valueB.value);
+    } else {
+      throw new Error('bad types');
     }
   }
 }
@@ -299,8 +383,8 @@ export class ExpressionOr extends ExpressionBinaryOperator {
 // --------------------------------------------------------------------------- 
 
 export class ExpressionNot extends ExpressionUnaryOperator {
-  constructor(a) {
-    super(Precedence.Not, '!', a);
+  constructor(a, where) {
+    super(Precedence.Not, '!', a, where);
   }
 
   evaluate() {
@@ -312,12 +396,42 @@ export class ExpressionNot extends ExpressionUnaryOperator {
       throw new Error('bad types');
     }
   }
+}
 
-  simplify(expression, value) {
-    if (this === expression) {
-      return value;
+// --------------------------------------------------------------------------- 
+
+export class ExpressionSame extends ExpressionBinaryOperator {
+  constructor(a, b, where) {
+    super(Precedence.Equality, '==', a, b, where);
+  }
+
+  evaluate() {
+    const valueA = this.a.evaluate();
+    const valueB = this.b.evaluate();
+
+    if (valueA.constructor === valueB.constructor) {
+      return new ExpressionBoolean(valueA.value === valueB.value);
     } else {
-      return new ExpressionNot(this.a.simplify(expression, value));
+      throw new Error('bad types');
+    }
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionNotSame extends ExpressionBinaryOperator {
+  constructor(a, b, where) {
+    super(Precedence.Equality, '!=', a, b, where);
+  }
+
+  evaluate() {
+    const valueA = this.a.evaluate();
+    const valueB = this.b.evaluate();
+
+    if (valueA.constructor === valueB.constructor) {
+      return new ExpressionBoolean(valueA.value !== valueB.value);
+    } else {
+      throw new Error('bad types');
     }
   }
 }
@@ -325,8 +439,8 @@ export class ExpressionNot extends ExpressionUnaryOperator {
 // --------------------------------------------------------------------------- 
 
 class ExpressionLiteral extends Expression {
-  constructor(value) {
-    super(Precedence.Atom, value);
+  constructor(value, where) {
+    super(Precedence.Atom, value, where);
     this.value = value;
   }
 
@@ -341,32 +455,23 @@ class ExpressionLiteral extends Expression {
   reactify(props, isParenthesized) {
     return (
       <span className="subexpression expression-piece literal">
-        {'' + this.value}
+        {this.value.toString()}
       </span>
     )
   }
 }
 
 export class ExpressionInteger extends ExpressionLiteral {
-  // constructor(value) {
-    // super(value);
-  // }
 }
 
 export class ExpressionReal extends ExpressionLiteral {
-  // constructor(value) {
-    // super(value);
-  // }
 }
 
 export class ExpressionString extends ExpressionLiteral {
-  // constructor(value) {
-    // super(value);
-  // }
 }
 
 export class ExpressionBoolean extends ExpressionLiteral {
-  // constructor(value) {
-    // super(value);
-  // }
 }
+
+// --------------------------------------------------------------------------- 
+
