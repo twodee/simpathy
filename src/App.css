@@ -44,11 +44,20 @@
 #expression, #evaluate-box {
   user-select: none;
   font-size: 24pt;
+  font-family: 'Inconsolata', monospace;
 }
 
-.expression-piece {
+/* .expression-piece { */
+  /* display: inline-block; */
+  /* padding: 5px; */
+/* } */
+
+.operator {
   display: inline-block;
-  padding: 5px;
+}
+
+.binary-infix-operator {
+  padding: 5px 10px;
 }
 
 .literal {
@@ -61,6 +70,7 @@
 
 .subexpression {
   display: inline-block;
+  padding: 3px 3px;
 }
 
 .active {

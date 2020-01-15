@@ -33,7 +33,7 @@ class App extends React.Component {
     // const e = new ExpressionMultiply(new ExpressionInteger(7), new ExpressionAdd(new ExpressionReal(1.5), new ExpressionInteger(9)));
     // const e = new ExpressionMultiply(new ExpressionInteger(7), new ExpressionMultiply(new ExpressionReal(1.5), new ExpressionInteger(9)));
     // const e = new ExpressionMultiply(new ExpressionModulus(new ExpressionInteger(44), new ExpressionInteger(9)), new ExpressionInteger(7));
-    const e = new ExpressionOr(new ExpressionAnd(new ExpressionBoolean(true), new ExpressionBoolean(false)), new ExpressionNot(new ExpressionBoolean(true)));
+    const e = new ExpressionOr(new ExpressionAnd(new ExpressionBoolean(true), new ExpressionBoolean(false)), new ExpressionNot(new ExpressionAnd(new ExpressionBoolean(true), new ExpressionBoolean(true))));
     this.props.onLoadExpression(e);
   }
 

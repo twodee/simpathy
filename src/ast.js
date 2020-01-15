@@ -1,5 +1,13 @@
 import React from 'react';
 
+const Precedence = Object.freeze({
+  Atom: 100,
+  Not: 90,
+  Multiplicative: 80,
+  Additive: 70,
+  And: 60,
+  Or: 59,
+});
 // --------------------------------------------------------------------------- 
 
 class Expression {
@@ -18,6 +26,32 @@ class Expression {
       return this;
     }
   }
+
+  evaluatePopup(props) {
+    if (props.isEvaluating && props.activeSubexpression === this) {
+      return (
+        <div className="evaluate-popup">
+          <svg height="12" width="16">
+            <polygon points="8,12 0,0 16,0" />
+          </svg>
+          <input
+            id="evaluate-box"
+            type="text"
+            size="8"
+            autoFocus
+            autoComplete="off"
+            className={props.isShakingEvaluation ? 'shaking' : ''}
+            onAnimationEnd={props.onStopShakingEvaluation}
+            onChange={e => props.onEditValue(e.target.value)}
+            value={props.value}
+            onKeyDown={e => props.onKeyDown(e, props.activeSubexpression, props.value)}
+          />
+        </div>
+      );
+    } else {
+      return null;
+    }
+  }
 }
 
 // --------------------------------------------------------------------------- 
@@ -29,39 +63,20 @@ class ExpressionUnaryOperator extends Expression {
     this.operator = operator;
   }
 
-  reactify(props, superPrecedence = -1) {
+  reactify(props, isParenthesized) {
     return (
       <span className={`subexpression ${props.isEvaluating && props.activeSubexpression === this ? 'active' : ''}`}>
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
         <span
-          className={`expression-piece ${this === props.hoveredSubexpression ? 'hovered' : ''} ${props.isShakingOperation && this === props.activeSubexpression ? 'shaking' : ''}`}
+          className={`operator unary-prefix-operator expression-piece ${this === props.hoveredSubexpression ? 'hovered' : ''} ${props.isShakingOperation && this === props.activeSubexpression ? 'shaking' : ''}`}
           onAnimationEnd={props.onStopShakingOperation}
           onMouseOver={e => !props.isEvaluating && props.onHover(e, this)}
           onMouseOut={e => props.onUnhover(e, this)}
           onClick={e => !props.isEvaluating && props.onClick(props.expression, this)}
         >{this.operator}</span>
-        {this.precedence <= superPrecedence ? <span className="expression-piece">(</span> : ''}
-        {this.a.reactify(props, this.precedence)}
-        {this.precedence <= superPrecedence ? <span className="expression-piece">)</span> : ''}
-
-        {props.isEvaluating && props.activeSubexpression === this && (
-          <div className="evaluate-popup">
-            <svg height="12" width="16">
-              <polygon points="8,12 0,0 16,0" />
-            </svg>
-            <input
-              id="evaluate-box"
-              type="text"
-              size="8"
-              autoFocus
-              autoComplete="off"
-              className={props.isShakingEvaluation ? 'shaking' : ''}
-              onAnimationEnd={props.onStopShakingEvaluation}
-              onChange={e => props.onEditValue(e.target.value)}
-              value={props.value}
-              onKeyDown={e => props.onKeyDown(e, props.activeSubexpression, props.value)}
-            />
-          </div>
-        )}
+        {this.a.reactify(props, this.precedence >= this.a.precedence)}
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+        {this.evaluatePopup(props)}
       </span>
     )
   }
@@ -85,40 +100,21 @@ class ExpressionBinaryOperator extends Expression {
     this.operator = operator;
   }
 
-  reactify(props, superPrecedence = -1) {
+  reactify(props, isParenthesized) {
     return (
       <span className={`subexpression ${props.isEvaluating && props.activeSubexpression === this ? 'active' : ''}`}>
-        {this.precedence <= superPrecedence ? <span className="expression-piece">(</span> : ''}
-        {this.a.reactify(props, this.precedence)}
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        {this.a.reactify(props, this.precedence > this.a.precedence)}
         <span
-          className={`expression-piece ${this === props.hoveredSubexpression ? 'hovered' : ''} ${props.isShakingOperation && this === props.activeSubexpression ? 'shaking' : ''}`}
+          className={`operator binary-infix-operator expression-piece ${this === props.hoveredSubexpression ? 'hovered' : ''} ${props.isShakingOperation && this === props.activeSubexpression ? 'shaking' : ''}`}
           onAnimationEnd={props.onStopShakingOperation}
           onMouseOver={e => !props.isEvaluating && props.onHover(e, this)}
           onMouseOut={e => props.onUnhover(e, this)}
           onClick={e => !props.isEvaluating && props.onClick(props.expression, this)}
         >{this.operator}</span>
-        {this.b.reactify(props, this.precedence)}
-        {this.precedence <= superPrecedence ? <span className="expression-piece">)</span> : ''}
-
-        {props.isEvaluating && props.activeSubexpression === this && (
-          <div className="evaluate-popup">
-            <svg height="12" width="16">
-              <polygon points="8,12 0,0 16,0" />
-            </svg>
-            <input
-              id="evaluate-box"
-              type="text"
-              size="8"
-              autoFocus
-              autoComplete="off"
-              className={props.isShakingEvaluation ? 'shaking' : ''}
-              onAnimationEnd={props.onStopShakingEvaluation}
-              onChange={e => props.onEditValue(e.target.value)}
-              value={props.value}
-              onKeyDown={e => props.onKeyDown(e, props.activeSubexpression, props.value)}
-            />
-          </div>
-        )}
+        {this.b.reactify(props, this.precedence >= this.b.precedence)}
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+        {this.evaluatePopup(props)}
       </span>
     )
   }
@@ -167,7 +163,7 @@ export class ExpressionAdd extends ExpressionBinaryOperator {
 
 export class ExpressionMultiply extends ExpressionBinaryOperator {
   constructor(a, b) {
-    super(80, '*', a, b);
+    super(Precedence.Multiplicative, '*', a, b);
   }
 
   evaluate() {
@@ -195,7 +191,7 @@ export class ExpressionMultiply extends ExpressionBinaryOperator {
 
 export class ExpressionModulus extends ExpressionBinaryOperator {
   constructor(a, b) {
-    super(80, '%', a, b);
+    super(Precedence.Multiplicative, '%', a, b);
   }
 
   evaluate() {
@@ -220,7 +216,7 @@ export class ExpressionModulus extends ExpressionBinaryOperator {
 
 export class ExpressionDivide extends ExpressionBinaryOperator {
   constructor(a, b) {
-    super(80, '/', a, b);
+    super(Precedence.Multiplicative, '/', a, b);
   }
 
   evaluate() {
@@ -250,7 +246,7 @@ export class ExpressionDivide extends ExpressionBinaryOperator {
 
 export class ExpressionAnd extends ExpressionBinaryOperator {
   constructor(a, b) {
-    super(60, '&&', a, b);
+    super(Precedence.And, '&&', a, b);
   }
 
   evaluate() {
@@ -277,7 +273,7 @@ export class ExpressionAnd extends ExpressionBinaryOperator {
 
 export class ExpressionOr extends ExpressionBinaryOperator {
   constructor(a, b) {
-    super(60, '||', a, b);
+    super(Precedence.Or, '||', a, b);
   }
 
   evaluate() {
@@ -304,7 +300,7 @@ export class ExpressionOr extends ExpressionBinaryOperator {
 
 export class ExpressionNot extends ExpressionUnaryOperator {
   constructor(a) {
-    super(60, '!', a);
+    super(Precedence.Not, '!', a);
   }
 
   evaluate() {
@@ -330,7 +326,7 @@ export class ExpressionNot extends ExpressionUnaryOperator {
 
 class ExpressionLiteral extends Expression {
   constructor(value) {
-    super(100, value);
+    super(Precedence.Atom, value);
     this.value = value;
   }
 
@@ -342,7 +338,7 @@ class ExpressionLiteral extends Expression {
     return this.constructor === that.constructor && this.value === that.value;
   }
 
-  reactify(props, superPrecedence) {
+  reactify(props, isParenthesized) {
     return (
       <span className="subexpression expression-piece literal">
         {'' + this.value}
