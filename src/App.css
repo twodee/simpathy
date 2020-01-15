@@ -46,14 +46,13 @@
   font-size: 24pt;
 }
 
-.operator {
+.expression-piece {
   display: inline-block;
   padding: 5px;
 }
 
 .literal {
   color: red;
-  padding: 5px;
 }
 
 .hovered {

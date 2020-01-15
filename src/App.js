@@ -15,14 +15,25 @@ import {
 
 import {
   ExpressionAdd,
+  ExpressionAnd,
+  ExpressionBoolean,
+  ExpressionDivide,
   ExpressionInteger,
+  ExpressionModulus,
   ExpressionMultiply,
+  ExpressionNot,
+  ExpressionOr,
   ExpressionReal,
 } from './ast';
 
 class App extends React.Component {
   componentDidMount() {
-    const e = new ExpressionAdd(new ExpressionInteger(7), new ExpressionMultiply(new ExpressionReal(1.5), new ExpressionInteger(9)));
+    // const e = new ExpressionAdd(new ExpressionInteger(7), new ExpressionAdd(new ExpressionReal(1.5), new ExpressionInteger(9)));
+    // const e = new ExpressionMultiply(new ExpressionAdd(new ExpressionReal(1.5), new ExpressionInteger(9)), new ExpressionInteger(7));
+    // const e = new ExpressionMultiply(new ExpressionInteger(7), new ExpressionAdd(new ExpressionReal(1.5), new ExpressionInteger(9)));
+    // const e = new ExpressionMultiply(new ExpressionInteger(7), new ExpressionMultiply(new ExpressionReal(1.5), new ExpressionInteger(9)));
+    // const e = new ExpressionMultiply(new ExpressionModulus(new ExpressionInteger(44), new ExpressionInteger(9)), new ExpressionInteger(7));
+    const e = new ExpressionOr(new ExpressionAnd(new ExpressionBoolean(true), new ExpressionBoolean(false)), new ExpressionNot(new ExpressionBoolean(true)));
     this.props.onLoadExpression(e);
   }
 

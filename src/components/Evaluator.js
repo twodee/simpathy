@@ -15,6 +15,7 @@ import {
 } from '../actions';
 
 import {
+  ExpressionBoolean,
   ExpressionInteger,
   ExpressionReal,
   ExpressionString,
@@ -75,6 +76,10 @@ const mapDispatchToProps = dispatch => {
           actual = new ExpressionInteger(parseInt(value));
         } else if (value.match(/^-?(\d+\.\d*|\d*.\d+)$/)) {
           actual = new ExpressionReal(parseFloat(value));
+        } else if (value.match(/^true$/)) {
+          actual = new ExpressionBoolean(true);
+        } else if (value.match(/^false$/)) {
+          actual = new ExpressionBoolean(false);
         } else if (value.match(/^".*"$/)) {
           actual = new ExpressionString(value.slice(1, -1));
         } else {
