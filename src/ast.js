@@ -5,6 +5,7 @@ const Precedence = Object.freeze({
   Not: 90,
   Multiplicative: 80,
   Additive: 70,
+  Shift: 65,
   And: 60,
   Or: 59,
   Relational: 50,
@@ -224,6 +225,40 @@ export class ExpressionDivide extends ExpressionBinaryOperator {
     } else if ((valueA instanceof ExpressionReal && valueB instanceof ExpressionInteger) ||
                (valueB instanceof ExpressionReal && valueA instanceof ExpressionInteger)) {
       return new ExpressionReal(valueA.value / valueB.value);
+    } else {
+      throw new Error('bad types');
+    }
+  }
+}
+
+export class ExpressionLeftShift extends ExpressionBinaryOperator {
+  constructor(a, b, where) {
+    super(Precedence.Shift, '<<', a, b, where);
+  }
+
+  evaluate() {
+    const valueA = this.a.evaluate();
+    const valueB = this.b.evaluate();
+
+    if (valueA instanceof ExpressionInteger && valueB instanceof ExpressionInteger) {
+      return new ExpressionInteger(valueA.value << valueB.value);
+    } else {
+      throw new Error('bad types');
+    }
+  }
+}
+
+export class ExpressionRightShift extends ExpressionBinaryOperator {
+  constructor(a, b, where) {
+    super(Precedence.Shift, '>>', a, b, where);
+  }
+
+  evaluate() {
+    const valueA = this.a.evaluate();
+    const valueB = this.b.evaluate();
+
+    if (valueA instanceof ExpressionInteger && valueB instanceof ExpressionInteger) {
+      return new ExpressionInteger(valueA.value >> valueB.value);
     } else {
       throw new Error('bad types');
     }

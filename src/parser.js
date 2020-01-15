@@ -22,6 +22,7 @@ import {
   // ExpressionIdentifier,
   // ExpressionIf,
   ExpressionInteger,
+  ExpressionLeftShift,
   ExpressionLess,
   ExpressionLessEqual,
   // ExpressionMemberFunctionCall,
@@ -35,6 +36,7 @@ import {
   ExpressionOr,
   // ExpressionPower,
   ExpressionReal,
+  ExpressionRightShift,
   ExpressionModulus,
   ExpressionSame,
   ExpressionString,
@@ -193,10 +195,10 @@ export function parse(tokens) {
   }
 
   function expressionRelational() {
-    let a = expressionAdditive();
+    let a = expressionShift();
     while (has(Token.Less) || has(Token.More) || has(Token.LessEqual) || has(Token.MoreEqual)) {
       let operator = consume();
-      let b = expressionAdditive();
+      let b = expressionShift();
       if (operator.type === Token.Less) {
         a = new ExpressionLess(a, b, SourceLocation.span(a.where, b.where));
       } else if (operator.type === Token.LessEqual) {
@@ -210,14 +212,26 @@ export function parse(tokens) {
     return a;
   }
 
+  function expressionShift() {
+    let a = expressionAdditive();
+    while (has(Token.LeftLeft) || has(Token.RightRight)) {
+      let operator = consume();
+      let b = expressionAdditive();
+      if (operator.type === Token.LeftLeft) {
+        a = new ExpressionLeftShift(a, b, SourceLocation.span(a.where, b.where));
+      } else {
+        a = new ExpressionRightShift(a, b, SourceLocation.span(a.where, b.where));
+      }
+    }
+    return a;
+  }
+
   function expressionAdditive() {
     let a = expressionMultiplicative();
     while (has(Token.Plus) || has(Token.Minus)) {
       let operator = consume();
       let b = expressionMultiplicative();
       if (operator.type === Token.Plus) {
-        console.log("a:", a);
-        console.log("b:", b);
         a = new ExpressionAdd(a, b, SourceLocation.span(a.where, b.where));
       } else {
         // a = new ExpressionSubtract(a, b, SourceLocation.span(a.where, b.where));

@@ -252,6 +252,9 @@ export function lex(source) {
     if (has('=')) {
       consume();
       emit(Token.LessEqual);
+    } else if (has('<')) {
+      consume();
+      emit(Token.LeftLeft);
     } else {
       emit(Token.Less);
     }
@@ -262,6 +265,9 @@ export function lex(source) {
     if (has('=')) {
       consume();
       emit(Token.MoreEqual);
+    } else if (has('>')) {
+      consume();
+      emit(Token.RightRight);
     } else {
       emit(Token.More);
     }

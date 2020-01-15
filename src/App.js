@@ -30,7 +30,7 @@ import {
 
 class App extends React.Component {
   componentDidMount() {
-    const tokens = lex('true && !(false || true)').slice(1);
+    const tokens = lex('5 << 2 >> 3').slice(1);
     const e = parse(tokens);
     this.props.onLoadExpression(e);
   }
