@@ -47,11 +47,6 @@
   font-family: 'Inconsolata', monospace;
 }
 
-/* .expression-piece { */
-  /* display: inline-block; */
-  /* padding: 5px; */
-/* } */
-
 .operator {
   display: inline-block;
 }
@@ -116,4 +111,21 @@
   background-color: orange;
   grid-row: 3 / span 1;
   grid-column: 2 / span 1;
+}
+
+#frames {
+  display: grid;
+  grid-template-columns: 1fr 1fr 5fr;
+}
+
+.bordered-cell {
+  border-top: 1px solid black;
+}
+
+.variable-name-cell {
+  grid-column: 2;
+}
+
+.variable-value-cell {
+  grid-column: 3;
 }

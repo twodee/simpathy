@@ -79,7 +79,7 @@ class ExpressionUnaryOperator extends Expression {
           onMouseOut={e => props.onUnhover(e, this)}
           onClick={e => !props.isEvaluating && props.onClick(props.expression, this)}
         >{this.operator}</span>
-        {this.a.reactify(props, this.precedence >= this.a.precedence)}
+        {this.a.reactify(props, this.precedence > this.a.precedence)}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
         {this.evaluatePopup(props)}
       </span>

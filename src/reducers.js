@@ -12,7 +12,36 @@ const initialState = {
   },
   prompter: {
     message: null,
-  }
+  },
+  memory: {
+    frames: [
+      {
+        name: 'main',
+        variables: [
+          {
+            name: 'a',
+            current: 6,
+            history: [7, 8, 9],
+          }
+        ],
+      },
+      {
+        name: 'foo',
+        variables: [
+          {
+            name: 'b',
+            current: "barm",
+            history: ["zig", "zag"],
+          },
+          {
+            name: 'c',
+            current: "furb",
+            history: ["zig", "zag"],
+          },
+        ],
+      },
+    ]
+  },
 };
 
 function evaluator(state = initialState.evaluator, action) {
@@ -93,6 +122,13 @@ function prompter(state = initialState.prompter, action) {
   }
 }
 
-const reducer = combineReducers({ evaluator, prompter });
+function memory(state = initialState.memory, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+}
+
+const reducer = combineReducers({evaluator, prompter, memory});
 
 export default reducer;

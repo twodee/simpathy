@@ -15,22 +15,9 @@ import {
   showMessage,
 } from './actions';
 
-// import {
-  // ExpressionAdd,
-  // ExpressionAnd,
-  // ExpressionBoolean,
-  // ExpressionDivide,
-  // ExpressionInteger,
-  // ExpressionModulus,
-  // ExpressionMultiply,
-  // ExpressionNot,
-  // ExpressionOr,
-  // ExpressionReal,
-// } from './ast';
-
 class App extends React.Component {
   componentDidMount() {
-    const tokens = lex('5 << 2 >> 3').slice(1);
+    const tokens = lex('!!!!!!true').slice(1);
     const e = parse(tokens);
     this.props.onLoadExpression(e);
   }
