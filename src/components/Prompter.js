@@ -11,7 +11,7 @@ class Prompter extends React.Component {
 
 const mapStateToProps = state => {
   return {
-    message: state.prompter.message,
+    message: state.message,
   };
 };
 

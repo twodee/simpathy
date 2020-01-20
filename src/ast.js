@@ -32,7 +32,7 @@ class Expression {
     }
   }
 
-  evaluatePopup(props) {
+  evaluatePopup(component, props) {
     if (props.isEvaluating && props.activeSubexpression === this) {
       return (
         <div className="evaluate-popup">
@@ -45,8 +45,9 @@ class Expression {
             size="8"
             autoFocus
             autoComplete="off"
+            spellCheck="false"
             className={props.isShakingEvaluation ? 'shaking' : ''}
-            onAnimationEnd={props.onStopShakingEvaluation}
+            onAnimationEnd={() => props.onStopShakingEvaluation()}
             onChange={e => props.onEditValue(e.target.value)}
             value={props.value}
             onKeyDown={e => props.onKeyDown(e, props.activeSubexpression, props.value)}
@@ -68,7 +69,7 @@ class ExpressionUnaryOperator extends Expression {
     this.operator = operator;
   }
 
-  reactify(props, isParenthesized) {
+  reactify(component, props, isParenthesized) {
     return (
       <span className={`subexpression ${props.isEvaluating && props.activeSubexpression === this ? 'active' : ''}`}>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
@@ -79,9 +80,9 @@ class ExpressionUnaryOperator extends Expression {
           onMouseOut={e => props.onUnhover(e, this)}
           onClick={e => !props.isEvaluating && props.onClick(props.expression, this)}
         >{this.operator}</span>
-        {this.a.reactify(props, this.precedence > this.a.precedence)}
+        {this.a.reactify(component, props, this.precedence > this.a.precedence)}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
-        {this.evaluatePopup(props)}
+        {this.evaluatePopup(component, props)}
       </span>
     )
   }
@@ -113,11 +114,11 @@ class ExpressionBinaryOperator extends Expression {
     this.operator = operator;
   }
 
-  reactify(props, isParenthesized) {
+  reactify(component, props, isParenthesized) {
     return (
       <span className={`subexpression ${props.isEvaluating && props.activeSubexpression === this ? 'active' : ''}`}>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
-        {this.a.reactify(props, this.precedence > this.a.precedence)}
+        {this.a.reactify(component, props, this.precedence > this.a.precedence)}
         <span
           className={`operator binary-infix-operator expression-piece ${this === props.hoveredSubexpression ? 'hovered' : ''} ${props.isShakingOperation && this === props.activeSubexpression ? 'shaking' : ''}`}
           onAnimationEnd={props.onStopShakingOperation}
@@ -125,9 +126,9 @@ class ExpressionBinaryOperator extends Expression {
           onMouseOut={e => props.onUnhover(e, this)}
           onClick={e => !props.isEvaluating && props.onClick(props.expression, this)}
         >{this.operator}</span>
-        {this.b.reactify(props, this.precedence >= this.b.precedence)}
+        {this.b.reactify(component, props, this.precedence >= this.b.precedence)}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
-        {this.evaluatePopup(props)}
+        {this.evaluatePopup(component, props)}
       </span>
     )
   }
@@ -487,7 +488,7 @@ class ExpressionLiteral extends Expression {
     return this.constructor === that.constructor && this.value === that.value;
   }
 
-  reactify(props, isParenthesized) {
+  reactify(component, props, isParenthesized) {
     return (
       <span className="subexpression expression-piece literal">
         {this.value.toString()}

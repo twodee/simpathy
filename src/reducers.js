@@ -2,49 +2,43 @@ import { combineReducers } from 'redux';
 import { Action } from './actions';
 
 const initialState = {
-  evaluator: {
-    expression: null,
-    hoveredSubexpression: null,
-    activeSubexpression: null,
-    value: '',
-    isShakingOperation: false,
-    isShakingEvaluation: false,
-  },
-  prompter: {
-    message: null,
-  },
-  memory: {
-    frames: [
-      {
-        name: 'main',
-        variables: [
-          {
-            name: 'a',
-            current: 6,
-            history: [7, 8, 9],
-          }
-        ],
-      },
-      {
-        name: 'foo',
-        variables: [
-          {
-            name: 'b',
-            current: "barm",
-            history: ["zig", "zag"],
-          },
-          {
-            name: 'c',
-            current: "furb",
-            history: ["zig", "zag"],
-          },
-        ],
-      },
-    ]
-  },
+  expression: null,
+  hoveredSubexpression: null,
+  activeSubexpression: null,
+  value: '',
+  isShakingOperation: false,
+  isShakingEvaluation: false,
+  message: null,
+  frames: [
+    {
+      name: 'main',
+      variables: [
+        {
+          name: 'a',
+          current: 6,
+          history: [7, 8, 9],
+        }
+      ],
+    },
+    {
+      name: 'foo',
+      variables: [
+        {
+          name: 'b',
+          current: "barm",
+          history: ["zig", "zag", "asd", "asdfadsf", "a2r23", "23432", "fghfgh", "asdfds", "ertert", "tyutyu", "vbvncvb", "thjrtyrt", "34543543", "23432423423423432", "cxvxfgf", "srtert"],
+        },
+        {
+          name: 'c',
+          current: "furb",
+          history: ["zig", "zag"],
+        },
+      ],
+    },
+  ]
 };
 
-function evaluator(state = initialState.evaluator, action) {
+export default function reducer(state = initialState, action) {
   switch (action.type) {
     case Action.HoverSubexpression:
       return {
@@ -105,30 +99,18 @@ function evaluator(state = initialState.evaluator, action) {
         ...state,
         isShakingEvaluation: false,
       };
-    default:
-      return state;
-  }
-}
 
-function prompter(state = initialState.prompter, action) {
-  switch (action.type) {
     case Action.ShowMessage:
       return {
         ...state,
         message: action.payload,
       };
+
     default:
       return state;
   }
 }
 
-function memory(state = initialState.memory, action) {
-  switch (action.type) {
-    default:
-      return state;
-  }
-}
+// const reducer = combineReducers({evaluator, prompter, memory});
 
-const reducer = combineReducers({evaluator, prompter, memory});
-
-export default reducer;
+// export default reducer;

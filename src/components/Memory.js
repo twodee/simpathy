@@ -17,7 +17,7 @@ class Memory extends React.Component {
 
 const mapStateToProps = state => {
   return {
-    frames: state.memory.frames,
+    frames: state.frames,
   };
 };
 

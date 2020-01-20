@@ -9,7 +9,7 @@
   top: 0;
   bottom: 0;
   display: grid;
-  grid-template-columns: 3fr 7fr;
+  grid-template-columns: 400px auto;
   grid-template-rows: 100px 1fr 1fr;
 }
 
@@ -44,6 +44,9 @@
 #expression, #evaluate-box {
   user-select: none;
   font-size: 24pt;
+}
+
+.code {
   font-family: 'Inconsolata', monospace;
 }
 
@@ -88,7 +91,6 @@
   display: block;
   margin: 0 auto 5px auto;
   fill: cornflowerblue;
-  /* stroke: gray; */
 }
 
 #evaluate-box {
@@ -108,24 +110,54 @@
 }
 
 #memory {
-  background-color: orange;
+  background-color: rgb(85%, 85%, 85%);
   grid-row: 3 / span 1;
   grid-column: 2 / span 1;
 }
 
-#frames {
+.stack-frame {
+  margin: 10px;
   display: grid;
-  grid-template-columns: 1fr 1fr 5fr;
+  grid-template-columns: 7em 7em 2em 10em 1fr;
+  border-radius: 5px;
+  box-shadow: rgba(0,0,0,0.2) 0px 2px 3px, inset rgba(0,0,0,0.2) 0px -1px 2px;
+  background-color: white;
 }
 
-.bordered-cell {
-  border-top: 1px solid black;
+.cell {
+  padding: 10px;
+  /* background-color: white; */
+  font-size: 14pt;
+}
+
+.function-name-cell {
+  grid-column: 1;
+  grid-row: 1;
+  /* border-top-left-radius: 5px; */
+  /* border-bottom-left-radius: 5px; */
+}
+
+.arrow-cell {
 }
 
 .variable-name-cell {
   grid-column: 2;
+  text-align: right;
 }
 
 .variable-value-cell {
-  grid-column: 3;
+  grid-column: 4;
+}
+
+.variable-history-cell {
+  color: darkgray;
+}
+
+.old {
+  /* Old values are spans, and for some reason, overflowing content doesn't
+     wrap between spans. */
+  display: inline-block;
+
+  text-decoration: line-through;
+  padding-right: 1em;
 }

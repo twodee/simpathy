@@ -22,11 +22,48 @@ import {
 } from '../ast';
 
 class Evaluator extends React.Component {
+  // constructor(props) {
+    // super(props);
+    // this.state = {
+      // isShakingEvaluation: false,
+    // };
+  // }
+
+  // onKeyDown(e, expression, value) {
+    // if (e.key === 'Enter') {
+      // const expected = expression.evaluate();
+
+      // let actual;
+      // if (value.match(/^-?\d+$/)) {
+        // actual = new ExpressionInteger(parseInt(value));
+      // } else if (value.match(/^-?(\d+\.\d*|\d*.\d+)$/)) {
+        // actual = new ExpressionReal(parseFloat(value));
+      // } else if (value.match(/^true$/)) {
+        // actual = new ExpressionBoolean(true);
+      // } else if (value.match(/^false$/)) {
+        // actual = new ExpressionBoolean(false);
+      // } else if (value.match(/^".*"$/)) {
+        // actual = new ExpressionString(value.slice(1, -1));
+      // } else {
+        // actual = new ExpressionString(value);
+      // }
+
+      // if (expected.equals(actual)) {
+        // console.log("y");
+        // dispatch(evaluateCorrectly(actual));
+      // } else {
+        // console.log("n");
+        // this.setState({isShakingEvaluation: true});
+        // dispatch(evaluateIncorrectly(actual));
+      // }
+    // }
+  // }
+
   render() {
     return (
       <div id="evaluator">
-        <div id="expression">
-          {this.props.expression && this.props.expression.reactify(this.props)}
+        <div id="expression" className="code">
+          {this.props.expression && this.props.expression.reactify(this, this.props)}
         </div>
       </div>
     );
@@ -35,13 +72,13 @@ class Evaluator extends React.Component {
 
 const mapStateToProps = state => {
   return {
-    expression: state.evaluator.expression,
-    hoveredSubexpression: state.evaluator.hoveredSubexpression,
-    activeSubexpression: state.evaluator.activeSubexpression,
-    isShakingOperation: state.evaluator.isShakingOperation,
-    isShakingEvaluation: state.evaluator.isShakingEvaluation,
-    isEvaluating: state.evaluator.isEvaluating,
-    value: state.evaluator.value,
+    expression: state.expression,
+    hoveredSubexpression: state.hoveredSubexpression,
+    activeSubexpression: state.activeSubexpression,
+    isShakingOperation: state.isShakingOperation,
+    isShakingEvaluation: state.isShakingEvaluation,
+    isEvaluating: state.isEvaluating,
+    value: state.value,
   };
 };
 
