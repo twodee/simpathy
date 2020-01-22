@@ -11,7 +11,7 @@ import {
 import {
   ExpressionAdd,
   ExpressionAnd,
-  // ExpressionAssignment,
+  ExpressionAssignment,
   // ExpressionBlock,
   ExpressionBoolean,
   // ExpressionCharacter,
@@ -19,7 +19,7 @@ import {
   // ExpressionFor,
   // ExpressionFunctionCall,
   // ExpressionFunctionDefinition,
-  // ExpressionIdentifier,
+  ExpressionIdentifier,
   // ExpressionIf,
   ExpressionInteger,
   ExpressionLeftShift,
@@ -146,19 +146,19 @@ export function parse(tokens) {
   // }
 
   function expression() {
-    // TODO
-    return expressionOr();
+    return expressionAssignment();
   }
 
-  // function expressionAssignment() {
-    // let lhs = expressionEquality(); 
-    // if (has(Token.Assign)) {
-      // consume();
-      // let rhs = expressionAssignment();
-      // lhs = new ExpressionAssignment(lhs, rhs, SourceLocation.span(lhs.where, rhs.where));
-    // }
-    // return lhs;
-  // }
+  function expressionAssignment() {
+    if (has(Token.Identifier) && has(Token.Assign, 1)) {
+      let identifier = consume();
+      consume(); // eat =
+      let rhs = expressionAssignment();
+      return new ExpressionAssignment(identifier, rhs, SourceLocation.span(identifier.where, rhs.where));
+    } else {
+      return expressionOr();
+    }
+  }
 
   function expressionOr() {
     let a = expressionAnd();
@@ -378,6 +378,10 @@ export function parse(tokens) {
     } else if (has(Token.Boolean)) {
       let token = consume();
       return new ExpressionBoolean(token.source === 'true', token.where);
+    } else if (has(Token.Identifier)) {
+      let where = tokens[i].where;
+      let id = consume();
+      return new ExpressionIdentifier(id, where);
     // } else if (has(Token.To)) {
       // let sourceStart = tokens[i].where;
       // consume(); // eat if
@@ -621,10 +625,6 @@ export function parse(tokens) {
       // consume(); // eat linebreak
       // let body = block();
       // return new ExpressionRepeat(count, body, SourceLocation.span(sourceStart, body.where));
-    // } else if (has(Token.Identifier)) {
-      // let where = tokens[i].where;
-      // let id = consume();
-      // return new ExpressionIdentifier(id, where);
     // } else {
       // if (!has(Token.Linebreak)) {
         // throw new LocatedException(tokens[i].where, `I don't know what "${tokens[i].source}" means here.`);

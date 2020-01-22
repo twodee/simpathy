@@ -17,7 +17,7 @@ import {
 
 class App extends React.Component {
   componentDidMount() {
-    const tokens = lex('!!!!!!true').slice(1);
+    const tokens = lex('a = 7').slice(1);
     const e = parse(tokens);
     this.props.onLoadExpression(e);
   }

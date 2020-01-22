@@ -50,12 +50,12 @@
   font-family: 'Inconsolata', monospace;
 }
 
-.operator {
+.evaluatable {
   display: inline-block;
 }
 
 .binary-infix-operator {
-  padding: 5px 10px;
+  margin: 0 15px;
 }
 
 .literal {
@@ -68,7 +68,7 @@
 
 .subexpression {
   display: inline-block;
-  padding: 3px 3px;
+  padding: 3px initial;
 }
 
 .active {
@@ -160,4 +160,8 @@
 
   text-decoration: line-through;
   padding-right: 1em;
+}
+
+.memory-value-input {
+  width: 100%;
 }

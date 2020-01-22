@@ -8,7 +8,7 @@ class Memory extends React.Component {
     return (
       <div id="memory">
         <div id="frames">
-          { this.props.frames.map((frame, i) => <StackFrame key={`${frame.name}-${i}`} name={frame.name} variables={frame.variables} isFirst={i === 0} />) }
+          { this.props.frames.map((frame, i) => <StackFrame key={`${frame.name}-${i}`} index={i} />) }
         </div>
       </div>
     );
@@ -18,11 +18,15 @@ class Memory extends React.Component {
 const mapStateToProps = state => {
   return {
     frames: state.frames,
+    mode: state.mode,
+    hoveredMemoryValue: state.hoveredMemoryValue,
   };
 };
 
 const mapDispatchToProps = dispatch => {
   return {
+    onHover: null,
+    onUnhover: null,
   };
 };
 

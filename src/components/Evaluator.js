@@ -1,17 +1,22 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
+// import {
+  // Mode,
+// } from './constants';
+
 import {
   editValue,
   evaluateCorrectly,
   evaluateIncorrectly,
   selectSubexpression,
-  hoverSubexpression,
+  hover,
+  selectMemoryValue,
   showMessage,
   startShakingOperation,
   stopShakingOperation,
   stopShakingEvaluation,
-  unhoverSubexpression,
+  unhover,
 } from '../actions';
 
 import {
@@ -22,43 +27,6 @@ import {
 } from '../ast';
 
 class Evaluator extends React.Component {
-  // constructor(props) {
-    // super(props);
-    // this.state = {
-      // isShakingEvaluation: false,
-    // };
-  // }
-
-  // onKeyDown(e, expression, value) {
-    // if (e.key === 'Enter') {
-      // const expected = expression.evaluate();
-
-      // let actual;
-      // if (value.match(/^-?\d+$/)) {
-        // actual = new ExpressionInteger(parseInt(value));
-      // } else if (value.match(/^-?(\d+\.\d*|\d*.\d+)$/)) {
-        // actual = new ExpressionReal(parseFloat(value));
-      // } else if (value.match(/^true$/)) {
-        // actual = new ExpressionBoolean(true);
-      // } else if (value.match(/^false$/)) {
-        // actual = new ExpressionBoolean(false);
-      // } else if (value.match(/^".*"$/)) {
-        // actual = new ExpressionString(value.slice(1, -1));
-      // } else {
-        // actual = new ExpressionString(value);
-      // }
-
-      // if (expected.equals(actual)) {
-        // console.log("y");
-        // dispatch(evaluateCorrectly(actual));
-      // } else {
-        // console.log("n");
-        // this.setState({isShakingEvaluation: true});
-        // dispatch(evaluateIncorrectly(actual));
-      // }
-    // }
-  // }
-
   render() {
     return (
       <div id="evaluator">
@@ -73,12 +41,13 @@ class Evaluator extends React.Component {
 const mapStateToProps = state => {
   return {
     expression: state.expression,
-    hoveredSubexpression: state.hoveredSubexpression,
+    hoveredElement: state.hoveredElement,
     activeSubexpression: state.activeSubexpression,
     isShakingOperation: state.isShakingOperation,
     isShakingEvaluation: state.isShakingEvaluation,
-    isEvaluating: state.isEvaluating,
+    mode: state.mode,
     value: state.value,
+    env: state.frames[0],
   };
 };
 
@@ -86,16 +55,33 @@ const mapDispatchToProps = dispatch => {
   return {
     onHover: (e, expression) => {
       e.stopPropagation();
-      dispatch(hoverSubexpression(expression));
+      dispatch(hover(expression));
     },
     onUnhover: (e, expression) => {
       e.stopPropagation();
-      dispatch(unhoverSubexpression(expression));
+      dispatch(unhover(expression));
     },
-    onClick: (expression, subexpression) => {
+    onClickOperator: (expression, subexpression) => {
       if (expression.nextNonterminal === subexpression) {
-        dispatch(showMessage("Solve."));
+        dispatch(showMessage("What's the value of this operation?"));
         dispatch(selectSubexpression(subexpression));
+      } else {
+        dispatch(showMessage("No, that's not it."));
+        dispatch(startShakingOperation(subexpression));
+      }
+    },
+    onClickIdentifier: (expression, subexpression) => {
+      if (expression.nextNonterminal === subexpression) {
+        dispatch(showMessage("What's the value of this variable?"));
+        dispatch(selectSubexpression(subexpression));
+      } else {
+        dispatch(showMessage("No, that's not it."));
+        dispatch(startShakingOperation(subexpression));
+      }
+    },
+    onClickAssignment: (expression, subexpression) => {
+      if (expression.nextNonterminal === subexpression) {
+        dispatch(selectMemoryValue(subexpression.identifier.source));
       } else {
         dispatch(showMessage("No, that's not it."));
         dispatch(startShakingOperation(subexpression));
@@ -104,9 +90,9 @@ const mapDispatchToProps = dispatch => {
     onStopShakingOperation: () => dispatch(stopShakingOperation()),
     onStopShakingEvaluation: () => dispatch(stopShakingEvaluation()),
     onEditValue: value => dispatch(editValue(value)),
-    onKeyDown: (e, expression, value) => {
+    onKeyDown: (e, env, expression, value) => {
       if (e.key === 'Enter') {
-        const expected = expression.evaluate();
+        const expected = expression.evaluate(env);
 
         let actual;
         if (value.match(/^-?\d+$/)) {

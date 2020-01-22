@@ -1,6 +1,6 @@
 export const Action = Object.freeze({
-  HoverSubexpression: 'HoverSubexpression',
-  UnhoverSubexpression: 'UnhoverSubexpression',
+  Hover: 'Hover',
+  Unhover: 'Unhover',
   ShowMessage: 'ShowMessage',
   LoadExpression: 'LoadExpression',
   SelectSubexpression: 'SelectSubexpression',
@@ -11,6 +11,10 @@ export const Action = Object.freeze({
   EditValue: 'EditValue',
   EvaluateCorrectly: 'EvaluateCorrectly',
   EvaluateIncorrectly: 'EvaluateIncorrectly',
+  SelectMemoryValue: 'SelectMemoryValue',
+  SelectRightMemoryValue: 'SelectRightMemoryValue',
+  SelectWrongMemoryValue: 'SelectWrongMemoryValue',
+  StopShakingMemoryValue: 'StopShakingMemoryValue',
 });
 
 // --------------------------------------------------------------------------- 
@@ -24,19 +28,19 @@ export const Action = Object.freeze({
 
 // --------------------------------------------------------------------------- 
 
-export function hoverSubexpression(subexpression) {
+export function hover(element) {
   return {
-    type: Action.HoverSubexpression,
-    payload: subexpression,
+    type: Action.Hover,
+    payload: element,
   };
 }
 
 // --------------------------------------------------------------------------- 
 
-export function unhoverSubexpression(subexpression) {
+export function unhover(element) {
   return {
-    type: Action.UnhoverSubexpression,
-    payload: subexpression,
+    type: Action.Unhover,
+    payload: element,
   };
 }
 
@@ -116,6 +120,41 @@ export function evaluateIncorrectly(value) {
   return {
     type: Action.EvaluateIncorrectly,
     payload: value,
+  };
+}
+
+// --------------------------------------------------------------------------- 
+
+export function selectMemoryValue(expected) {
+  return {
+    type: Action.SelectMemoryValue,
+    payload: expected,
+  };
+}
+
+// --------------------------------------------------------------------------- 
+
+export function selectRightMemoryValue(variable) {
+  return {
+    type: Action.SelectRightMemoryValue,
+    payload: variable,
+  };
+}
+
+// --------------------------------------------------------------------------- 
+
+export function selectWrongMemoryValue(message) {
+  return {
+    type: Action.SelectWrongMemoryValue,
+    payload: message,
+  };
+}
+
+// --------------------------------------------------------------------------- 
+
+export function stopShakingMemoryValue(message) {
+  return {
+    type: Action.StopShakingMemoryValue,
   };
 }
 

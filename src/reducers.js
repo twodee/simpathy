@@ -1,13 +1,32 @@
-import { combineReducers } from 'redux';
 import { Action } from './actions';
 
+import {
+  ExpressionInteger,
+  ExpressionReal,
+  ExpressionString,
+} from './ast';
+
+import {
+  Mode, 
+} from './constants';
+
 const initialState = {
+  mode: Mode.SelectSubexpression,
   expression: null,
-  hoveredSubexpression: null,
+
+  hoveredElement: null,
+  expectedElement: null,
+  activeElement: null,
+  isShaking: null,
+
   activeSubexpression: null,
   value: '',
   isShakingOperation: false,
   isShakingEvaluation: false,
+
+  errorMessage: '',
+  goalMessage: '',
+
   message: null,
   frames: [
     {
@@ -15,7 +34,7 @@ const initialState = {
       variables: [
         {
           name: 'a',
-          current: 6,
+          current: new ExpressionInteger(6),
           history: [7, 8, 9],
         }
       ],
@@ -24,13 +43,18 @@ const initialState = {
       name: 'foo',
       variables: [
         {
+          name: 'a',
+          current: new ExpressionString("barm"),
+          history: ["zig", "zag", "asd", "asdfadsf", "a2r23", "23432", "fghfgh", "asdfds", "ertert", "tyutyu", "vbvncvb", "thjrtyrt", "34543543", "23432423423423432", "cxvxfgf", "srtert"],
+        },
+        {
           name: 'b',
-          current: "barm",
+          current: new ExpressionString("barm"),
           history: ["zig", "zag", "asd", "asdfadsf", "a2r23", "23432", "fghfgh", "asdfds", "ertert", "tyutyu", "vbvncvb", "thjrtyrt", "34543543", "23432423423423432", "cxvxfgf", "srtert"],
         },
         {
           name: 'c',
-          current: "furb",
+          current: new ExpressionString("furb"),
           history: ["zig", "zag"],
         },
       ],
@@ -40,16 +64,18 @@ const initialState = {
 
 export default function reducer(state = initialState, action) {
   switch (action.type) {
-    case Action.HoverSubexpression:
+    case Action.Hover:
+      console.log("hovering");
       return {
         ...state,
-        hoveredSubexpression: action.payload,
+        hoveredElement: action.payload,
       };
-    case Action.UnhoverSubexpression:
+    case Action.Unhover:
       return {
         ...state,
-        hoveredSubexpression: state.hoveredSubexpression === action.payload ? null : state.hoveredSubexpression,
+        hoveredElement: state.hoveredElement === action.payload ? null : state.hoveredElement,
       };
+
     case Action.LoadExpression:
       return {
         ...state,
@@ -64,16 +90,15 @@ export default function reducer(state = initialState, action) {
       return {
         ...state,
         activeSubexpression: action.payload,
-        hoveredSubexpression: null,
-        isEvaluating: true,
+        hoveredElement: null,
+        mode: Mode.EvaluateSubexpression,
       };
     case Action.StartShakingOperation:
       return {
         ...state,
         activeSubexpression: action.payload,
-        hoveredSubexpression: null,
+        hoveredElement: null,
         isShakingOperation: true,
-        isEvaluating: false,
       };
     case Action.StopShakingOperation:
       return {
@@ -85,7 +110,7 @@ export default function reducer(state = initialState, action) {
       return {
         ...state,
         activeSubexpression: null,
-        isEvaluating: false,
+        mode: Mode.SelectSubexpression,
         value: '',
         expression: state.expression.simplify(state.activeSubexpression, action.payload),
       };
@@ -106,11 +131,38 @@ export default function reducer(state = initialState, action) {
         message: action.payload,
       };
 
+    case Action.SelectMemoryValue:
+      return {
+        ...state,
+        message: 'Which value in memory is being assigned?',
+        mode: Mode.SelectMemoryValue,
+        expectedElement: action.payload,
+      };
+
+    case Action.SelectRightMemoryValue:
+      return {
+        ...state,
+        message: 'What\'s the new value of this variable?',
+        mode: Mode.UpdateMemoryValue,
+      };
+
+    case Action.SelectWrongMemoryValue:
+      return {
+        ...state,
+        message: `No, that's variable ${action.payload.name}.`,
+        activeElement: action.payload,
+        hoveredElement: null,
+        isShaking: true,
+      };
+
+    case Action.StopShakingMemoryValue:
+      return {
+        ...state,
+        activeElement: null,
+        isShaking: false,
+      };
+
     default:
       return state;
   }
 }
-
-// const reducer = combineReducers({evaluator, prompter, memory});
-
-// export default reducer;

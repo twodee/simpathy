@@ -1,16 +1,9 @@
 import React from 'react';
 
-const Precedence = Object.freeze({
-  Atom: 100,
-  Not: 90,
-  Multiplicative: 80,
-  Additive: 70,
-  Shift: 65,
-  And: 60,
-  Or: 59,
-  Relational: 50,
-  Equality: 45,
-});
+import {
+  Mode,
+  Precedence,
+} from './constants';
 
 // --------------------------------------------------------------------------- 
 
@@ -33,7 +26,7 @@ class Expression {
   }
 
   evaluatePopup(component, props) {
-    if (props.isEvaluating && props.activeSubexpression === this) {
+    if (props.mode === Mode.EvaluateSubexpression && props.activeSubexpression === this) {
       return (
         <div className="evaluate-popup">
           <svg height="12" width="16">
@@ -50,13 +43,55 @@ class Expression {
             onAnimationEnd={() => props.onStopShakingEvaluation()}
             onChange={e => props.onEditValue(e.target.value)}
             value={props.value}
-            onKeyDown={e => props.onKeyDown(e, props.activeSubexpression, props.value)}
+            onKeyDown={e => props.onKeyDown(e, props.env, props.activeSubexpression, props.value)}
           />
         </div>
       );
     } else {
       return null;
     }
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionIdentifier extends Expression {
+  constructor(id, where = null) {
+    super(Precedence.Atom, where);
+    this.id = id;
+  }
+
+  reactify(component, props, isParenthesized) {
+    return (
+      <span className={`subexpression ${props.mode === Mode.EvaluateSubexpression && props.activeSubexpression === this ? 'active' : ''}`}>
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        <span
+          className={`evaluatable expression-piece ${this === props.hoveredElement ? 'hovered' : ''} ${props.isShakingOperation && this === props.activeSubexpression ? 'shaking' : ''}`}
+          onAnimationEnd={props.onStopShakingOperation}
+          onMouseOver={e => props.mode === Mode.SelectSubexpression && props.onHover(e, this)}
+          onMouseOut={e => props.onUnhover(e, this)}
+          onClick={e => props.mode === Mode.SelectSubexpression && props.onClickIdentifier(props.expression, this)}
+        >{this.id.source}</span>
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+        {this.evaluatePopup(component, props)}
+      </span>
+    )
+  }
+
+  get nextNonterminal() {
+    return this;
+  }
+
+  simplify(expression, value) {
+    if (this === expression) {
+      return value;
+    } else {
+      return this;
+    }
+  }
+
+  evaluate(env) {
+    return env.variables.find(variable => variable.name === this.id.source).current;
   }
 }
 
@@ -71,14 +106,14 @@ class ExpressionUnaryOperator extends Expression {
 
   reactify(component, props, isParenthesized) {
     return (
-      <span className={`subexpression ${props.isEvaluating && props.activeSubexpression === this ? 'active' : ''}`}>
+      <span className={`subexpression ${props.mode === Mode.EvaluateSubexpression && props.activeSubexpression === this ? 'active' : ''}`}>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
         <span
-          className={`operator unary-prefix-operator expression-piece ${this === props.hoveredSubexpression ? 'hovered' : ''} ${props.isShakingOperation && this === props.activeSubexpression ? 'shaking' : ''}`}
+          className={`evaluatable unary-prefix-operator expression-piece ${this === props.hoveredElement ? 'hovered' : ''} ${props.isShakingOperation && this === props.activeSubexpression ? 'shaking' : ''}`}
           onAnimationEnd={props.onStopShakingOperation}
-          onMouseOver={e => !props.isEvaluating && props.onHover(e, this)}
+          onMouseOver={e => props.mode === Mode.SelectSubexpression && props.onHover(e, this)}
           onMouseOut={e => props.onUnhover(e, this)}
-          onClick={e => !props.isEvaluating && props.onClick(props.expression, this)}
+          onClick={e => props.mode === Mode.SelectSubexpression && props.onClickOperator(props.expression, this)}
         >{this.operator}</span>
         {this.a.reactify(component, props, this.precedence > this.a.precedence)}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
@@ -116,15 +151,15 @@ class ExpressionBinaryOperator extends Expression {
 
   reactify(component, props, isParenthesized) {
     return (
-      <span className={`subexpression ${props.isEvaluating && props.activeSubexpression === this ? 'active' : ''}`}>
+      <span className={`subexpression ${props.mode === Mode.EvaluateSubexpression && props.activeSubexpression === this ? 'active' : ''}`}>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
         {this.a.reactify(component, props, this.precedence > this.a.precedence)}
         <span
-          className={`operator binary-infix-operator expression-piece ${this === props.hoveredSubexpression ? 'hovered' : ''} ${props.isShakingOperation && this === props.activeSubexpression ? 'shaking' : ''}`}
+          className={`evaluatable binary-infix-operator expression-piece ${this === props.hoveredElement ? 'hovered' : ''} ${props.isShakingOperation && this === props.activeSubexpression ? 'shaking' : ''}`}
           onAnimationEnd={props.onStopShakingOperation}
-          onMouseOver={e => !props.isEvaluating && props.onHover(e, this)}
+          onMouseOver={e => props.mode === Mode.SelectSubexpression && props.onHover(e, this)}
           onMouseOut={e => props.onUnhover(e, this)}
-          onClick={e => !props.isEvaluating && props.onClick(props.expression, this)}
+          onClick={e => props.mode === Mode.SelectSubexpression && props.onClickOperator(props.expression, this)}
         >{this.operator}</span>
         {this.b.reactify(component, props, this.precedence >= this.b.precedence)}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
@@ -153,14 +188,57 @@ class ExpressionBinaryOperator extends Expression {
   }
 }
 
-export class ExpressionAdd extends ExpressionBinaryOperator {
-  constructor(a, b, where) {
-    super(70, '+', a, b, where);
+export class ExpressionAssignment extends Expression {
+  constructor(identifier, value, where) {
+    super(Precedence.Assignment, where);
+    this.identifier = identifier;
+    this.value = value;
   }
 
-  evaluate() {
-    const valueA = this.a.evaluate();
-    const valueB = this.b.evaluate();
+  reactify(component, props, isParenthesized) {
+    return (
+      <span className={`subexpression ${props.mode === Mode.EvaluateSubexpression && props.activeSubexpression === this ? 'active' : ''}`}>
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        {this.identifier.source}
+        <span
+          className={`evaluatable binary-infix-operator expression-piece ${this === props.hoveredElement ? 'hovered' : ''} ${props.isShakingOperation && this === props.activeSubexpression ? 'shaking' : ''}`}
+          onAnimationEnd={props.onStopShakingOperation}
+          onMouseOver={e => props.mode === Mode.SelectSubexpression && props.onHover(e, this)}
+          onMouseOut={e => props.onUnhover(e, this)}
+          onClick={e => props.mode === Mode.SelectSubexpression && props.onClickAssignment(props.expression, this)}
+        >=</span>
+        {this.value.reactify(component, props, this.precedence >= this.value.precedence)}
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+        {this.evaluatePopup(component, props)}
+      </span>
+    )
+  }
+
+  get nextNonterminal() {
+    let node = this.value.nextNonterminal;
+    if (!node) {
+      node = this;
+    }
+    return node;
+  }
+
+  simplify(expression, value) {
+    if (this === expression) {
+      return value;
+    } else {
+      return new this.constructor(this.identifier, this.value.simplify(expression, value));
+    }
+  }
+}
+
+export class ExpressionAdd extends ExpressionBinaryOperator {
+  constructor(a, b, where) {
+    super(Precedence.Additive, '+', a, b, where);
+  }
+
+  evaluate(env) {
+    const valueA = this.a.evaluate(env);
+    const valueB = this.b.evaluate(env);
 
     if (valueA instanceof ExpressionInteger && valueB instanceof ExpressionInteger) {
       return new ExpressionInteger(valueA.value + valueB.value);
@@ -180,9 +258,9 @@ export class ExpressionMultiply extends ExpressionBinaryOperator {
     super(Precedence.Multiplicative, '*', a, b, where);
   }
 
-  evaluate() {
-    const valueA = this.a.evaluate();
-    const valueB = this.b.evaluate();
+  evaluate(env) {
+    const valueA = this.a.evaluate(env);
+    const valueB = this.b.evaluate(env);
 
     if (valueA instanceof ExpressionInteger && valueB instanceof ExpressionInteger) {
       return new ExpressionInteger(valueA.value * valueB.value);
@@ -200,9 +278,9 @@ export class ExpressionModulus extends ExpressionBinaryOperator {
     super(Precedence.Multiplicative, '%', a, b, where);
   }
 
-  evaluate() {
-    const valueA = this.a.evaluate();
-    const valueB = this.b.evaluate();
+  evaluate(env) {
+    const valueA = this.a.evaluate(env);
+    const valueB = this.b.evaluate(env);
 
     if (valueA instanceof ExpressionInteger && valueB instanceof ExpressionInteger) {
       return new ExpressionInteger(valueA.value % valueB.value);
@@ -217,9 +295,9 @@ export class ExpressionDivide extends ExpressionBinaryOperator {
     super(Precedence.Multiplicative, '/', a, b);
   }
 
-  evaluate() {
-    const valueA = this.a.evaluate();
-    const valueB = this.b.evaluate();
+  evaluate(env) {
+    const valueA = this.a.evaluate(env);
+    const valueB = this.b.evaluate(env);
 
     if (valueA instanceof ExpressionInteger && valueB instanceof ExpressionInteger) {
       return new ExpressionInteger(Math.floor(valueA.value / valueB.value));
@@ -237,9 +315,9 @@ export class ExpressionLeftShift extends ExpressionBinaryOperator {
     super(Precedence.Shift, '<<', a, b, where);
   }
 
-  evaluate() {
-    const valueA = this.a.evaluate();
-    const valueB = this.b.evaluate();
+  evaluate(env) {
+    const valueA = this.a.evaluate(env);
+    const valueB = this.b.evaluate(env);
 
     if (valueA instanceof ExpressionInteger && valueB instanceof ExpressionInteger) {
       return new ExpressionInteger(valueA.value << valueB.value);
@@ -254,9 +332,9 @@ export class ExpressionRightShift extends ExpressionBinaryOperator {
     super(Precedence.Shift, '>>', a, b, where);
   }
 
-  evaluate() {
-    const valueA = this.a.evaluate();
-    const valueB = this.b.evaluate();
+  evaluate(env) {
+    const valueA = this.a.evaluate(env);
+    const valueB = this.b.evaluate(env);
 
     if (valueA instanceof ExpressionInteger && valueB instanceof ExpressionInteger) {
       return new ExpressionInteger(valueA.value >> valueB.value);
@@ -273,9 +351,9 @@ export class ExpressionAnd extends ExpressionBinaryOperator {
     super(Precedence.And, '&&', a, b, where);
   }
 
-  evaluate() {
-    const valueA = this.a.evaluate();
-    const valueB = this.b.evaluate();
+  evaluate(env) {
+    const valueA = this.a.evaluate(env);
+    const valueB = this.b.evaluate(env);
 
     if (valueA instanceof ExpressionBoolean && valueB instanceof ExpressionBoolean) {
       return new ExpressionBoolean(valueA.value && valueB.value);
@@ -308,9 +386,9 @@ export class ExpressionOr extends ExpressionBinaryOperator {
     super(Precedence.Or, '||', a, b, where);
   }
 
-  evaluate() {
-    const valueA = this.a.evaluate();
-    const valueB = this.b.evaluate();
+  evaluate(env) {
+    const valueA = this.a.evaluate(env);
+    const valueB = this.b.evaluate(env);
 
     if (valueA instanceof ExpressionBoolean && valueB instanceof ExpressionBoolean) {
       return new ExpressionBoolean(valueA.value || valueB.value);
@@ -343,9 +421,9 @@ export class ExpressionMore extends ExpressionBinaryOperator {
     super(Precedence.Relational, '>', a, b, where);
   }
 
-  evaluate() {
-    const valueA = this.a.evaluate();
-    const valueB = this.b.evaluate();
+  evaluate(env) {
+    const valueA = this.a.evaluate(env);
+    const valueB = this.b.evaluate(env);
 
     if ((valueA instanceof ExpressionInteger || valueA instanceof ExpressionReal) &&
         (valueB instanceof ExpressionInteger || valueB instanceof ExpressionReal)) {
@@ -363,9 +441,9 @@ export class ExpressionMoreEqual extends ExpressionBinaryOperator {
     super(Precedence.Relational, '>=', a, b, where);
   }
 
-  evaluate() {
-    const valueA = this.a.evaluate();
-    const valueB = this.b.evaluate();
+  evaluate(env) {
+    const valueA = this.a.evaluate(env);
+    const valueB = this.b.evaluate(env);
 
     if ((valueA instanceof ExpressionInteger || valueA instanceof ExpressionReal) &&
         (valueB instanceof ExpressionInteger || valueB instanceof ExpressionReal)) {
@@ -383,9 +461,9 @@ export class ExpressionLess extends ExpressionBinaryOperator {
     super(Precedence.Relational, '<', a, b, where);
   }
 
-  evaluate() {
-    const valueA = this.a.evaluate();
-    const valueB = this.b.evaluate();
+  evaluate(env) {
+    const valueA = this.a.evaluate(env);
+    const valueB = this.b.evaluate(env);
 
     if ((valueA instanceof ExpressionInteger || valueA instanceof ExpressionReal) &&
         (valueB instanceof ExpressionInteger || valueB instanceof ExpressionReal)) {
@@ -403,9 +481,9 @@ export class ExpressionLessEqual extends ExpressionBinaryOperator {
     super(Precedence.Relational, '<=', a, b, where);
   }
 
-  evaluate() {
-    const valueA = this.a.evaluate();
-    const valueB = this.b.evaluate();
+  evaluate(env) {
+    const valueA = this.a.evaluate(env);
+    const valueB = this.b.evaluate(env);
 
     if ((valueA instanceof ExpressionInteger || valueA instanceof ExpressionReal) &&
         (valueB instanceof ExpressionInteger || valueB instanceof ExpressionReal)) {
@@ -423,8 +501,8 @@ export class ExpressionNot extends ExpressionUnaryOperator {
     super(Precedence.Not, '!', a, where);
   }
 
-  evaluate() {
-    const valueA = this.a.evaluate();
+  evaluate(env) {
+    const valueA = this.a.evaluate(env);
 
     if (valueA instanceof ExpressionBoolean) {
       return new ExpressionBoolean(!valueA.value);
@@ -441,9 +519,9 @@ export class ExpressionSame extends ExpressionBinaryOperator {
     super(Precedence.Equality, '==', a, b, where);
   }
 
-  evaluate() {
-    const valueA = this.a.evaluate();
-    const valueB = this.b.evaluate();
+  evaluate(env) {
+    const valueA = this.a.evaluate(env);
+    const valueB = this.b.evaluate(env);
 
     if (valueA.constructor === valueB.constructor) {
       return new ExpressionBoolean(valueA.value === valueB.value);
@@ -460,9 +538,9 @@ export class ExpressionNotSame extends ExpressionBinaryOperator {
     super(Precedence.Equality, '!=', a, b, where);
   }
 
-  evaluate() {
-    const valueA = this.a.evaluate();
-    const valueB = this.b.evaluate();
+  evaluate(env) {
+    const valueA = this.a.evaluate(env);
+    const valueB = this.b.evaluate(env);
 
     if (valueA.constructor === valueB.constructor) {
       return new ExpressionBoolean(valueA.value !== valueB.value);
@@ -480,7 +558,7 @@ class ExpressionLiteral extends Expression {
     this.value = value;
   }
 
-  evaluate() {
+  evaluate(env) {
     return this;
   }
 
