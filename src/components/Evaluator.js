@@ -1,37 +1,32 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-// import {
-  // Mode,
-// } from './constants';
-
 import {
-  editValue,
-  evaluateCorrectly,
-  evaluateIncorrectly,
-  selectSubexpression,
+  editInput,
+  enterRightSubexpressionValue,
+  enterWrongSubexpressionValue,
+  selectRightSubexpression,
   hover,
-  selectMemoryValue,
+  selectAssignment,
   showMessage,
-  startShakingOperation,
+  selectWrongSubexpression,
   stopShakingOperation,
   stopShakingEvaluation,
   unhover,
 } from '../actions';
 
 import {
-  ExpressionBoolean,
-  ExpressionInteger,
-  ExpressionReal,
-  ExpressionString,
+  parseLiteral,
 } from '../ast';
+
+// --------------------------------------------------------------------------- 
 
 class Evaluator extends React.Component {
   render() {
     return (
       <div id="evaluator">
         <div id="expression" className="code">
-          {this.props.expression && this.props.expression.reactify(this, this.props)}
+          {this.props.expression && this.props.expression.evaluatorify(this, this.props)}
         </div>
       </div>
     );
@@ -43,10 +38,9 @@ const mapStateToProps = state => {
     expression: state.expression,
     hoveredElement: state.hoveredElement,
     activeSubexpression: state.activeSubexpression,
-    isShakingOperation: state.isShakingOperation,
-    isShakingEvaluation: state.isShakingEvaluation,
+    isShaking: state.isShaking,
     mode: state.mode,
-    value: state.value,
+    currentInput: state.currentInput,
     env: state.frames[0],
   };
 };
@@ -63,56 +57,38 @@ const mapDispatchToProps = dispatch => {
     },
     onClickOperator: (expression, subexpression) => {
       if (expression.nextNonterminal === subexpression) {
-        dispatch(showMessage("What's the value of this operation?"));
-        dispatch(selectSubexpression(subexpression));
+        dispatch(selectRightSubexpression(subexpression, "Evaluate this operation."));
       } else {
-        dispatch(showMessage("No, that's not it."));
-        dispatch(startShakingOperation(subexpression));
+        dispatch(selectWrongSubexpression(subexpression, "No, that's not it."));
       }
     },
     onClickIdentifier: (expression, subexpression) => {
       if (expression.nextNonterminal === subexpression) {
-        dispatch(showMessage("What's the value of this variable?"));
-        dispatch(selectSubexpression(subexpression));
+        dispatch(selectRightSubexpression(subexpression, "What's the value bound to this variable?"));
       } else {
-        dispatch(showMessage("No, that's not it."));
-        dispatch(startShakingOperation(subexpression));
+        dispatch(selectWrongSubexpression(subexpression, "No that's not it."));
       }
     },
     onClickAssignment: (expression, subexpression) => {
       if (expression.nextNonterminal === subexpression) {
-        dispatch(selectMemoryValue(subexpression.identifier.source));
+        dispatch(selectAssignment(subexpression));
       } else {
         dispatch(showMessage("No, that's not it."));
-        dispatch(startShakingOperation(subexpression));
+        dispatch(selectWrongSubexpression(subexpression));
       }
     },
     onStopShakingOperation: () => dispatch(stopShakingOperation()),
     onStopShakingEvaluation: () => dispatch(stopShakingEvaluation()),
-    onEditValue: value => dispatch(editValue(value)),
+    onEditInput: value => dispatch(editInput(value)),
     onKeyDown: (e, env, expression, value) => {
       if (e.key === 'Enter') {
         const expected = expression.evaluate(env);
-
-        let actual;
-        if (value.match(/^-?\d+$/)) {
-          actual = new ExpressionInteger(parseInt(value));
-        } else if (value.match(/^-?(\d+\.\d*|\d*.\d+)$/)) {
-          actual = new ExpressionReal(parseFloat(value));
-        } else if (value.match(/^true$/)) {
-          actual = new ExpressionBoolean(true);
-        } else if (value.match(/^false$/)) {
-          actual = new ExpressionBoolean(false);
-        } else if (value.match(/^".*"$/)) {
-          actual = new ExpressionString(value.slice(1, -1));
-        } else {
-          actual = new ExpressionString(value);
-        }
+        let actual = parseLiteral(value);
 
         if (expected.equals(actual)) {
-          dispatch(evaluateCorrectly(actual));
+          dispatch(enterRightSubexpressionValue(actual));
         } else {
-          dispatch(evaluateIncorrectly(actual));
+          dispatch(enterWrongSubexpressionValue(actual));
         }
       }
     }

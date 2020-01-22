@@ -5,7 +5,7 @@ import {
 
 import {
   LocatedException,
-  MessagedException,
+  // MessagedException,
 } from './types';
 
 import {
@@ -55,7 +55,7 @@ import {
 
 export function parse(tokens) {
   let i = 0;
-  let indents = [-1];
+  // let indents = [-1];
 
   function has(type, offset) {
     let index = i;
@@ -163,7 +163,7 @@ export function parse(tokens) {
   function expressionOr() {
     let a = expressionAnd();
     while (has(Token.Or)) {
-      let operator = consume();
+      consume(); // eat or
       let b = expressionAnd();
       a = new ExpressionOr(a, b, SourceLocation.span(a.where, b.where));
     }
@@ -173,7 +173,7 @@ export function parse(tokens) {
   function expressionAnd() {
     let a = expressionEquality();
     while (has(Token.And)) {
-      let operator = consume();
+      consume(); // eat and
       let b = expressionEquality();
       a = new ExpressionAnd(a, b, SourceLocation.span(a.where, b.where));
     }
@@ -339,19 +339,19 @@ export function parse(tokens) {
     // return base;
   // }
 
-  function isFirstOfExpression(offset = 0) {
-    return has(Token.Integer, offset) ||
-           has(Token.Real, offset) ||
-           has(Token.Minus, offset) ||
-           has(Token.Boolean, offset) ||
-           has(Token.String, offset) ||
-           has(Token.Identifier, offset) ||
-           has(Token.LeftSquareBracket, offset) ||
-           has(Token.LeftParenthesis, offset) ||
-           has(Token.Repeat, offset) ||
-           has(Token.For, offset) ||
-           has(Token.If, offset);
-  }
+  // function isFirstOfExpression(offset = 0) {
+    // return has(Token.Integer, offset) ||
+           // has(Token.Real, offset) ||
+           // has(Token.Minus, offset) ||
+           // has(Token.Boolean, offset) ||
+           // has(Token.String, offset) ||
+           // has(Token.Identifier, offset) ||
+           // has(Token.LeftSquareBracket, offset) ||
+           // has(Token.LeftParenthesis, offset) ||
+           // has(Token.Repeat, offset) ||
+           // has(Token.For, offset) ||
+           // has(Token.If, offset);
+  // }
 
   function atom() {
     if (has(Token.Integer)) {

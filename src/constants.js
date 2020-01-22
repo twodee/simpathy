@@ -12,8 +12,8 @@ export const Precedence = Object.freeze({
 });
 
 export const Mode = Object.freeze({
-  SelectSubexpression: 'SelectSubexpression',
-  SelectMemoryValue: 'SelectMemoryValue',
-  EvaluateSubexpression: 'EvaluateSubexpression',
-  UpdateMemoryValue: 'UpdateMemoryValue',
+  SelectingSubexpression: 'SelectingSubexpression',
+  SelectingMemoryValue: 'SelectingMemoryValue',
+  EvaluatingSubexpression: 'EvaluatingSubexpression',
+  EnteringMemoryValue: 'EnteringMemoryValue',
 });

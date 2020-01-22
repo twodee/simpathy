@@ -3,18 +3,23 @@ export const Action = Object.freeze({
   Unhover: 'Unhover',
   ShowMessage: 'ShowMessage',
   LoadExpression: 'LoadExpression',
-  SelectSubexpression: 'SelectSubexpression',
-  StartShakingOperation: 'StartShakingOperation',
-  StopShakingOperation: 'StopShakingOperation',
-  StartShakingEvaluation: 'StartShakingEvaluation',
-  StopShakingEvaluation: 'StopShakingEvaluation',
-  EditValue: 'EditValue',
-  EvaluateCorrectly: 'EvaluateCorrectly',
-  EvaluateIncorrectly: 'EvaluateIncorrectly',
-  SelectMemoryValue: 'SelectMemoryValue',
+  EditInput: 'EditInput',
+
+  SelectAssignment: 'SelectAssignment',
+  SelectRightSubexpression: 'SelectRightSubexpression',
+  SelectWrongSubexpression: 'SelectWrongSubexpression',
   SelectRightMemoryValue: 'SelectRightMemoryValue',
   SelectWrongMemoryValue: 'SelectWrongMemoryValue',
-  StopShakingMemoryValue: 'StopShakingMemoryValue',
+
+  EnterRightSubexpressionValue: 'EnterRightSubexpressionValue',
+  EnterWrongSubexpressionValue: 'EnterWrongSubexpressionValue',
+  EnterRightMemoryValue: 'EnterRightMemoryValue',
+  EnterWrongMemoryValue: 'EnterWrongMemoryValue',
+
+  StopShakingOperation: 'StopShakingOperation',
+  StopShakingEvaluation: 'StopShakingEvaluation',
+  StopShakingMemoryValueSelection: 'StopShakingMemoryValueSelection',
+  StopShakingMemoryValueInput: 'StopShakingMemoryValueInput',
 });
 
 // --------------------------------------------------------------------------- 
@@ -64,19 +69,19 @@ export function loadExpression(expression) {
 
 // --------------------------------------------------------------------------- 
 
-export function selectSubexpression(expression) {
+export function selectRightSubexpression(expression, message) {
   return {
-    type: Action.SelectSubexpression,
-    payload: expression,
+    type: Action.SelectRightSubexpression,
+    payload: {expression, message},
   };
 }
 
 // --------------------------------------------------------------------------- 
 
-export function startShakingOperation(expression) {
+export function selectWrongSubexpression(expression, message) {
   return {
-    type: Action.StartShakingOperation,
-    payload: expression,
+    type: Action.SelectWrongSubexpression,
+    payload: {expression, message},
   };
 }
 
@@ -98,37 +103,37 @@ export function stopShakingEvaluation() {
 
 // --------------------------------------------------------------------------- 
 
-export function editValue(value) {
+export function editInput(value) {
   return {
-    type: Action.EditValue,
+    type: Action.EditInput,
     payload: value,
   };
 }
 
 // --------------------------------------------------------------------------- 
 
-export function evaluateCorrectly(value) {
+export function enterRightSubexpressionValue(value) {
   return {
-    type: Action.EvaluateCorrectly,
+    type: Action.EnterRightSubexpressionValue,
     payload: value,
   };
 }
 
 // --------------------------------------------------------------------------- 
 
-export function evaluateIncorrectly(value) {
+export function enterWrongSubexpressionValue(value) {
   return {
-    type: Action.EvaluateIncorrectly,
+    type: Action.EnterWrongSubexpressionValue,
     payload: value,
   };
 }
 
 // --------------------------------------------------------------------------- 
 
-export function selectMemoryValue(expected) {
+export function selectAssignment(assignmentExpression) {
   return {
-    type: Action.SelectMemoryValue,
-    payload: expected,
+    type: Action.SelectAssignment,
+    payload: assignmentExpression,
   };
 }
 
@@ -152,9 +157,33 @@ export function selectWrongMemoryValue(message) {
 
 // --------------------------------------------------------------------------- 
 
-export function stopShakingMemoryValue(message) {
+export function stopShakingMemoryValueSelection(message) {
   return {
-    type: Action.StopShakingMemoryValue,
+    type: Action.StopShakingMemoryValueSelection,
+  };
+}
+
+// --------------------------------------------------------------------------- 
+
+export function stopShakingMemoryValueInput(message) {
+  return {
+    type: Action.StopShakingMemoryValueInput,
+  };
+}
+
+// --------------------------------------------------------------------------- 
+
+export function enterRightMemoryValue() {
+  return {
+    type: Action.EnterRightMemoryValue,
+  };
+}
+
+// --------------------------------------------------------------------------- 
+
+export function enterWrongMemoryValue() {
+  return {
+    type: Action.EnterWrongMemoryValue,
   };
 }
 
