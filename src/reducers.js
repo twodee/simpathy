@@ -12,8 +12,11 @@ import {
 
 const initialState = {
   mode: Mode.SelectingSubexpression,
-  expression: null,
 
+  expression: null,
+  program: null,
+
+  activeProgramPiece: null,
   hoveredElement: null,
   expectedElement: null,
   activeElement: null,
@@ -22,10 +25,8 @@ const initialState = {
   activeSubexpression: null,
   currentInput: '',
 
-  errorMessage: '',
-  goalMessage: '',
-
   message: null,
+
   frames: [
     {
       name: 'main',
@@ -78,6 +79,13 @@ export default function reducer(state = initialState, action) {
         ...state,
         expression: action.payload,
       };
+    case Action.LoadProgram:
+      return {
+        ...state,
+        mode: Mode.SelectingProgramPiece,
+        message: 'The program has been loaded. What happens next?',
+        program: action.payload,
+      };
     case Action.EditInput:
       return {
         ...state,
@@ -86,6 +94,7 @@ export default function reducer(state = initialState, action) {
     case Action.SelectRightSubexpression:
       return {
         ...state,
+        isShaking: false,
         message: action.payload.message,
         activeSubexpression: action.payload.expression,
         hoveredElement: null,
@@ -108,6 +117,7 @@ export default function reducer(state = initialState, action) {
     case Action.EnterRightSubexpressionValue:
       return {
         ...state,
+        isShaking: false,
         activeSubexpression: null,
         mode: Mode.SelectingSubexpression,
         currentInput: '',
@@ -142,6 +152,7 @@ export default function reducer(state = initialState, action) {
       return {
         ...state,
         message: 'What\'s the new value of this variable?',
+        isShaking: false,
         mode: Mode.EnteringMemoryValue,
       };
 
@@ -150,6 +161,23 @@ export default function reducer(state = initialState, action) {
         ...state,
         message: `No, that's variable ${action.payload.name}.`,
         activeElement: action.payload,
+        hoveredElement: null,
+        isShaking: true,
+      };
+
+    case Action.SelectRightProgramPiece:
+      return {
+        ...state,
+        message: 'Let\'s evaluate.',
+        isShaking: false,
+        mode: Mode.SelectingSubexpression,
+      };
+
+    case Action.SelectWrongProgramPiece:
+      return {
+        ...state,
+        message: `No, that's not what happens next.`,
+        activeProgramPiece: action.payload,
         hoveredElement: null,
         isShaking: true,
       };
@@ -166,6 +194,7 @@ export default function reducer(state = initialState, action) {
       return {
         ...state,
         message: "You got it!",
+        isShaking: false,
         currentInput: '',
         mode: Mode.SelectingSubexpression,
         expression: state.expression.simplify(state.activeSubexpression, state.activeSubexpression.value),
@@ -193,6 +222,12 @@ export default function reducer(state = initialState, action) {
       };
 
     case Action.StopShakingMemoryValueInput:
+      return {
+        ...state,
+        isShaking: false,
+      };
+
+    case Action.StopShakingProgramPiece:
       return {
         ...state,
         isShaking: false,

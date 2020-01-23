@@ -12,7 +12,7 @@ import {
   ExpressionAdd,
   ExpressionAnd,
   ExpressionAssignment,
-  // ExpressionBlock,
+  ExpressionBlock,
   ExpressionBoolean,
   // ExpressionCharacter,
   ExpressionDivide,
@@ -55,7 +55,7 @@ import {
 
 export function parse(tokens) {
   let i = 0;
-  // let indents = [-1];
+  let indents = [-1];
 
   function has(type, offset) {
     let index = i;
@@ -75,75 +75,75 @@ export function parse(tokens) {
     return tokens[i - 1];
   }
 
-  // function program() {
-    // if (has(Token.Indentation) && tokens[i].source.length != 0) {
-      // throw new LocatedException(tokens[i].where, 'I expected no indentation at the top-level of the program.');
-    // }
+  function program() {
+    if (has(Token.Indentation) && tokens[i].source.length !== 0) {
+      throw new LocatedException(tokens[i].where, 'I expected no indentation at the top-level of the program.');
+    }
 
-    // let b;
-    // if (has(Token.EOF)) {
-      // let eofToken = consume();
-      // b = new ExpressionBlock([], eofToken.where);
-    // } else {
-      // b = block();
-      // if (!has(Token.EOF)) {
-        // throw new LocatedException(b.where, 'I expected the program to end after this, but it didn\'t.');
-      // }
-    // }
+    let body;
+    if (has(Token.EOF)) {
+      let eofToken = consume();
+      body = new ExpressionBlock([], eofToken.where);
+    } else {
+      body = block();
+      if (!has(Token.EOF)) {
+        throw new LocatedException(body.where, 'I expected the program to end after this, but it didn\'t.');
+      }
+    }
 
-    // return b;
-  // }
+    return body;
+  }
 
-  // function block() {
-    // if (!has(Token.Indentation)) {
-      // throw new LocatedException(tokens[i].where, 'I expected the code to be indented here, but it wasn\'t.');
-    // }
+  function block() {
+    if (!has(Token.Indentation)) {
+      throw new LocatedException(tokens[i].where, 'I expected the code to be indented here, but it wasn\'t.');
+    }
 
-    // let indentation = tokens[i];
+    let indentation = tokens[i];
 
-    // if (indentation.source.length <= indents[indents.length - 1]) {
-      // throw new LocatedException(indentation.where, 'I expected the indentation to increase upon entering a block.');
-    // }
-    // indents.push(indentation.source.length);
+    if (indentation.source.length <= indents[indents.length - 1]) {
+      throw new LocatedException(indentation.where, 'I expected the indentation to increase upon entering a block.');
+    }
+    indents.push(indentation.source.length);
 
-    // let statements = [];
-    // while (has(Token.Indentation) && tokens[i].source.length === indentation.source.length) {
-      // consume(); // eat indentation
-      // if (has(Token.Linebreak)) {
-        // consume();
-      // } else if (!has(Token.EOF)) {
-        // let s = statement();
-        // statements.push(s);
-      // }
-    // }
+    let statements = [];
+    while (has(Token.Indentation) && tokens[i].source.length === indentation.source.length) {
+      consume(); // eat indentation
+      if (has(Token.Linebreak)) {
+        consume();
+      } else if (!has(Token.EOF)) {
+        let s = statement();
+        statements.push(s);
+      }
+    }
 
-    // if (tokens[i].source.length > indentation.source.length) {
-      // throw new LocatedException(tokens[i].where, `I expected consistent indentation within this block (which is indented with ${indentation.source.length} character${indentation.source.length === 1 ? '' : 's'}), but this indentation jumps around.`);
-    // }
+    if (tokens[i].source.length > indentation.source.length) {
+      throw new LocatedException(tokens[i].where, `I expected consistent indentation within this block (which is indented with ${indentation.source.length} character${indentation.source.length === 1 ? '' : 's'}), but this indentation jumps around.`);
+    }
 
-    // indents.pop();
+    indents.pop();
 
-    // let sourceStart = indentation.where;
-    // let sourceEnd = sourceStart;
-    // if (statements.length > 0) {
-      // sourceStart = statements[0].where;
-      // sourceEnd = statements[statements.length - 1].where;
-    // }
+    let sourceStart = indentation.where;
+    let sourceEnd = sourceStart;
+    if (statements.length > 0) {
+      sourceStart = statements[0].where;
+      sourceEnd = statements[statements.length - 1].where;
+    }
 
-    // return new ExpressionBlock(statements, SourceLocation.span(sourceStart, sourceEnd));
-  // }
+    return new ExpressionBlock(statements, SourceLocation.span(sourceStart, sourceEnd));
+  }
 
-  // function statement() {
-    // let e = expression();
-    // if (has(Token.Linebreak)) {
-      // consume();
-      // return e;
-    // } else if (has(Token.EOF) || has(Token.Indentation)) { // Check for indentation because some expressions end in blocks, which have eaten their linebreak already
-      // return e;
-    // } else if (!has(Token.EOF)) {
-      // throw new LocatedException(tokens[i].where, `I expected a line break or the end the program, but I found ${tokens[i].source}.`);
-    // }
-  // }
+  function statement() {
+    let e = expression();
+    if (has(Token.Linebreak)) {
+      consume();
+      return e;
+    } else if (has(Token.EOF) || has(Token.Indentation)) { // Check for indentation because some expressions end in blocks, which have eaten their linebreak already
+      return e;
+    } else if (!has(Token.EOF)) {
+      throw new LocatedException(tokens[i].where, `I expected a line break or the end the program, but I found ${tokens[i].source}.`);
+    }
+  }
 
   function expression() {
     return expressionAssignment();
@@ -632,7 +632,7 @@ export function parse(tokens) {
     }
   }
 
-  let ast = expression();
+  let ast = program();
 
   return ast;
 }

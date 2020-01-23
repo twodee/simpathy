@@ -12,6 +12,7 @@ export const Precedence = Object.freeze({
 });
 
 export const Mode = Object.freeze({
+  SelectingProgramPiece: 'SelectingProgramPiece',
   SelectingSubexpression: 'SelectingSubexpression',
   SelectingMemoryValue: 'SelectingMemoryValue',
   EvaluatingSubexpression: 'EvaluatingSubexpression',

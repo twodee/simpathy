@@ -25,6 +25,22 @@ class Expression {
     }
   }
 
+  addSelectable(attributes, props, active) {
+    attributes.onMouseOver = () => props.onHover(this);
+    attributes.onMouseOut = () => props.onUnhover(this);
+
+    attributes.onClick = () => props.onClick(props.mode, this);
+    attributes.onAnimationEnd = () => props.onStopShaking(props.mode, this);
+
+    if (this === props.hoveredElement) {
+      attributes.className += ' hovered';
+    }
+
+    if (this === active && props.isShaking) {
+      attributes.className += ' shaking';
+    }
+  }
+
   evaluatePopup(component, props) {
     if (props.mode === Mode.EvaluatingSubexpression && props.activeSubexpression === this) {
       return (
@@ -55,6 +71,23 @@ class Expression {
 
 // --------------------------------------------------------------------------- 
 
+export class ExpressionBlock extends Expression {
+  constructor(body, where) {
+    super(Precedence.Atom, where);
+    this.body = body;
+  }
+
+  programify(component, props, isParenthesized, isSelectable) {
+    return (
+      <div className="block">
+        {this.body.map((statement, i) => <div className="statement" key={`statement-${i}`}>{statement.programify(component, props, false, true)}</div>)}
+      </div>
+    );
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
 export class ExpressionIdentifier extends Expression {
   constructor(id, where = null) {
     super(Precedence.Atom, where);
@@ -75,7 +108,7 @@ export class ExpressionIdentifier extends Expression {
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
         {this.evaluatePopup(component, props)}
       </span>
-    )
+    );
   }
 
   get nextNonterminal() {
@@ -88,6 +121,24 @@ export class ExpressionIdentifier extends Expression {
     } else {
       return this;
     }
+  }
+
+  programify(component, props, isParenthesized, isSelectable) {
+    let attributes = {
+      className: 'subexpression',
+    };
+
+    if (isSelectable) {
+      this.addSelectable(attributes, props, props.activeProgramPiece);
+    }
+
+    return React.createElement('span', attributes, 
+      <>
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        <span className="expression-piece">{this.id.source}</span>
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+      </>
+    );
   }
 
   evaluate(env) {
@@ -120,13 +171,13 @@ class ExpressionUnaryOperator extends Expression {
 
     return (
       <span className={`subexpression ${props.mode === Mode.EvaluatingSubexpression && props.activeSubexpression === this ? 'active' : ''}`}>
-        {operatorElement}
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        {operatorElement}
         {this.a.evaluatorify(component, props, this.precedence > this.a.precedence)}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
         {this.evaluatePopup(component, props)}
       </span>
-    )
+    );
   }
 
   simplify(expression, value) {
@@ -143,6 +194,25 @@ class ExpressionUnaryOperator extends Expression {
       node = this;
     }
     return node;
+  }
+
+  programify(component, props, isParenthesized, isSelectable) {
+    let attributes = {
+      className: 'subexpression',
+    };
+
+    if (isSelectable) {
+      this.addSelectable(attributes, props, props.activeProgramPiece);
+    }
+
+    return React.createElement('span', attributes,
+      <>
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        <span className="unary-prefix-operator expression-piece">{this.operator}</span>;
+        {this.a.programify(component, props, this.precedence > this.a.precedence, false)}
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+      </>
+    );
   }
 }
 
@@ -167,7 +237,7 @@ class ExpressionBinaryOperator extends Expression {
         onClick={e => props.onClickOperator(props.expression, this)}
       >{this.operator}</span>
     } else {
-      operatorElement = <span className="binary-infix-operator expression-piece">{this.operator}</span>
+      operatorElement = <span className="binary-infix-operator expression-piece">{this.operator}</span>;
     }
 
     return (
@@ -199,6 +269,26 @@ class ExpressionBinaryOperator extends Expression {
     } else {
       return new this.constructor(this.a.simplify(expression, value), this.b.simplify(expression, value));
     }
+  }
+
+  programify(component, props, isParenthesized, isSelectable) {
+    let attributes = {
+      className: 'subexpression',
+    };
+
+    if (isSelectable) {
+      this.addSelectable(attributes, props, props.activeProgramPiece);
+    }
+
+    return React.createElement('span', attributes,
+      <>
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        {this.a.programify(component, props, this.precedence > this.a.precedence, false)}
+        <span className="binary-infix-operator expression-piece">{this.operator}</span>
+        {this.b.programify(component, props, this.precedence >= this.b.precedence, false)}
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+      </>
+    );
   }
 }
 
@@ -232,7 +322,7 @@ export class ExpressionAssignment extends Expression {
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
         {this.evaluatePopup(component, props)}
       </span>
-    )
+    );
   }
 
   get nextNonterminal() {
@@ -249,6 +339,26 @@ export class ExpressionAssignment extends Expression {
     } else {
       return new this.constructor(this.identifier, this.value.simplify(expression, value));
     }
+  }
+
+  programify(component, props, isParenthesized, isSelectable) {
+    let attributes = {
+      className: 'subexpression',
+    };
+
+    if (isSelectable) {
+      this.addSelectable(attributes, props, props.activeProgramPiece);
+    }
+
+    return React.createElement('span', attributes,
+      <>
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        {this.identifier.source}
+        <span className="binary-infix-operator expression-piece">=</span>
+        {this.value.programify(component, props, this.precedence > this.value.precedence, false)}
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+      </>
+    );
   }
 }
 
@@ -592,7 +702,19 @@ class ExpressionLiteral extends Expression {
       <span className="subexpression expression-piece literal">
         {this.value.toString()}
       </span>
-    )
+    );
+  }
+
+  programify(component, props, isParenthesized, isSelectable) {
+    let attributes = {
+      className: 'subexpression expression-piece literal',
+    };
+
+    if (isSelectable) {
+      this.addSelectable(attributes, props, props.activeProgramPiece);
+    }
+
+    return React.createElement('span', attributes, this.value.toString());
   }
 }
 

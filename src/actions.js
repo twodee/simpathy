@@ -3,6 +3,7 @@ export const Action = Object.freeze({
   Unhover: 'Unhover',
   ShowMessage: 'ShowMessage',
   LoadExpression: 'LoadExpression',
+  LoadProgram: 'LoadProgram',
   EditInput: 'EditInput',
 
   SelectAssignment: 'SelectAssignment',
@@ -10,6 +11,8 @@ export const Action = Object.freeze({
   SelectWrongSubexpression: 'SelectWrongSubexpression',
   SelectRightMemoryValue: 'SelectRightMemoryValue',
   SelectWrongMemoryValue: 'SelectWrongMemoryValue',
+  SelectRightProgramPiece: 'SelectRightProgramPiece',
+  SelectWrongProgramPiece: 'SelectWrongProgramPiece',
 
   EnterRightSubexpressionValue: 'EnterRightSubexpressionValue',
   EnterWrongSubexpressionValue: 'EnterWrongSubexpressionValue',
@@ -20,6 +23,7 @@ export const Action = Object.freeze({
   StopShakingEvaluation: 'StopShakingEvaluation',
   StopShakingMemoryValueSelection: 'StopShakingMemoryValueSelection',
   StopShakingMemoryValueInput: 'StopShakingMemoryValueInput',
+  StopShakingProgramPiece: 'StopShakingProgramPiece',
 });
 
 // --------------------------------------------------------------------------- 
@@ -64,6 +68,15 @@ export function loadExpression(expression) {
   return {
     type: Action.LoadExpression,
     payload: expression,
+  };
+}
+
+// --------------------------------------------------------------------------- 
+
+export function loadProgram(program) {
+  return {
+    type: Action.LoadProgram,
+    payload: program,
   };
 }
 
@@ -165,9 +178,17 @@ export function stopShakingMemoryValueSelection(message) {
 
 // --------------------------------------------------------------------------- 
 
-export function stopShakingMemoryValueInput(message) {
+export function stopShakingMemoryValueInput() {
   return {
     type: Action.StopShakingMemoryValueInput,
+  };
+}
+
+// --------------------------------------------------------------------------- 
+
+export function stopShakingProgramPiece() {
+  return {
+    type: Action.StopShakingProgramPiece,
   };
 }
 
@@ -184,6 +205,24 @@ export function enterRightMemoryValue() {
 export function enterWrongMemoryValue() {
   return {
     type: Action.EnterWrongMemoryValue,
+  };
+}
+
+// --------------------------------------------------------------------------- 
+
+export function selectRightProgramPiece(piece) {
+  return {
+    type: Action.SelectRightProgramPiece,
+    payload: piece,
+  };
+}
+
+// --------------------------------------------------------------------------- 
+
+export function selectWrongProgramPiece(piece) {
+  return {
+    type: Action.SelectWrongProgramPiece,
+    payload: piece,
   };
 }
 
