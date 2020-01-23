@@ -36,7 +36,7 @@ class StackFrame extends React.Component {
                 autoFocus
                 autoComplete="off"
                 spellCheck="false"
-                className={`memory-value-input ${this.props.isBadInput ? 'shaking' : ''}`}
+                className={`code memory-value-input ${this.props.isBadInput ? 'shaking' : ''}`}
                 value={this.props.currentInput}
                 onAnimationEnd={this.props.onStopShaking}
                 onChange={e => this.props.onEditInput(e.target.value)}
@@ -102,9 +102,6 @@ const mapDispatchToProps = dispatch => {
     onHover: (e, element) => dispatch(hover(element)),
     onUnhover: (e, element) => dispatch(unhover(element)),
     onClick: (mode, frameIndex, actualElement, activeSubexpression) => {
-      console.log("frameIndex:", frameIndex);
-      console.log("actualElement:", actualElement);
-      console.log("activeSubexpression:", activeSubexpression);
       if (mode === Mode.SelectingMemoryValue && frameIndex === 0 && activeSubexpression.identifier.source === actualElement.name) {
         dispatch(selectRightMemoryValue(actualElement));
       } else {

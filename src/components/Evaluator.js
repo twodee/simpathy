@@ -55,8 +55,6 @@ const mapDispatchToProps = dispatch => {
       dispatch(unhover(expression));
     },
     onClick: (mode, clickedElement, expression) => {
-      // console.log("activeElement:", activeElement);
-      // console.log("clickedElement:", clickedElement);
       if (expression.nextNonterminal === clickedElement) {
         dispatch(selectRightSubexpression(clickedElement));
       } else {

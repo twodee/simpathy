@@ -63,7 +63,7 @@ class Expression {
             autoFocus
             autoComplete="off"
             spellCheck="false"
-            className={props.isBadInput ? 'shaking' : ''}
+            className={`code ${props.isBadInput ? 'shaking' : ''}`}
             onAnimationEnd={props.onStopShaking}
             onChange={e => props.onEditInput(e.target.value)}
             value={props.currentInput}
@@ -721,7 +721,7 @@ export class ExpressionNotSame extends ExpressionBinaryOperator {
 
 // --------------------------------------------------------------------------- 
 
-class ExpressionLiteral extends Expression {
+export class ExpressionLiteral extends Expression {
   constructor(value, where) {
     super(Precedence.Atom, where);
     this.value = value;

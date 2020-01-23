@@ -3,6 +3,7 @@ import { Action } from './actions';
 import {
   ExpressionAssignment,
   ExpressionInteger,
+  ExpressionLiteral,
   // ExpressionReal,
   ExpressionString,
 } from './ast';
@@ -112,6 +113,7 @@ export default function reducer(state = initialState, action) {
         hoveredElement: null,
         isBadSelection: true,
       };
+
     case Action.StopShaking:
       return {
         ...state,
@@ -119,15 +121,21 @@ export default function reducer(state = initialState, action) {
         isBadSelection: false,
         isBadInput: false,
       };
-    case Action.EnterRightSubexpressionValue:
+
+    case Action.EnterRightSubexpressionValue: {
+      const simplifiedExpression = state.expression.simplify(state.activeSubexpression, action.payload);
+      const isPrimitive = simplifiedExpression instanceof ExpressionLiteral;
       return {
         ...state,
         isBadInput: false,
         activeSubexpression: null,
-        mode: Mode.SelectingSubexpression,
+        mode: isPrimitive ? Mode.SelectingStatement : Mode.SelectingSubexpression,
+        message: isPrimitive ? 'next statement?' : 'next subexpression?',
         currentInput: '',
-        expression: state.expression.simplify(state.activeSubexpression, action.payload),
+        expression: simplifiedExpression,
       };
+    }
+
     case Action.EnterWrongSubexpressionValue:
       return {
         ...state,
@@ -168,6 +176,7 @@ export default function reducer(state = initialState, action) {
     case Action.SelectRightStatement:
       return {
         ...state,
+        activeStatement: action.payload,
         expression: action.payload.clone(),
         message: 'Let\'s evaluate.',
         isBadSelection: false,
@@ -183,15 +192,31 @@ export default function reducer(state = initialState, action) {
         isBadSelection: true,
       };
 
-    case Action.EnterRightMemoryValue:
+    case Action.EnterRightMemoryValue: {
       const topFrame = state.frames[0];
+      const simplifiedExpression = state.expression.simplify(state.activeSubexpression, state.activeSubexpression.value);
+      const isPrimitive = simplifiedExpression instanceof ExpressionLiteral;
+
+      let mode;
+      let message;
+      if (state.activeStatement.getNextStatement(0) === null) {
+        mode = Mode.Celebrating;
+        message = "You are all done!";
+      } else if (isPrimitive) {
+        mode = Mode.SelectingStatement;
+        message = "next statement?";
+      } else {
+        mode = Mode.SelectingSubexpression;
+        message = "next expression?";
+      }
+
       return {
         ...state,
-        message: "You got it!",
         isBadInput: false,
         currentInput: '',
-        mode: Mode.SelectingSubexpression,
-        expression: state.expression.simplify(state.activeSubexpression, state.activeSubexpression.value),
+        message: message,
+        mode: mode,
+        expression: simplifiedExpression,
         frames: [{
           name: topFrame.name,
           variables: topFrame.variables.map(variable => {
@@ -207,6 +232,7 @@ export default function reducer(state = initialState, action) {
           }),
         }].concat(state.frames.slice(1)),
       };
+    }
 
     case Action.EnterWrongMemoryValue:
       return {

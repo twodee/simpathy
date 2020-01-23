@@ -20,7 +20,9 @@ class App extends React.Component {
     // const e = parse(tokens);
     // this.props.onLoadExpression(e);
 
-    const tokens = lex(`a = !false`);
+    const tokens = lex(`a = 7
+a = 5 + 3
+a = !false`);
     const ast = parse(tokens);
     this.props.onLoadProgram(ast);
   }

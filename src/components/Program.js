@@ -18,7 +18,7 @@ import {
 class Program extends React.Component {
   render() {
     return (
-      <div id="program">
+      <div id="program" className="code">
         {this.props.program && this.props.program.programify(this, this.props)}
       </div>
     );
@@ -44,7 +44,7 @@ const mapDispatchToProps = dispatch => {
     onUnhover: (event, element) => dispatch(unhover(element)),
     onStopShaking: () => dispatch(stopShaking()),
     onClick: (mode, clickedElement, activeElement) => {
-      if (mode === Mode.SelectingStatement) {
+      if ((activeElement === null || activeElement.getNextStatement(0) === clickedElement) && mode === Mode.SelectingStatement) {
         dispatch(selectRightStatement(clickedElement));
       } else {
         dispatch(selectWrongStatement(clickedElement));
