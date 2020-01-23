@@ -11,9 +11,7 @@ import { lex } from './lexer';
 import { parse } from './parser';
 
 import {
-  loadExpression,
   loadProgram,
-  showMessage,
 } from './actions';
 
 class App extends React.Component {
@@ -22,7 +20,7 @@ class App extends React.Component {
     // const e = parse(tokens);
     // this.props.onLoadExpression(e);
 
-    const tokens = lex(`a = 7 * 3 + 2 / b`);
+    const tokens = lex(`a = !false`);
     const ast = parse(tokens);
     this.props.onLoadProgram(ast);
   }
@@ -46,10 +44,6 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps = dispatch => {
   return {
-    onLoadExpression: expr => {
-      dispatch(showMessage('Click on the next expression to be evaluated.'));
-      dispatch(loadExpression(expr));
-    },
     onLoadProgram: program => {
       dispatch(loadProgram(program));
     },

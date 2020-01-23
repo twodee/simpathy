@@ -3,15 +3,12 @@ import { connect } from 'react-redux';
 
 import {
   editInput,
+  hover,
   enterRightSubexpressionValue,
   enterWrongSubexpressionValue,
   selectRightSubexpression,
-  hover,
-  selectAssignment,
-  showMessage,
   selectWrongSubexpression,
-  stopShakingOperation,
-  stopShakingEvaluation,
+  stopShaking,
   unhover,
 } from '../actions';
 
@@ -37,8 +34,10 @@ const mapStateToProps = state => {
   return {
     expression: state.expression,
     hoveredElement: state.hoveredElement,
+    clickedElement: state.clickedElement,
     activeSubexpression: state.activeSubexpression,
-    isShaking: state.isShaking,
+    isBadInput: state.isBadInput,
+    isBadSelection: state.isBadSelection,
     mode: state.mode,
     currentInput: state.currentInput,
     env: state.frames[0],
@@ -55,30 +54,16 @@ const mapDispatchToProps = dispatch => {
       e.stopPropagation();
       dispatch(unhover(expression));
     },
-    onClickOperator: (expression, subexpression) => {
-      if (expression.nextNonterminal === subexpression) {
-        dispatch(selectRightSubexpression(subexpression, "Evaluate this operation."));
+    onClick: (mode, clickedElement, expression) => {
+      // console.log("activeElement:", activeElement);
+      // console.log("clickedElement:", clickedElement);
+      if (expression.nextNonterminal === clickedElement) {
+        dispatch(selectRightSubexpression(clickedElement));
       } else {
-        dispatch(selectWrongSubexpression(subexpression, "No, that's not it."));
+        dispatch(selectWrongSubexpression(clickedElement));
       }
     },
-    onClickIdentifier: (expression, subexpression) => {
-      if (expression.nextNonterminal === subexpression) {
-        dispatch(selectRightSubexpression(subexpression, "What's the value bound to this variable?"));
-      } else {
-        dispatch(selectWrongSubexpression(subexpression, "No that's not it."));
-      }
-    },
-    onClickAssignment: (expression, subexpression) => {
-      if (expression.nextNonterminal === subexpression) {
-        dispatch(selectAssignment(subexpression));
-      } else {
-        dispatch(showMessage("No, that's not it."));
-        dispatch(selectWrongSubexpression(subexpression));
-      }
-    },
-    onStopShakingOperation: () => dispatch(stopShakingOperation()),
-    onStopShakingEvaluation: () => dispatch(stopShakingEvaluation()),
+    onStopShaking: () => dispatch(stopShaking()),
     onEditInput: value => dispatch(editInput(value)),
     onKeyDown: (e, env, expression, value) => {
       if (e.key === 'Enter') {

@@ -1,29 +1,21 @@
 export const Action = Object.freeze({
   Hover: 'Hover',
   Unhover: 'Unhover',
-  ShowMessage: 'ShowMessage',
-  LoadExpression: 'LoadExpression',
   LoadProgram: 'LoadProgram',
   EditInput: 'EditInput',
+  StopShaking: 'StopShaking',
 
-  SelectAssignment: 'SelectAssignment',
   SelectRightSubexpression: 'SelectRightSubexpression',
   SelectWrongSubexpression: 'SelectWrongSubexpression',
   SelectRightMemoryValue: 'SelectRightMemoryValue',
   SelectWrongMemoryValue: 'SelectWrongMemoryValue',
-  SelectRightProgramPiece: 'SelectRightProgramPiece',
-  SelectWrongProgramPiece: 'SelectWrongProgramPiece',
+  SelectRightStatement: 'SelectRightStatement',
+  SelectWrongStatement: 'SelectWrongStatement',
 
   EnterRightSubexpressionValue: 'EnterRightSubexpressionValue',
   EnterWrongSubexpressionValue: 'EnterWrongSubexpressionValue',
   EnterRightMemoryValue: 'EnterRightMemoryValue',
   EnterWrongMemoryValue: 'EnterWrongMemoryValue',
-
-  StopShakingOperation: 'StopShakingOperation',
-  StopShakingEvaluation: 'StopShakingEvaluation',
-  StopShakingMemoryValueSelection: 'StopShakingMemoryValueSelection',
-  StopShakingMemoryValueInput: 'StopShakingMemoryValueInput',
-  StopShakingProgramPiece: 'StopShakingProgramPiece',
 });
 
 // --------------------------------------------------------------------------- 
@@ -55,15 +47,6 @@ export function unhover(element) {
 
 // --------------------------------------------------------------------------- 
 
-export function showMessage(message) {
-  return {
-    type: Action.ShowMessage,
-    payload: message,
-  };
-}
-
-// --------------------------------------------------------------------------- 
-
 export function loadExpression(expression) {
   return {
     type: Action.LoadExpression,
@@ -82,35 +65,27 @@ export function loadProgram(program) {
 
 // --------------------------------------------------------------------------- 
 
-export function selectRightSubexpression(expression, message) {
+export function selectRightSubexpression(expression) {
   return {
     type: Action.SelectRightSubexpression,
-    payload: {expression, message},
+    payload: expression,
   };
 }
 
 // --------------------------------------------------------------------------- 
 
-export function selectWrongSubexpression(expression, message) {
+export function selectWrongSubexpression(expression) {
   return {
     type: Action.SelectWrongSubexpression,
-    payload: {expression, message},
+    payload: expression,
   };
 }
 
 // --------------------------------------------------------------------------- 
 
-export function stopShakingOperation() {
+export function stopShaking() {
   return {
-    type: Action.StopShakingOperation,
-  };
-}
-
-// --------------------------------------------------------------------------- 
-
-export function stopShakingEvaluation() {
-  return {
-    type: Action.StopShakingEvaluation,
+    type: Action.StopShaking,
   };
 }
 
@@ -143,15 +118,6 @@ export function enterWrongSubexpressionValue(value) {
 
 // --------------------------------------------------------------------------- 
 
-export function selectAssignment(assignmentExpression) {
-  return {
-    type: Action.SelectAssignment,
-    payload: assignmentExpression,
-  };
-}
-
-// --------------------------------------------------------------------------- 
-
 export function selectRightMemoryValue(variable) {
   return {
     type: Action.SelectRightMemoryValue,
@@ -165,30 +131,6 @@ export function selectWrongMemoryValue(message) {
   return {
     type: Action.SelectWrongMemoryValue,
     payload: message,
-  };
-}
-
-// --------------------------------------------------------------------------- 
-
-export function stopShakingMemoryValueSelection(message) {
-  return {
-    type: Action.StopShakingMemoryValueSelection,
-  };
-}
-
-// --------------------------------------------------------------------------- 
-
-export function stopShakingMemoryValueInput() {
-  return {
-    type: Action.StopShakingMemoryValueInput,
-  };
-}
-
-// --------------------------------------------------------------------------- 
-
-export function stopShakingProgramPiece() {
-  return {
-    type: Action.StopShakingProgramPiece,
   };
 }
 
@@ -210,18 +152,18 @@ export function enterWrongMemoryValue() {
 
 // --------------------------------------------------------------------------- 
 
-export function selectRightProgramPiece(piece) {
+export function selectRightStatement(piece) {
   return {
-    type: Action.SelectRightProgramPiece,
+    type: Action.SelectRightStatement,
     payload: piece,
   };
 }
 
 // --------------------------------------------------------------------------- 
 
-export function selectWrongProgramPiece(piece) {
+export function selectWrongStatement(piece) {
   return {
-    type: Action.SelectWrongProgramPiece,
+    type: Action.SelectWrongStatement,
     payload: piece,
   };
 }

@@ -13,6 +13,14 @@ class Expression {
     this.where = where;
   }
 
+  getNextStatement(value, afterChild = null) {
+    if (this.parent) {
+      return this.parent.getNextStatement(value, this);
+    } else {
+      return null;
+    }
+  }
+
   get nextNonterminal() {
     return null;
   }
@@ -25,18 +33,18 @@ class Expression {
     }
   }
 
-  addSelectable(attributes, props, active) {
-    attributes.onMouseOver = () => props.onHover(this);
-    attributes.onMouseOut = () => props.onUnhover(this);
+  addSelectable(attributes, props, activeElement) {
+    attributes.onMouseOver = event => props.onHover(event, this);
+    attributes.onMouseOut = event => props.onUnhover(event, this);
 
-    attributes.onClick = () => props.onClick(props.mode, this);
+    attributes.onClick = () => props.onClick(props.mode, this, activeElement);
     attributes.onAnimationEnd = () => props.onStopShaking(props.mode, this);
 
     if (this === props.hoveredElement) {
       attributes.className += ' hovered';
     }
 
-    if (this === active && props.isShaking) {
+    if (this === props.clickedElement && props.isBadSelection) {
       attributes.className += ' shaking';
     }
   }
@@ -55,8 +63,8 @@ class Expression {
             autoFocus
             autoComplete="off"
             spellCheck="false"
-            className={props.isShaking ? 'shaking' : ''}
-            onAnimationEnd={props.onStopShakingEvaluation}
+            className={props.isBadInput ? 'shaking' : ''}
+            onAnimationEnd={props.onStopShaking}
             onChange={e => props.onEditInput(e.target.value)}
             value={props.currentInput}
             onKeyDown={e => props.onKeyDown(e, props.env, props.activeSubexpression, props.currentInput)}
@@ -72,15 +80,27 @@ class Expression {
 // --------------------------------------------------------------------------- 
 
 export class ExpressionBlock extends Expression {
-  constructor(body, where) {
+  constructor(statements, where) {
     super(Precedence.Atom, where);
-    this.body = body;
+    this.statements = statements;
+    for (let child of this.statements) {
+      child.parent = this;
+    }
+  }
+
+  getNextStatement(value, afterChild) {
+    const index = this.statements.indexOf(afterChild);
+    if (index < this.statements.length - 1) {
+      return this.statements[index + 1];
+    } else {
+      return super.getNextStatement();
+    }
   }
 
   programify(component, props, isParenthesized, isSelectable) {
     return (
       <div className="block">
-        {this.body.map((statement, i) => <div className="statement" key={`statement-${i}`}>{statement.programify(component, props, false, true)}</div>)}
+        {this.statements.map((statement, i) => <div className="statement" key={`statement-${i}`}>{statement.programify(component, props, false, true)}</div>)}
       </div>
     );
   }
@@ -95,16 +115,14 @@ export class ExpressionIdentifier extends Expression {
   }
 
   evaluatorify(component, props, isParenthesized) {
+    let attributes = {className: 'subexpression'};
+    this.addSelectable(attributes, props, props.expression);
+
+    const identifierElement = React.createElement('span', attributes, this.id.source);
     return (
       <span className={`subexpression ${props.mode === Mode.EvaluatingSubexpression && props.activeSubexpression === this ? 'active' : ''}`}>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
-        <span
-          className={`evaluatable expression-piece ${this === props.hoveredElement ? 'hovered' : ''} ${props.isShaking && this === props.activeSubexpression ? 'shaking' : ''}`}
-          onAnimationEnd={props.onStopShakingOperation}
-          onMouseOver={e => props.mode === Mode.SelectingSubexpression && props.onHover(e, this)}
-          onMouseOut={e => props.onUnhover(e, this)}
-          onClick={e => props.mode === Mode.SelectingSubexpression && props.onClickIdentifier(props.expression, this)}
-        >{this.id.source}</span>
+        {identifierElement}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
         {this.evaluatePopup(component, props)}
       </span>
@@ -123,13 +141,14 @@ export class ExpressionIdentifier extends Expression {
     }
   }
 
-  programify(component, props, isParenthesized, isSelectable) {
-    let attributes = {
-      className: 'subexpression',
-    };
+  clone() {
+    return new this.constructor(this.id, this.where);
+  }
 
+  programify(component, props, isParenthesized, isSelectable) {
+    let attributes = {className: 'subexpression'};
     if (isSelectable) {
-      this.addSelectable(attributes, props, props.activeProgramPiece);
+      this.addSelectable(attributes, props, props.activeStatement);
     }
 
     return React.createElement('span', attributes, 
@@ -153,22 +172,27 @@ class ExpressionUnaryOperator extends Expression {
     super(precedence, where);
     this.a = a;
     this.operator = operator;
+    this.a.parent = this;
   }
 
   evaluatorify(component, props, isParenthesized) {
-    let operatorElement;
-    if (props.mode === Mode.SelectingSubexpression) {
-      operatorElement = <span
-        className={`evaluatable unary-prefix-operator expression-piece ${this === props.hoveredElement ? 'hovered' : ''} ${props.isShaking && this === props.activeSubexpression ? 'shaking' : ''}`}
-        onAnimationEnd={props.onStopShakingOperation}
-        onMouseOver={e => props.mode === Mode.SelectingSubexpression && props.onHover(e, this)}
-        onMouseOut={e => props.onUnhover(e, this)}
-        onClick={e => props.mode === Mode.SelectingSubexpression && props.onClickOperator(props.expression, this)}
-      >{this.operator}</span>;
-    } else {
-      operatorElement = <span className="unary-prefix-operator expression-piece">{this.operator}</span>;
-    }
+    // let operatorElement;
+    // if (props.mode === Mode.SelectingSubexpression) {
+      // operatorElement = <span
+        // className={`evaluatable unary-prefix-operator expression-piece ${this === props.hoveredElement ? 'hovered' : ''} ${props.isShaking && this === props.clickedElement ? 'shaking' : ''}`}
+        // onAnimationEnd={props.onStopShakingOperation}
+        // onMouseOver={e => props.mode === Mode.SelectingSubexpression && props.onHover(e, this)}
+        // onMouseOut={e => props.onUnhover(e, this)}
+        // onClick={e => props.mode === Mode.SelectingSubexpression && props.onClickOperator(props.expression, this)}
+      // >{this.operator}</span>;
+    // } else {
+      // operatorElement = <span className="unary-prefix-operator expression-piece">{this.operator}</span>;
+    // }
 
+    let attributes = {className: 'evaluatable unary-prefix-operator expression-piece'};
+    this.addSelectable(attributes, props, props.expression);
+
+    const operatorElement = React.createElement('span', attributes, this.operator);
     return (
       <span className={`subexpression ${props.mode === Mode.EvaluatingSubexpression && props.activeSubexpression === this ? 'active' : ''}`}>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
@@ -188,6 +212,10 @@ class ExpressionUnaryOperator extends Expression {
     }
   }
 
+  clone() {
+    return new this.constructor(this.a.clone(), this.where);
+  }
+
   get nextNonterminal() {
     let node = this.a.nextNonterminal;
     if (!node) {
@@ -197,18 +225,15 @@ class ExpressionUnaryOperator extends Expression {
   }
 
   programify(component, props, isParenthesized, isSelectable) {
-    let attributes = {
-      className: 'subexpression',
-    };
-
+    let attributes = {className: 'subexpression'};
     if (isSelectable) {
-      this.addSelectable(attributes, props, props.activeProgramPiece);
+      this.addSelectable(attributes, props, props.activeStatement);
     }
 
     return React.createElement('span', attributes,
       <>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
-        <span className="unary-prefix-operator expression-piece">{this.operator}</span>;
+        <span className="unary-prefix-operator expression-piece">{this.operator}</span>
         {this.a.programify(component, props, this.precedence > this.a.precedence, false)}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
       </>
@@ -224,22 +249,28 @@ class ExpressionBinaryOperator extends Expression {
     this.a = a;
     this.b = b;
     this.operator = operator;
+    this.a.parent = this;
+    this.b.parent = this;
   }
 
   evaluatorify(component, props, isParenthesized) {
-    let operatorElement;
-    if (props.mode === Mode.SelectingSubexpression) {
-      operatorElement = <span
-        className={`evaluatable binary-infix-operator expression-piece ${this === props.hoveredElement ? 'hovered' : ''} ${props.isShaking && this === props.activeSubexpression ? 'shaking' : ''}`}
-        onAnimationEnd={props.onStopShakingOperation}
-        onMouseOver={e => props.onHover(e, this)}
-        onMouseOut={e => props.onUnhover(e, this)}
-        onClick={e => props.onClickOperator(props.expression, this)}
-      >{this.operator}</span>
-    } else {
-      operatorElement = <span className="binary-infix-operator expression-piece">{this.operator}</span>;
-    }
+    // let operatorElement;
+    // if (props.mode === Mode.SelectingSubexpression) {
+      // operatorElement = <span
+        // className={`evaluatable binary-infix-operator expression-piece ${this === props.hoveredElement ? 'hovered' : ''} ${props.isShaking && this === props.clickedElement ? 'shaking' : ''}`}
+        // onAnimationEnd={props.onStopShakingOperation}
+        // onMouseOver={e => props.onHover(e, this)}
+        // onMouseOut={e => props.onUnhover(e, this)}
+        // onClick={e => props.onClickOperator(props.expression, this)}
+      // >{this.operator}</span>
+    // } else {
+      // operatorElement = <span className="binary-infix-operator expression-piece">{this.operator}</span>;
+    // }
 
+    let attributes = {className: 'evaluatable binary-infix-operator expression-piece'};
+    this.addSelectable(attributes, props, props.expression);
+
+    const operatorElement = React.createElement('span', attributes, this.operator);
     return (
       <span className={`subexpression ${props.mode === Mode.EvaluatingSubexpression && props.activeSubexpression === this ? 'active' : ''}`}>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
@@ -271,13 +302,14 @@ class ExpressionBinaryOperator extends Expression {
     }
   }
 
-  programify(component, props, isParenthesized, isSelectable) {
-    let attributes = {
-      className: 'subexpression',
-    };
+  clone() {
+    return new this.constructor(this.a.clone(), this.b.clone(), this.where);
+  }
 
+  programify(component, props, isParenthesized, isSelectable) {
+    let attributes = {className: 'subexpression'};
     if (isSelectable) {
-      this.addSelectable(attributes, props, props.activeProgramPiece);
+      this.addSelectable(attributes, props, props.activeStatement);
     }
 
     return React.createElement('span', attributes,
@@ -297,22 +329,27 @@ export class ExpressionAssignment extends Expression {
     super(Precedence.Assignment, where);
     this.identifier = identifier;
     this.value = value;
+    this.value.parent = this;
   }
 
   evaluatorify(component, props, isParenthesized) {
-    let operatorElement;
-    if (props.mode === Mode.SelectingSubexpression) {
-      operatorElement = <span
-        className={`evaluatable binary-infix-operator expression-piece ${this === props.hoveredElement ? 'hovered' : ''} ${props.isShaking && this === props.activeSubexpression ? 'shaking' : ''}`}
-        onAnimationEnd={props.onStopShakingOperation}
-        onMouseOver={e => props.onHover(e, this)}
-        onMouseOut={e => props.onUnhover(e, this)}
-        onClick={e => props.onClickAssignment(props.expression, this)}
-      >=</span>;
-    } else {
-      operatorElement = <span className="binary-infix-operator expression-piece">=</span>;
-    }
+    // let operatorElement;
+    // if (props.mode === Mode.SelectingSubexpression) {
+      // operatorElement = <span
+        // className={`evaluatable binary-infix-operator expression-piece ${this === props.hoveredElement ? 'hovered' : ''} ${props.isShaking && this === props.clickedElement ? 'shaking' : ''}`}
+        // onAnimationEnd={props.onStopShakingOperation}
+        // onMouseOver={e => props.onHover(e, this)}
+        // onMouseOut={e => props.onUnhover(e, this)}
+        // onClick={e => props.onClickAssignment(props.expression, this)}
+      // >=</span>;
+    // } else {
+      // operatorElement = <span className="binary-infix-operator expression-piece">=</span>;
+    // }
 
+    let attributes = {className: 'evaluatable binary-infix-operator expression-piece'};
+    this.addSelectable(attributes, props, props.expression);
+
+    const operatorElement = React.createElement('span', attributes, '=');
     return (
       <span className={`subexpression ${props.mode === Mode.EvaluatingSubexpression && props.activeSubexpression === this ? 'active' : ''}`}>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
@@ -341,13 +378,14 @@ export class ExpressionAssignment extends Expression {
     }
   }
 
-  programify(component, props, isParenthesized, isSelectable) {
-    let attributes = {
-      className: 'subexpression',
-    };
+  clone() {
+    return new this.constructor(this.identifier, this.value.clone(), this.where);
+  }
 
+  programify(component, props, isParenthesized, isSelectable) {
+    let attributes = {className: 'subexpression'};
     if (isSelectable) {
-      this.addSelectable(attributes, props, props.activeProgramPiece);
+      this.addSelectable(attributes, props, props.activeStatement);
     }
 
     return React.createElement('span', attributes,
@@ -689,6 +727,10 @@ class ExpressionLiteral extends Expression {
     this.value = value;
   }
 
+  clone() {
+    return new this.constructor(this.value, this.where);
+  }
+
   evaluate(env) {
     return this;
   }
@@ -699,19 +741,14 @@ class ExpressionLiteral extends Expression {
 
   evaluatorify(component, props, isParenthesized) {
     return (
-      <span className="subexpression expression-piece literal">
-        {this.value.toString()}
-      </span>
+      <span className="subexpression expression-piece literal">{this.value.toString()}</span>
     );
   }
 
   programify(component, props, isParenthesized, isSelectable) {
-    let attributes = {
-      className: 'subexpression expression-piece literal',
-    };
-
+    let attributes = {className: 'subexpression expression-piece literal'};
     if (isSelectable) {
-      this.addSelectable(attributes, props, props.activeProgramPiece);
+      this.addSelectable(attributes, props, props.activeStatement);
     }
 
     return React.createElement('span', attributes, this.value.toString());

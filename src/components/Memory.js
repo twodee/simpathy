@@ -18,15 +18,11 @@ class Memory extends React.Component {
 const mapStateToProps = state => {
   return {
     frames: state.frames,
-    mode: state.mode,
-    hoveredMemoryValue: state.hoveredMemoryValue,
   };
 };
 
 const mapDispatchToProps = dispatch => {
   return {
-    onHover: null,
-    onUnhover: null,
   };
 };
 

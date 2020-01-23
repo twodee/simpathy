@@ -3,9 +3,9 @@ import { connect } from 'react-redux';
 
 import {
   hover,
-  selectRightProgramPiece,
-  selectWrongProgramPiece,
-  stopShakingProgramPiece,
+  selectRightStatement,
+  selectWrongStatement,
+  stopShaking,
   unhover,
 } from '../actions';
 
@@ -30,23 +30,24 @@ class Program extends React.Component {
 const mapStateToProps = state => {
   return {
     hoveredElement: state.hoveredElement,
+    clickedElement: state.clickedElement,
     program: state.program,
     mode: state.mode,
-    activeProgramPiece: state.activeProgramPiece,
-    isShaking: state.isShaking,
+    activeStatement: state.activeStatement,
+    isBadSelection: state.isBadSelection,
   };
 };
 
 const mapDispatchToProps = dispatch => {
   return {
-    onHover: element => dispatch(hover(element)),
-    onUnhover: element => dispatch(unhover(element)),
-    onStopShaking: () => dispatch(stopShakingProgramPiece()),
-    onClick: (mode, actualElement) => {
-      if (mode === Mode.SelectingProgramPiece) {
-        dispatch(selectRightProgramPiece(actualElement));
+    onHover: (event, element) => dispatch(hover(element)),
+    onUnhover: (event, element) => dispatch(unhover(element)),
+    onStopShaking: () => dispatch(stopShaking()),
+    onClick: (mode, clickedElement, activeElement) => {
+      if (mode === Mode.SelectingStatement) {
+        dispatch(selectRightStatement(clickedElement));
       } else {
-        dispatch(selectWrongProgramPiece(actualElement));
+        dispatch(selectWrongStatement(clickedElement));
       }
     },
   };

@@ -8,8 +8,7 @@ import {
   hover,
   selectRightMemoryValue,
   selectWrongMemoryValue,
-  stopShakingMemoryValueInput,
-  stopShakingMemoryValueSelection,
+  stopShaking,
   unhover,
 } from '../actions';
 
@@ -37,21 +36,35 @@ class StackFrame extends React.Component {
                 autoFocus
                 autoComplete="off"
                 spellCheck="false"
-                className={`memory-value-input ${this.props.isShaking ? 'shaking' : ''}`}
+                className={`memory-value-input ${this.props.isBadInput ? 'shaking' : ''}`}
                 value={this.props.currentInput}
-                onAnimationEnd={this.props.onStopShakingInput}
+                onAnimationEnd={this.props.onStopShaking}
                 onChange={e => this.props.onEditInput(e.target.value)}
                 onKeyDown={e => this.props.onKeyDown(e, this.props.activeSubexpression, this.props.currentInput)}
                 />
-            } else if (this.props.mode === Mode.SelectingMemoryValue) {
-              element = <span
-                className={`evaluatable ${variable === this.props.hoveredElement ? 'hovered' : ''} ${this.props.isShaking && variable === this.props.activeElement ? 'shaking' : ''}`}
-                onAnimationEnd={this.props.onStopShakingSelection}
-                onMouseOver={e => this.props.onHover(e, variable)}
-                onMouseOut={e => this.props.onUnhover(e, variable)}
-                onClick={e => this.props.onClickMemoryValue(this.props.index, this.props.activeSubexpression, variable)}>{variable.current.value}</span>
             } else {
-              element = <span>{variable.current.value}</span>;
+              let attributes = {className: 'evaluatable'};
+
+              attributes.onMouseOver = event => this.props.onHover(event, variable);
+              attributes.onMouseOut = event => this.props.onUnhover(event, variable);
+              attributes.onClick = () => this.props.onClick(this.props.mode, this.props.index, variable, this.props.activeSubexpression);
+              attributes.onAnimationEnd = () => this.props.onStopShaking(this.props.mode, this);
+
+              if (variable === this.props.hoveredElement) {
+                attributes.className += ' hovered';
+              }
+
+              if (variable === this.props.clickedElement && this.props.isBadSelection) {
+                attributes.className += ' shaking';
+              }
+
+              element = React.createElement('span', attributes, variable.current.value.toString());
+              // element = <span
+                // className={`evaluatable ${variable === this.props.hoveredElement ? 'hovered' : ''} ${this.props.isBadSelection && variable === this.props.clickedElement ? 'shaking' : ''}`}
+                // onAnimationEnd={this.props.onStopShakingSelection}
+                // onMouseOver={e => this.props.onHover(e, variable)}
+                // onMouseOut={e => this.props.onUnhover(e, variable)}
+                // onClick={e => this.props.onClickMemoryValue(this.props.index, this.props.activeSubexpression, variable)}>{variable.current.value}</span>
             }
 
             return (
@@ -74,9 +87,11 @@ const mapStateToProps = state => {
     activeSubexpression: state.activeSubexpression,
     frames: state.frames,
     hoveredElement: state.hoveredElement,
+    clickedElement: state.clickedElement,
     expectedElement: state.expectedElement,
     activeElement: state.activeElement,
-    isShaking: state.isShaking,
+    isBadSelection: state.isBadSelection,
+    isBadInput: state.isBadInput,
     mode: state.mode,
     currentInput: state.currentInput,
   };
@@ -86,18 +101,18 @@ const mapDispatchToProps = dispatch => {
   return {
     onHover: (e, element) => dispatch(hover(element)),
     onUnhover: (e, element) => dispatch(unhover(element)),
-    onClickMemoryValue: (frameIndex, activeSubexpression, actualElement) => {
-      if (frameIndex === 0 && activeSubexpression.identifier.source === actualElement.name) {
+    onClick: (mode, frameIndex, actualElement, activeSubexpression) => {
+      console.log("frameIndex:", frameIndex);
+      console.log("actualElement:", actualElement);
+      console.log("activeSubexpression:", activeSubexpression);
+      if (mode === Mode.SelectingMemoryValue && frameIndex === 0 && activeSubexpression.identifier.source === actualElement.name) {
         dispatch(selectRightMemoryValue(actualElement));
       } else {
         dispatch(selectWrongMemoryValue(actualElement));
       }
     },
-    onStopShakingSelection: () => {
-      dispatch(stopShakingMemoryValueSelection());
-    },
-    onStopShakingInput: () => {
-      dispatch(stopShakingMemoryValueInput());
+    onStopShaking: () => {
+      dispatch(stopShaking());
     },
     onEditInput: value => dispatch(editInput(value)),
     onKeyDown: (event, assignmentExpression, value) => {

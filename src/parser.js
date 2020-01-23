@@ -80,18 +80,18 @@ export function parse(tokens) {
       throw new LocatedException(tokens[i].where, 'I expected no indentation at the top-level of the program.');
     }
 
-    let body;
+    let statements;
     if (has(Token.EOF)) {
       let eofToken = consume();
-      body = new ExpressionBlock([], eofToken.where);
+      statements = new ExpressionBlock([], eofToken.where);
     } else {
-      body = block();
+      statements = block();
       if (!has(Token.EOF)) {
-        throw new LocatedException(body.where, 'I expected the program to end after this, but it didn\'t.');
+        throw new LocatedException(statements.where, 'I expected the program to end after this, but it didn\'t.');
       }
     }
 
-    return body;
+    return statements;
   }
 
   function block() {

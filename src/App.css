@@ -119,27 +119,22 @@
 
 .stack-frame {
   margin: 10px;
+  padding: 5px;
   display: grid;
-  grid-template-columns: 7em 7em 2em 10em 1fr;
+  grid-template-columns: 7em 7em auto 10em 1fr;
   border-radius: 5px;
   box-shadow: rgba(0,0,0,0.2) 0px 2px 3px, inset rgba(0,0,0,0.2) 0px -1px 2px;
   background-color: white;
 }
 
 .cell {
-  padding: 10px;
-  /* background-color: white; */
+  padding: 5px;
   font-size: 14pt;
 }
 
 .function-name-cell {
   grid-column: 1;
   grid-row: 1;
-  /* border-top-left-radius: 5px; */
-  /* border-bottom-left-radius: 5px; */
-}
-
-.arrow-cell {
 }
 
 .variable-name-cell {
