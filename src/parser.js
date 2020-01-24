@@ -20,7 +20,7 @@ import {
   // ExpressionFunctionCall,
   // ExpressionFunctionDefinition,
   ExpressionIdentifier,
-  // ExpressionIf,
+  ExpressionIf,
   ExpressionInteger,
   ExpressionLeftShift,
   ExpressionLess,
@@ -468,95 +468,95 @@ export function parse(tokens) {
 
       // return new ExpressionFunctionDefinition(idToken.source, formals, body, SourceLocation.span(sourceStart, body.where));
 
-    // } else if (has(Token.If)) {
-      // let sourceStart = tokens[i].where;
-      // let sourceEnd = sourceStart;
-      // consume(); // eat if
+    } else if (has(Token.If)) {
+      let sourceStart = tokens[i].where;
+      let sourceEnd = sourceStart;
+      consume(); // eat if
 
-      // let conditions = [];
-      // let thenBlocks = [];
-      // let elseBlock = null;
-      // let isOneLiner;
+      let conditions = [];
+      let thenBlocks = [];
+      let elseBlock = null;
+      let isOneLiner;
 
-      // if (isFirstOfExpression()) {
-        // let condition = expression();
+      if (isFirstOfExpression()) {
+        let condition = expression();
 
-        // let thenBlock;
-        // if (has(Token.Linebreak)) {
-          // consume(); // eat linebreak
-          // thenBlock = block();
-          // isOneLiner = false;
-        // } else if (has(Token.Then)) {
-          // consume(); // eat then
-          // thenBlock = expression();
-          // isOneLiner = true;
-        // } else {
-          // throw new LocatedException(sourceStart, 'I expected either a linebreak or then after the condition.');
-        // }
+        let thenBlock;
+        if (has(Token.Linebreak)) {
+          consume(); // eat linebreak
+          thenBlock = block();
+          isOneLiner = false;
+        } else if (has(Token.Then)) {
+          consume(); // eat then
+          thenBlock = expression();
+          isOneLiner = true;
+        } else {
+          throw new LocatedException(sourceStart, 'I expected either a linebreak or then after the condition.');
+        }
 
-        // conditions.push(condition);
-        // thenBlocks.push(thenBlock);
-        // sourceEnd = thenBlock.where;
-      // } else {
-        // throw new LocatedException(sourceStart, 'I expected a condition for this if.');
-      // }
+        conditions.push(condition);
+        thenBlocks.push(thenBlock);
+        sourceEnd = thenBlock.where;
+      } else {
+        throw new LocatedException(sourceStart, 'I expected a condition for this if.');
+      }
 
-      // while ((isOneLiner && has(Token.ElseIf)) ||
-             // (!isOneLiner && has(Token.Indentation) && indents[indents.length - 1] === tokens[i].source.length && has(Token.ElseIf, 1))) {
-        // if (!isOneLiner) {
-          // consume(); // eat indent
-        // }
-        // let elseIfToken = tokens[i];
-        // consume(); // eat else if
+      while ((isOneLiner && has(Token.ElseIf)) ||
+             (!isOneLiner && has(Token.Indentation) && indents[indents.length - 1] === tokens[i].source.length && has(Token.ElseIf, 1))) {
+        if (!isOneLiner) {
+          consume(); // eat indent
+        }
+        let elseIfToken = tokens[i];
+        consume(); // eat else if
 
-        // if (!isFirstOfExpression()) {
-          // throw new LocatedException(elseIfToken.where, 'I expected a condition after this else-if.');
-        // }
+        if (!isFirstOfExpression()) {
+          throw new LocatedException(elseIfToken.where, 'I expected a condition after this else-if.');
+        }
 
-        // let condition = expression();
+        let condition = expression();
 
-        // let thenBlock;
-        // if (has(Token.Linebreak)) {
-          // consume(); // eat linebreak
-          // thenBlock = block();
-          // isOneLiner = false;
-        // } else if (has(Token.Then)) {
-          // consume(); // eat then
-          // thenBlock = expression();
-          // isOneLiner = true;
-        // } else {
-          // throw new LocatedException(sourceStart, 'I expected either a linebreak or then after the condition.');
-        // }
+        let thenBlock;
+        if (has(Token.Linebreak)) {
+          consume(); // eat linebreak
+          thenBlock = block();
+          isOneLiner = false;
+        } else if (has(Token.Then)) {
+          consume(); // eat then
+          thenBlock = expression();
+          isOneLiner = true;
+        } else {
+          throw new LocatedException(sourceStart, 'I expected either a linebreak or then after the condition.');
+        }
 
-        // conditions.push(condition);
-        // thenBlocks.push(thenBlock);
-        // sourceEnd = thenBlock.where;
-      // }
+        conditions.push(condition);
+        thenBlocks.push(thenBlock);
+        sourceEnd = thenBlock.where;
+      }
 
-      // if (conditions.length === 0) {
-        // throw new LocatedException(sourceStart, 'I expected this if statement to have at least one condition.');
-      // }
+      if (conditions.length === 0) {
+        throw new LocatedException(sourceStart, 'I expected this if statement to have at least one condition.');
+      }
       
-      // if ((isOneLiner && has(Token.Else)) ||
-          // (!isOneLiner && has(Token.Indentation) && indents[indents.length - 1] === tokens[i].source.length && has(Token.Else, 1))) {
-        // if (!isOneLiner) {
-          // consume(); // eat indentation
-        // }
-        // let elseToken = consume(); // eat else
+      if ((isOneLiner && has(Token.Else)) ||
+          (!isOneLiner && has(Token.Indentation) && indents[indents.length - 1] === tokens[i].source.length && has(Token.Else, 1))) {
+        if (!isOneLiner) {
+          consume(); // eat indentation
+        }
+        consume(); // eat else
 
-        // if (has(Token.Linebreak)) {
-          // consume(); // eat linebreak
-          // elseBlock = block();
-          // isOneLiner = false;
-        // } else {
-          // elseBlock = expression();
-          // isOneLiner = true;
-        // }
+        if (has(Token.Linebreak)) {
+          consume(); // eat linebreak
+          elseBlock = block();
+          isOneLiner = false;
+        } else {
+          elseBlock = expression();
+          isOneLiner = true;
+        }
 
-        // sourceEnd = elseBlock.where;
-      // }
+        sourceEnd = elseBlock.where;
+      }
 
-      // return new ExpressionIf(conditions, thenBlocks, elseBlock, SourceLocation.span(sourceStart, sourceEnd));
+      return new ExpressionIf(conditions, thenBlocks, elseBlock, SourceLocation.span(sourceStart, sourceEnd));
     // } else if (has(Token.For)) {
       // let sourceStart = tokens[i].where;
       // consume();

@@ -13,6 +13,10 @@ class Expression {
     this.where = where;
   }
 
+  getFirstStatement() {
+    return this;
+  }
+
   getNextStatement(value, afterChild = null) {
     if (this.parent) {
       return this.parent.getNextStatement(value, this);
@@ -33,11 +37,11 @@ class Expression {
     }
   }
 
-  addSelectable(attributes, props, activeElement) {
+  addSelectable(attributes, props, ...extras) {
     attributes.onMouseOver = event => props.onHover(event, this);
     attributes.onMouseOut = event => props.onUnhover(event, this);
 
-    attributes.onClick = () => props.onClick(props.mode, this, activeElement);
+    attributes.onClick = () => props.onClick(props.mode, this, ...extras);
     attributes.onAnimationEnd = () => props.onStopShaking(props.mode, this);
 
     if (this === props.hoveredElement) {
@@ -88,8 +92,16 @@ export class ExpressionBlock extends Expression {
     }
   }
 
+  getFirstStatement() {
+    if (this.statements.length > 0) {
+      return this.statements[0].getFirstStatement();
+    } else {
+      return null;
+    }
+  }
+
   getNextStatement(value, afterChild) {
-    const index = this.statements.indexOf(afterChild);
+    const index = afterChild ? this.statements.indexOf(afterChild) : 0;
     if (index < this.statements.length - 1) {
       return this.statements[index + 1];
     } else {
@@ -97,10 +109,10 @@ export class ExpressionBlock extends Expression {
     }
   }
 
-  programify(component, props, isParenthesized, isSelectable) {
+  programify(component, props, isParenthesized, isSelectable, indentation) {
     return (
       <div className="block">
-        {this.statements.map((statement, i) => <div className="statement" key={`statement-${i}`}>{statement.programify(component, props, false, true)}</div>)}
+        {this.statements.map((statement, i) => <div className="statement" key={`statement-${i}`}>{statement.programify(component, props, false, true, indentation)}</div>)}
       </div>
     );
   }
@@ -145,10 +157,10 @@ export class ExpressionIdentifier extends Expression {
     return new this.constructor(this.id, this.where);
   }
 
-  programify(component, props, isParenthesized, isSelectable) {
+  programify(component, props, isParenthesized, isSelectable, indentation) {
     let attributes = {className: 'subexpression'};
     if (isSelectable) {
-      this.addSelectable(attributes, props, props.activeStatement);
+      this.addSelectable(attributes, props, props.activeStatement, props.program, props.expression);
     }
 
     return React.createElement('span', attributes, 
@@ -224,17 +236,17 @@ class ExpressionUnaryOperator extends Expression {
     return node;
   }
 
-  programify(component, props, isParenthesized, isSelectable) {
+  programify(component, props, isParenthesized, isSelectable, indentation) {
     let attributes = {className: 'subexpression'};
     if (isSelectable) {
-      this.addSelectable(attributes, props, props.activeStatement);
+      this.addSelectable(attributes, props, props.activeStatement, props.program, props.expression);
     }
 
     return React.createElement('span', attributes,
       <>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
         <span className="unary-prefix-operator expression-piece">{this.operator}</span>
-        {this.a.programify(component, props, this.precedence > this.a.precedence, false)}
+        {this.a.programify(component, props, this.precedence > this.a.precedence, false, '')}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
       </>
     );
@@ -306,18 +318,18 @@ class ExpressionBinaryOperator extends Expression {
     return new this.constructor(this.a.clone(), this.b.clone(), this.where);
   }
 
-  programify(component, props, isParenthesized, isSelectable) {
+  programify(component, props, isParenthesized, isSelectable, indentation) {
     let attributes = {className: 'subexpression'};
     if (isSelectable) {
-      this.addSelectable(attributes, props, props.activeStatement);
+      this.addSelectable(attributes, props, props.activeStatement, props.program, props.expression);
     }
 
     return React.createElement('span', attributes,
       <>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
-        {this.a.programify(component, props, this.precedence > this.a.precedence, false)}
+        {this.a.programify(component, props, this.precedence > this.a.precedence, false, '')}
         <span className="binary-infix-operator expression-piece">{this.operator}</span>
-        {this.b.programify(component, props, this.precedence >= this.b.precedence, false)}
+        {this.b.programify(component, props, this.precedence >= this.b.precedence, false, '')}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
       </>
     );
@@ -334,8 +346,6 @@ class ExpressionBuiltin extends Expression {
     for (let operand of this.operands) {
       operand.parent = this;
     }
-    console.log("this.name:", this.name);
-    console.log("this.operands:", this.operands);
   }
 
   get nextNonterminal() {
@@ -382,10 +392,10 @@ class ExpressionBuiltin extends Expression {
     )
   }
 
-  programify(component, props, isParenthesized, isSelectable) {
+  programify(component, props, isParenthesized, isSelectable, indentation) {
     let attributes = {className: 'subexpression'};
     if (isSelectable) {
-      this.addSelectable(attributes, props, props.activeStatement);
+      this.addSelectable(attributes, props, props.activeStatement, props.program, props.expression);
     }
 
     return React.createElement('span', attributes,
@@ -395,14 +405,70 @@ class ExpressionBuiltin extends Expression {
           this.operands.map((operand, i) => (
             <React.Fragment key={`operand-${i}`}>
               {i > 0 ? ', ' : ''}
-              {operand.programify(component, props, false)}
+              {operand.programify(component, props, false, '')}
             </React.Fragment>
           ))
         })
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
-        {this.evaluatePopup(component, props)}
       </>
     )
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionIf extends Expression {
+  constructor(conditions, thenBlocks, elseBlock, where = null) {
+    super(Precedence.Atom, where);
+    this.conditions = conditions;
+    this.thenBlocks = thenBlocks;
+    this.elseBlock = elseBlock;
+    for (let condition of this.conditions) {
+      condition.parent = this;
+    }
+    for (let thenBody of this.thenBlocks) {
+      thenBody.parent = this;
+    }
+    this.elseBlock.parent = this;
+  }
+
+  getFirstStatement() {
+    return this.conditions[0].getFirstStatement();
+  }
+
+  getNextStatement(value, afterChild) {
+    // Walk through conditions. If the child is one of them and the condition
+    // is true, we jump to the first statement of the associated block. If the
+    // child is one of them but the condition is not true, we jump to the next
+    // condition or the else block.
+    console.log("value:", value);
+    console.log("afterChild:", afterChild);
+    for (const [i, condition] of this.conditions.entries()) {
+      if (condition === afterChild) {
+        if (value.value) {
+          return this.thenBlocks[i].getFirstStatement();
+        } else if (i < this.conditions.length - 1) {
+          return this.conditions[i + 1].getFirstStatement();
+        } else if (this.elseBlock) {
+          return this.elseBlock.getFirstStatement();
+        }
+      }
+    }
+
+    return super.getNextStatement();
+  }
+
+  programify(component, props, isParenthesized, isSelectable, indentation) {
+    return (
+      <span>
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        if ({this.conditions[0].programify(component, props, false, true, '')})
+          {this.thenBlocks[0].programify(component, props, false, false, indentation + '  ')}
+        else
+          {this.elseBlock.programify(component, props, false, false, indentation + '  ')}
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+      </span>
+    );
   }
 }
 
@@ -523,19 +589,26 @@ export class ExpressionAssignment extends Expression {
     return new this.constructor(this.identifier, this.value.clone(), this.where);
   }
 
-  programify(component, props, isParenthesized, isSelectable) {
+  programify(component, props, isParenthesized, isSelectable, indentation) {
     let attributes = {className: 'subexpression'};
     if (isSelectable) {
-      this.addSelectable(attributes, props, props.activeStatement);
+      this.addSelectable(attributes, props, props.activeStatement, props.program, props.expression);
     }
 
-    return React.createElement('span', attributes,
+    const element = React.createElement('span', attributes,
       <>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
         {this.identifier.source}
         <span className="binary-infix-operator expression-piece">=</span>
-        {this.value.programify(component, props, this.precedence > this.value.precedence, false)}
+        {this.value.programify(component, props, this.precedence > this.value.precedence, false, '')}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
+      </>
+    );
+
+    return (
+      <>
+        <span className="indentation">{indentation}</span>
+        {element}
       </>
     );
   }
@@ -886,10 +959,10 @@ export class ExpressionLiteral extends Expression {
     );
   }
 
-  programify(component, props, isParenthesized, isSelectable) {
+  programify(component, props, isParenthesized, isSelectable, indentation) {
     let attributes = {className: 'subexpression expression-piece literal'};
     if (isSelectable) {
-      this.addSelectable(attributes, props, props.activeStatement);
+      this.addSelectable(attributes, props, props.activeStatement, props.program, props.expression);
     }
 
     return React.createElement('span', attributes, this.value.toString());

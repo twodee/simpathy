@@ -164,3 +164,7 @@
 .memory-value-input {
   width: 100%;
 }
+
+.indentation {
+  white-space: pre;
+}

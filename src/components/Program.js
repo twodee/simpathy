@@ -19,7 +19,7 @@ class Program extends React.Component {
   render() {
     return (
       <div id="program" className="code">
-        {this.props.program && this.props.program.programify(this, this.props)}
+        {this.props.program && this.props.program.programify(this, this.props, false, false, '')}
       </div>
     );
   }
@@ -35,6 +35,7 @@ const mapStateToProps = state => {
     mode: state.mode,
     activeStatement: state.activeStatement,
     isBadSelection: state.isBadSelection,
+    expression: state.expression,
   };
 };
 
@@ -43,8 +44,18 @@ const mapDispatchToProps = dispatch => {
     onHover: (event, element) => dispatch(hover(element)),
     onUnhover: (event, element) => dispatch(unhover(element)),
     onStopShaking: () => dispatch(stopShaking()),
-    onClick: (mode, clickedElement, activeElement) => {
-      if ((activeElement === null || activeElement.getNextStatement(0) === clickedElement) && mode === Mode.SelectingStatement) {
+    onClick: (mode, clickedElement, activeElement, program, currentValue) => {
+      console.log("currentValue:", currentValue);
+      console.log("program:", program);
+      console.log("activeElement:", activeElement);
+      console.log("clickedElement:", clickedElement);
+      if (mode === Mode.SelectingStatement && activeElement !== null) {
+        console.log('next:', activeElement.getNextStatement(currentValue));
+      }
+      
+      if (mode === Mode.SelectingStatement &&
+          ((activeElement === null && clickedElement === program.getFirstStatement()) ||
+           (activeElement !== null && activeElement.getNextStatement(currentValue) === clickedElement))) {
         dispatch(selectRightStatement(clickedElement));
       } else {
         dispatch(selectWrongStatement(clickedElement));

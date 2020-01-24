@@ -16,7 +16,10 @@ import {
 
 class App extends React.Component {
   componentDidMount() {
-    const tokens = lex(`a = max(sign(10), sign(0) + sign(-5))`);
+    const tokens = lex(`if 4 > 3
+  a = 1
+else
+  a = -1`);
     const ast = parse(tokens);
     this.props.onLoadProgram(ast);
   }
