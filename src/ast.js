@@ -334,6 +334,8 @@ class ExpressionBuiltin extends Expression {
     for (let operand of this.operands) {
       operand.parent = this;
     }
+    console.log("this.name:", this.name);
+    console.log("this.operands:", this.operands);
   }
 
   get nextNonterminal() {
@@ -418,6 +420,43 @@ export class ExpressionMax extends ExpressionBuiltin {
       return new ExpressionInteger(Math.max(...values.map(value => value.value)));
     } else if (values.every(value => value instanceof ExpressionInteger || value instanceof ExpressionReal)) {
       return new ExpressionReal(Math.max(...values.map(value => value.value)));
+    } else {
+      throw new Error('bad types');
+    }
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionMin extends ExpressionBuiltin {
+  constructor(operands, where) {
+    super('min', operands, where);
+  }
+
+  evaluate(env) {
+    const values = this.operands.map(operand => operand.evaluate(env));
+
+    if (values.every(value => value instanceof ExpressionInteger)) {
+      return new ExpressionInteger(Math.min(...values.map(value => value.value)));
+    } else if (values.every(value => value instanceof ExpressionInteger || value instanceof ExpressionReal)) {
+      return new ExpressionReal(Math.min(...values.map(value => value.value)));
+    } else {
+      throw new Error('bad types');
+    }
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionSign extends ExpressionBuiltin {
+  constructor(operands, where) {
+    super('sign', operands, where);
+  }
+
+  evaluate(env) {
+    const value = this.operands[0].evaluate(env);
+    if (value instanceof ExpressionInteger || value instanceof ExpressionReal) {
+      return new ExpressionInteger(value.value > 0 ? 1 : (value.value < 0 ? -1 : 0));
     } else {
       throw new Error('bad types');
     }

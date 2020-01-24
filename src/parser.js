@@ -26,6 +26,7 @@ import {
   ExpressionLess,
   ExpressionLessEqual,
   ExpressionMax,
+  ExpressionMin,
   // ExpressionMemberFunctionCall,
   // ExpressionMemberIdentifier,
   ExpressionMore,
@@ -40,6 +41,7 @@ import {
   ExpressionRightShift,
   ExpressionModulus,
   ExpressionSame,
+  ExpressionSign,
   ExpressionString,
   // ExpressionSubscript,
   // ExpressionSubtract,
@@ -403,6 +405,10 @@ export function parse(tokens) {
 
       if (nameToken.source === 'max') {
         return new ExpressionMax(actuals, SourceLocation.span(nameToken, sourceEnd));
+      } else if (nameToken.source === 'min') {
+        return new ExpressionMin(actuals, SourceLocation.span(nameToken, sourceEnd));
+      } else if (nameToken.source === 'sign') {
+        return new ExpressionSign(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else {
         throw new MessagedException('ack!');
         // return new ExpressionFunctionCall(nameToken, actuals, SourceLocation.span(sourceStart, sourceEnd));

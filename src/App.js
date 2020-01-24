@@ -16,11 +16,7 @@ import {
 
 class App extends React.Component {
   componentDidMount() {
-    // const tokens = lex('a = 1 + 2 + 3').slice(1);
-    // const e = parse(tokens);
-    // this.props.onLoadExpression(e);
-
-    const tokens = lex(`a = max(1 + 1 + 1, 4 * 2, 3 - 7)`);
+    const tokens = lex(`a = max(sign(10), sign(0) + sign(-5))`);
     const ast = parse(tokens);
     this.props.onLoadProgram(ast);
   }
