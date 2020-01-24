@@ -324,6 +324,108 @@ class ExpressionBinaryOperator extends Expression {
   }
 }
 
+// --------------------------------------------------------------------------- 
+
+class ExpressionBuiltin extends Expression {
+  constructor(name, operands, where = null) {
+    super(Precedence.Atom, where);
+    this.operands = operands;
+    this.name = name;
+    for (let operand of this.operands) {
+      operand.parent = this;
+    }
+  }
+
+  get nextNonterminal() {
+    for (let operand of this.operands) {
+      let node = operand.nextNonterminal;
+      if (node) {
+        return node;
+      }
+    }
+    return this;
+  }
+
+  simplify(expression, value) {
+    if (this === expression) {
+      return value;
+    } else {
+      return new this.constructor(this.operands.map(operand => operand.simplify(expression, value)));
+    }
+  }
+
+  clone() {
+    return new this.constructor(this.operands.map(operand => operand.clone()), this.where);
+  }
+
+  evaluatorify(component, props, isParenthesized) {
+    let attributes = {className: 'evaluatable function-call expression-piece'};
+    this.addSelectable(attributes, props, props.expression);
+
+    const callElement = React.createElement('span', attributes, this.name);
+    return (
+      <span className={`subexpression ${props.mode === Mode.EvaluatingSubexpression && props.activeSubexpression === this ? 'active' : ''}`}>
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        {callElement}({
+          this.operands.map((operand, i) => (
+            <React.Fragment key={`operand-${i}`}>
+              {i > 0 ? ', ' : ''}
+              {operand.evaluatorify(component, props, false)}
+            </React.Fragment>
+          ))
+        })
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+        {this.evaluatePopup(component, props)}
+      </span>
+    )
+  }
+
+  programify(component, props, isParenthesized, isSelectable) {
+    let attributes = {className: 'subexpression'};
+    if (isSelectable) {
+      this.addSelectable(attributes, props, props.activeStatement);
+    }
+
+    return React.createElement('span', attributes,
+      <>
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        {this.name}({
+          this.operands.map((operand, i) => (
+            <React.Fragment key={`operand-${i}`}>
+              {i > 0 ? ', ' : ''}
+              {operand.programify(component, props, false)}
+            </React.Fragment>
+          ))
+        })
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+        {this.evaluatePopup(component, props)}
+      </>
+    )
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionMax extends ExpressionBuiltin {
+  constructor(operands, where) {
+    super('max', operands, where);
+  }
+
+  evaluate(env) {
+    const values = this.operands.map(operand => operand.evaluate(env));
+
+    if (values.every(value => value instanceof ExpressionInteger)) {
+      return new ExpressionInteger(Math.max(...values.map(value => value.value)));
+    } else if (values.every(value => value instanceof ExpressionInteger || value instanceof ExpressionReal)) {
+      return new ExpressionReal(Math.max(...values.map(value => value.value)));
+    } else {
+      throw new Error('bad types');
+    }
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
 export class ExpressionAssignment extends Expression {
   constructor(identifier, value, where) {
     super(Precedence.Assignment, where);

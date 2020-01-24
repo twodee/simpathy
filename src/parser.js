@@ -5,7 +5,7 @@ import {
 
 import {
   LocatedException,
-  // MessagedException,
+  MessagedException,
 } from './types';
 
 import {
@@ -25,6 +25,7 @@ import {
   ExpressionLeftShift,
   ExpressionLess,
   ExpressionLessEqual,
+  ExpressionMax,
   // ExpressionMemberFunctionCall,
   // ExpressionMemberIdentifier,
   ExpressionMore,
@@ -339,19 +340,19 @@ export function parse(tokens) {
     // return base;
   // }
 
-  // function isFirstOfExpression(offset = 0) {
-    // return has(Token.Integer, offset) ||
-           // has(Token.Real, offset) ||
-           // has(Token.Minus, offset) ||
-           // has(Token.Boolean, offset) ||
-           // has(Token.String, offset) ||
-           // has(Token.Identifier, offset) ||
-           // has(Token.LeftSquareBracket, offset) ||
-           // has(Token.LeftParenthesis, offset) ||
-           // has(Token.Repeat, offset) ||
-           // has(Token.For, offset) ||
-           // has(Token.If, offset);
-  // }
+  function isFirstOfExpression(offset = 0) {
+    return has(Token.Integer, offset) ||
+           has(Token.Real, offset) ||
+           has(Token.Minus, offset) ||
+           has(Token.Boolean, offset) ||
+           has(Token.String, offset) ||
+           has(Token.Identifier, offset) ||
+           has(Token.LeftSquareBracket, offset) ||
+           has(Token.LeftParenthesis, offset) ||
+           has(Token.Repeat, offset) ||
+           has(Token.For, offset) ||
+           has(Token.If, offset);
+  }
 
   function atom() {
     if (has(Token.Integer)) {
@@ -378,6 +379,34 @@ export function parse(tokens) {
     } else if (has(Token.Boolean)) {
       let token = consume();
       return new ExpressionBoolean(token.source === 'true', token.where);
+    } else if (has(Token.Identifier) && has(Token.LeftParenthesis, 1)) {
+      let sourceStart = tokens[i].where;
+
+      let nameToken = consume();
+      consume(); // eat (
+
+      let actuals = [];
+      if (isFirstOfExpression()) {
+        actuals.push(expression());
+        while (has(Token.Comma) && isFirstOfExpression(1)) {
+          consume(); // eat ,
+          actuals.push(expression());
+        }
+      }
+
+      let sourceEnd = tokens[i].where;
+      if (has(Token.RightParenthesis)) {
+        consume();
+      } else {
+        throw new LocatedException(SourceLocation.span(sourceStart, sourceEnd), `I expected a right parenthesis to close the function call, but I encountered "${tokens[i].source}" (${tokens[i].type}) instead.`);
+      }
+
+      if (nameToken.source === 'max') {
+        return new ExpressionMax(actuals, SourceLocation.span(nameToken, sourceEnd));
+      } else {
+        throw new MessagedException('ack!');
+        // return new ExpressionFunctionCall(nameToken, actuals, SourceLocation.span(sourceStart, sourceEnd));
+      }
     } else if (has(Token.Identifier)) {
       let where = tokens[i].where;
       let id = consume();

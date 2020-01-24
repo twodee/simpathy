@@ -20,9 +20,7 @@ class App extends React.Component {
     // const e = parse(tokens);
     // this.props.onLoadExpression(e);
 
-    const tokens = lex(`a = 7
-a = 5 + 3
-a = !false`);
+    const tokens = lex(`a = max(1 + 1 + 1, 4 * 2, 3 - 7)`);
     const ast = parse(tokens);
     this.props.onLoadProgram(ast);
   }
