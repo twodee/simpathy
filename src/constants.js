@@ -1,5 +1,6 @@
 export const Precedence = Object.freeze({
   Atom: 100,
+  Power: 95,
   Not: 90,
   Multiplicative: 80,
   Additive: 70,

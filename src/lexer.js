@@ -348,7 +348,12 @@ export function lex(source) {
       emit(Token.Circumflex);
     } else if (has('*')) {
       consume();
-      emit(Token.Asterisk);
+      if (has('*')) {
+        consume();
+        emit(Token.Power);
+      } else {
+        emit(Token.Asterisk);
+      }
     } else if (has('%')) {
       consume();
       emit(Token.Percent);

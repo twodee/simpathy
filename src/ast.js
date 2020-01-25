@@ -19,7 +19,12 @@ class Expression {
 
   getNextStatement(value, afterChild = null) {
     if (this.parent) {
-      return this.parent.getNextStatement(value, this);
+      const next = this.parent.getNextStatement(value, this);
+      if (next) {
+        return next.getFirstStatement();
+      } else {
+        return null;
+      }
     } else {
       return null;
     }
@@ -256,7 +261,7 @@ class ExpressionUnaryOperator extends Expression {
 // --------------------------------------------------------------------------- 
 
 class ExpressionBinaryOperator extends Expression {
-  constructor(precedence, operator, a, b, where = null) {
+  constructor(precedence, operator, isLeftAssociative, a, b, where = null) {
     super(precedence, where);
     this.a = a;
     this.b = b;
@@ -286,9 +291,9 @@ class ExpressionBinaryOperator extends Expression {
     return (
       <span className={`subexpression ${props.mode === Mode.EvaluatingSubexpression && props.activeSubexpression === this ? 'active' : ''}`}>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
-        {this.a.evaluatorify(component, props, this.precedence > this.a.precedence)}
+        {this.a.evaluatorify(component, props, this.isLeftAssociative ? this.precedence > this.a.precedence : this.precedence >= this.a.precedence)}
         {operatorElement}
-        {this.b.evaluatorify(component, props, this.precedence >= this.b.precedence)}
+        {this.b.evaluatorify(component, props, this.isLeftAssociative ? this.precedence >= this.b.precedence : this.precedence > this.b.precedence)}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
         {this.evaluatePopup(component, props)}
       </span>
@@ -327,9 +332,9 @@ class ExpressionBinaryOperator extends Expression {
     return React.createElement('span', attributes,
       <>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
-        {this.a.programify(component, props, this.precedence > this.a.precedence, false, '')}
+        {this.a.programify(component, props, this.isLeftAssociative ? this.precedence > this.a.precedence : this.precedence >= this.a.precedence, false, '')}
         <span className="binary-infix-operator expression-piece">{this.operator}</span>
-        {this.b.programify(component, props, this.precedence >= this.b.precedence, false, '')}
+        {this.b.programify(component, props, this.isLeftAssociative ? this.precedence >= this.b.precedence : this.precedence > this.b.precedence, false, '')}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
       </>
     );
@@ -441,8 +446,6 @@ export class ExpressionIf extends Expression {
     // is true, we jump to the first statement of the associated block. If the
     // child is one of them but the condition is not true, we jump to the next
     // condition or the else block.
-    console.log("value:", value);
-    console.log("afterChild:", afterChild);
     for (const [i, condition] of this.conditions.entries()) {
       if (condition === afterChild) {
         if (value.value) {
@@ -614,9 +617,29 @@ export class ExpressionAssignment extends Expression {
   }
 }
 
+export class ExpressionPower extends ExpressionBinaryOperator {
+  constructor(a, b, where) {
+    super(Precedence.Power, '**', false, a, b, where);
+  }
+
+  evaluate(env) {
+    const valueA = this.a.evaluate(env);
+    const valueB = this.b.evaluate(env);
+
+    if (valueA instanceof ExpressionInteger && valueB instanceof ExpressionInteger) {
+      return new ExpressionInteger(Math.pow(valueA.value, valueB.value));
+    } else if ((valueA instanceof ExpressionReal || valueA instanceof ExpressionInteger) &&
+               (valueB instanceof ExpressionReal || valueB instanceof ExpressionInteger)) {
+      return new ExpressionReal(Math.pow(valueA.value, valueB.value));
+    } else {
+      throw new Error('bad types');
+    }
+  }
+}
+
 export class ExpressionAdd extends ExpressionBinaryOperator {
   constructor(a, b, where) {
-    super(Precedence.Additive, '+', a, b, where);
+    super(Precedence.Additive, '+', true, a, b, where);
   }
 
   evaluate(env) {
@@ -627,8 +650,8 @@ export class ExpressionAdd extends ExpressionBinaryOperator {
       return new ExpressionInteger(valueA.value + valueB.value);
     } else if (valueA instanceof ExpressionString || valueB instanceof ExpressionString) {
       return new ExpressionString(valueA.value + valueB.value);
-    } else if ((valueA instanceof ExpressionReal && valueB instanceof ExpressionInteger) ||
-               (valueB instanceof ExpressionReal && valueA instanceof ExpressionInteger)) {
+    } else if ((valueA instanceof ExpressionReal || valueA instanceof ExpressionInteger) &&
+               (valueB instanceof ExpressionReal || valueB instanceof ExpressionInteger)) {
       return new ExpressionReal(valueA.value + valueB.value);
     } else {
       throw new Error('bad types');
@@ -638,7 +661,7 @@ export class ExpressionAdd extends ExpressionBinaryOperator {
 
 export class ExpressionMultiply extends ExpressionBinaryOperator {
   constructor(a, b, where) {
-    super(Precedence.Multiplicative, '*', a, b, where);
+    super(Precedence.Multiplicative, '*', true, a, b, where);
   }
 
   evaluate(env) {
@@ -647,8 +670,8 @@ export class ExpressionMultiply extends ExpressionBinaryOperator {
 
     if (valueA instanceof ExpressionInteger && valueB instanceof ExpressionInteger) {
       return new ExpressionInteger(valueA.value * valueB.value);
-    } else if ((valueA instanceof ExpressionReal && valueB instanceof ExpressionInteger) ||
-               (valueB instanceof ExpressionReal && valueA instanceof ExpressionInteger)) {
+    } else if ((valueA instanceof ExpressionReal || valueA instanceof ExpressionInteger) &&
+               (valueB instanceof ExpressionReal || valueB instanceof ExpressionInteger)) {
       return new ExpressionReal(valueA.value * valueB.value);
     } else {
       throw new Error('bad types');
@@ -658,7 +681,7 @@ export class ExpressionMultiply extends ExpressionBinaryOperator {
 
 export class ExpressionModulus extends ExpressionBinaryOperator {
   constructor(a, b, where) {
-    super(Precedence.Multiplicative, '%', a, b, where);
+    super(Precedence.Multiplicative, '%', true, a, b, where);
   }
 
   evaluate(env) {
@@ -675,7 +698,7 @@ export class ExpressionModulus extends ExpressionBinaryOperator {
 
 export class ExpressionDivide extends ExpressionBinaryOperator {
   constructor(a, b, where) {
-    super(Precedence.Multiplicative, '/', a, b, where);
+    super(Precedence.Multiplicative, '/', true, a, b, where);
   }
 
   evaluate(env) {
@@ -695,7 +718,7 @@ export class ExpressionDivide extends ExpressionBinaryOperator {
 
 export class ExpressionLeftShift extends ExpressionBinaryOperator {
   constructor(a, b, where) {
-    super(Precedence.Shift, '<<', a, b, where);
+    super(Precedence.Shift, '<<', true, a, b, where);
   }
 
   evaluate(env) {
@@ -712,7 +735,7 @@ export class ExpressionLeftShift extends ExpressionBinaryOperator {
 
 export class ExpressionRightShift extends ExpressionBinaryOperator {
   constructor(a, b, where) {
-    super(Precedence.Shift, '>>', a, b, where);
+    super(Precedence.Shift, '>>', true, a, b, where);
   }
 
   evaluate(env) {
@@ -731,7 +754,7 @@ export class ExpressionRightShift extends ExpressionBinaryOperator {
 
 export class ExpressionAnd extends ExpressionBinaryOperator {
   constructor(a, b, where) {
-    super(Precedence.And, '&&', a, b, where);
+    super(Precedence.And, '&&', true, a, b, where);
   }
 
   evaluate(env) {
@@ -766,7 +789,7 @@ export class ExpressionAnd extends ExpressionBinaryOperator {
 
 export class ExpressionOr extends ExpressionBinaryOperator {
   constructor(a, b, where) {
-    super(Precedence.Or, '||', a, b, where);
+    super(Precedence.Or, '||', true, a, b, where);
   }
 
   evaluate(env) {
@@ -801,7 +824,7 @@ export class ExpressionOr extends ExpressionBinaryOperator {
 
 export class ExpressionMore extends ExpressionBinaryOperator {
   constructor(a, b, where) {
-    super(Precedence.Relational, '>', a, b, where);
+    super(Precedence.Relational, '>', true, a, b, where);
   }
 
   evaluate(env) {
@@ -821,7 +844,7 @@ export class ExpressionMore extends ExpressionBinaryOperator {
 
 export class ExpressionMoreEqual extends ExpressionBinaryOperator {
   constructor(a, b, where) {
-    super(Precedence.Relational, '>=', a, b, where);
+    super(Precedence.Relational, '>=', true, a, b, where);
   }
 
   evaluate(env) {
@@ -841,7 +864,7 @@ export class ExpressionMoreEqual extends ExpressionBinaryOperator {
 
 export class ExpressionLess extends ExpressionBinaryOperator {
   constructor(a, b, where) {
-    super(Precedence.Relational, '<', a, b, where);
+    super(Precedence.Relational, '<', true, a, b, where);
   }
 
   evaluate(env) {
@@ -861,7 +884,7 @@ export class ExpressionLess extends ExpressionBinaryOperator {
 
 export class ExpressionLessEqual extends ExpressionBinaryOperator {
   constructor(a, b, where) {
-    super(Precedence.Relational, '<=', a, b, where);
+    super(Precedence.Relational, '<=', true, a, b, where);
   }
 
   evaluate(env) {
@@ -899,7 +922,7 @@ export class ExpressionNot extends ExpressionUnaryOperator {
 
 export class ExpressionSame extends ExpressionBinaryOperator {
   constructor(a, b, where) {
-    super(Precedence.Equality, '==', a, b, where);
+    super(Precedence.Equality, '==', true, a, b, where);
   }
 
   evaluate(env) {
@@ -918,7 +941,7 @@ export class ExpressionSame extends ExpressionBinaryOperator {
 
 export class ExpressionNotSame extends ExpressionBinaryOperator {
   constructor(a, b, where) {
-    super(Precedence.Equality, '!=', a, b, where);
+    super(Precedence.Equality, '!=', true, a, b, where);
   }
 
   evaluate(env) {

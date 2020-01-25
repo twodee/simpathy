@@ -33,6 +33,7 @@ let TokenTypes = Object.freeze({
   Or: 'Or',
   Percent: 'Percent',
   Plus: 'Plus',
+  Power: 'Power',
   Range: 'Range',
   Real: 'Real',
   Repeat: 'Repeat',

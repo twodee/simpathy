@@ -36,7 +36,7 @@ import {
   ExpressionNotSame,
   ExpressionNot,
   ExpressionOr,
-  // ExpressionPower,
+  ExpressionPower,
   ExpressionReal,
   ExpressionRightShift,
   ExpressionModulus,
@@ -278,11 +278,11 @@ export function parse(tokens) {
   function expressionPower() {
     let a = atom();
     // let a = expressionMember();
-    // while (has(Token.Circumflex)) {
-      // let operator = consume();
-      // let b = expressionMember();
-      // a = new ExpressionPower(a, b, SourceLocation.span(a.where, b.where));
-    // }
+    while (has(Token.Power)) {
+      consume(); // eat **
+      let b = expressionPower();
+      a = new ExpressionPower(a, b, SourceLocation.span(a.where, b.where));
+    }
     return a;
   }
 

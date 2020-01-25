@@ -16,7 +16,8 @@ import {
 
 class App extends React.Component {
   componentDidMount() {
-    const tokens = lex(`if 4 > 3
+    const tokens = lex(`9 + 2
+if 4 > 3
   a = 1
 else
   a = -1`);

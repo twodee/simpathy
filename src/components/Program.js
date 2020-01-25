@@ -45,13 +45,9 @@ const mapDispatchToProps = dispatch => {
     onUnhover: (event, element) => dispatch(unhover(element)),
     onStopShaking: () => dispatch(stopShaking()),
     onClick: (mode, clickedElement, activeElement, program, currentValue) => {
-      console.log("currentValue:", currentValue);
-      console.log("program:", program);
-      console.log("activeElement:", activeElement);
-      console.log("clickedElement:", clickedElement);
-      if (mode === Mode.SelectingStatement && activeElement !== null) {
-        console.log('next:', activeElement.getNextStatement(currentValue));
-      }
+      // if (mode === Mode.SelectingStatement && activeElement !== null) {
+        // console.log('next:', activeElement.getNextStatement(currentValue));
+      // }
       
       if (mode === Mode.SelectingStatement &&
           ((activeElement === null && clickedElement === program.getFirstStatement()) ||
