@@ -46,6 +46,8 @@ const mapDispatchToProps = dispatch => {
     onStopShaking: () => dispatch(stopShaking()),
     onClick: (mode, clickedElement, activeElement, program, currentValue) => {
       // if (mode === Mode.SelectingStatement && activeElement !== null) {
+        // console.log("activeElement:", activeElement);
+        // console.log("currentValue:", currentValue);
         // console.log('next:', activeElement.getNextStatement(currentValue));
       // }
       

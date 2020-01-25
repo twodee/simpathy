@@ -125,12 +125,26 @@ export default function reducer(state = initialState, action) {
     case Action.EnterRightSubexpressionValue: {
       const simplifiedExpression = state.expression.simplify(state.activeSubexpression, action.payload);
       const isPrimitive = simplifiedExpression instanceof ExpressionLiteral;
+     
+      let mode;
+      let message;
+      if (isPrimitive && state.activeStatement.getNextStatement(simplifiedExpression) === null) {
+        mode = Mode.Celebrating;
+        message = "You are all done!";
+      } else if (isPrimitive) {
+        mode = Mode.SelectingStatement;
+        message = "next statement?";
+      } else {
+        mode = Mode.SelectingSubexpression;
+        message = "next expression?";
+      }
+      
       return {
         ...state,
         isBadInput: false,
         activeSubexpression: null,
-        mode: isPrimitive ? Mode.SelectingStatement : Mode.SelectingSubexpression,
-        message: isPrimitive ? 'next statement?' : 'next subexpression?',
+        mode: mode,
+        message: message,
         currentInput: '',
         expression: simplifiedExpression,
       };
@@ -199,7 +213,7 @@ export default function reducer(state = initialState, action) {
 
       let mode;
       let message;
-      if (state.activeStatement.getNextStatement(0) === null) {
+      if (isPrimitive && state.activeStatement.getNextStatement(simplifiedExpression) === null) {
         mode = Mode.Celebrating;
         message = "You are all done!";
       } else if (isPrimitive) {

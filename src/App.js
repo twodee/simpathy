@@ -20,7 +20,8 @@ class App extends React.Component {
 if 4 > 3
   a = 1
 else
-  a = -1`);
+  a = -1
+a = 7 << 1`);
     const ast = parse(tokens);
     this.props.onLoadProgram(ast);
   }
