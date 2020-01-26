@@ -3,7 +3,6 @@ import { Action } from './actions';
 import {
   ExpressionAssignment,
   ExpressionInteger,
-  ExpressionLiteral,
   // ExpressionReal,
   ExpressionString,
 } from './ast';
@@ -124,14 +123,13 @@ export default function reducer(state = initialState, action) {
 
     case Action.EnterRightSubexpressionValue: {
       const simplifiedExpression = state.expression.simplify(state.activeSubexpression, action.payload);
-      const isPrimitive = simplifiedExpression instanceof ExpressionLiteral;
      
       let mode;
       let message;
-      if (isPrimitive && state.activeStatement.getNextStatement(simplifiedExpression) === null) {
+      if (simplifiedExpression.isSimplified() && state.activeStatement.getNextStatement(simplifiedExpression) === null) {
         mode = Mode.Celebrating;
         message = "You are all done!";
-      } else if (isPrimitive) {
+      } else if (simplifiedExpression.isSimplified()) {
         mode = Mode.SelectingStatement;
         message = "next statement?";
       } else {
@@ -209,14 +207,13 @@ export default function reducer(state = initialState, action) {
     case Action.EnterRightMemoryValue: {
       const topFrame = state.frames[0];
       const simplifiedExpression = state.expression.simplify(state.activeSubexpression, state.activeSubexpression.value);
-      const isPrimitive = simplifiedExpression instanceof ExpressionLiteral;
 
       let mode;
       let message;
-      if (isPrimitive && state.activeStatement.getNextStatement(simplifiedExpression) === null) {
+      if (simplifiedExpression.isSimplified() && state.activeStatement.getNextStatement(simplifiedExpression) === null) {
         mode = Mode.Celebrating;
         message = "You are all done!";
-      } else if (isPrimitive) {
+      } else if (simplifiedExpression.isSimplified()) {
         mode = Mode.SelectingStatement;
         message = "next statement?";
       } else {

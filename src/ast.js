@@ -97,6 +97,10 @@ export class ExpressionBlock extends Expression {
     }
   }
 
+  isSimplified() {
+    return false;
+  }
+
   getFirstStatement() {
     if (this.statements.length > 0) {
       return this.statements[0].getFirstStatement();
@@ -129,6 +133,10 @@ export class ExpressionIdentifier extends Expression {
   constructor(id, where = null) {
     super(Precedence.Atom, where);
     this.id = id;
+  }
+
+  isSimplified() {
+    return false;
   }
 
   evaluatorify(component, props, isParenthesized) {
@@ -190,6 +198,10 @@ class ExpressionUnaryOperator extends Expression {
     this.a = a;
     this.operator = operator;
     this.a.parent = this;
+  }
+
+  isSimplified() {
+    return false;
   }
 
   evaluatorify(component, props, isParenthesized) {
@@ -268,6 +280,10 @@ class ExpressionBinaryOperator extends Expression {
     this.operator = operator;
     this.a.parent = this;
     this.b.parent = this;
+  }
+
+  isSimplified() {
+    return false;
   }
 
   evaluatorify(component, props, isParenthesized) {
@@ -353,6 +369,10 @@ class ExpressionBuiltin extends Expression {
     }
   }
 
+  isSimplified() {
+    return false;
+  }
+
   get nextNonterminal() {
     for (let operand of this.operands) {
       let node = operand.nextNonterminal;
@@ -435,6 +455,10 @@ export class ExpressionIf extends Expression {
       thenBody.parent = this;
     }
     this.elseBlock.parent = this;
+  }
+
+  isSimplified() {
+    return false;
   }
 
   getFirstStatement() {
@@ -534,12 +558,30 @@ export class ExpressionSign extends ExpressionBuiltin {
 
 // --------------------------------------------------------------------------- 
 
+export class ExpressionPrint extends ExpressionBuiltin {
+  constructor(operands, where) {
+    super('print', operands, where);
+  }
+
+  evaluate(env) {
+    const values = this.operands.map(operand => operand.evaluate(env).value).join(' ');
+    console.log(values);
+    return new ExpressionUnit();
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
 export class ExpressionAssignment extends Expression {
   constructor(identifier, value, where) {
     super(Precedence.Assignment, where);
     this.identifier = identifier;
     this.value = value;
     this.value.parent = this;
+  }
+
+  isSimplified() {
+    return false;
   }
 
   evaluatorify(component, props, isParenthesized) {
@@ -972,6 +1014,10 @@ export class ExpressionLiteral extends Expression {
     return this;
   }
 
+  isSimplified() {
+    return true;
+  }
+
   equals(that) {
     return this.constructor === that.constructor && this.value === that.value;
   }
@@ -1006,9 +1052,43 @@ export class ExpressionBoolean extends ExpressionLiteral {
 
 // --------------------------------------------------------------------------- 
 
+export class ExpressionUnit extends Expression {
+  constructor(where) {
+    super(Precedence.Atom, where);
+  }
+
+  clone() {
+    return new this.constructor(this.where);
+  }
+
+  evaluate(env) {
+    return this;
+  }
+
+  isSimplified() {
+    return true;
+  }
+
+  equals(that) {
+    return this.constructor === that.constructor;
+  }
+
+  evaluatorify(component, props, isParenthesized) {
+    return null;
+  }
+
+  programify(component, props, isParenthesized, isSelectable, indentation) {
+    return null;
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
 export function parseLiteral(expression) {
   if (expression.match(/^-?\d+$/)) {
     return new ExpressionInteger(parseInt(expression));
+  } else if (expression.match(/^$/)) {
+    return new ExpressionUnit();
   } else if (expression.match(/^-?(\d+\.\d*|\d*.\d+)$/)) {
     return new ExpressionReal(parseFloat(expression));
   } else if (expression.match(/^true$/)) {
