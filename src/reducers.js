@@ -86,14 +86,24 @@ export default function reducer(state = initialState, action) {
       };
     case Action.LoadProgram:
       let astStepper = new TreeStepper(action.payload);
-      return {
-        ...state,
-        mode: Mode.SelectingStatement,
-        message: 'The program has been loaded. What happens next?',
-        program: action.payload,
-        astStepper: astStepper,
-        activeStatement: astStepper.next(new ExpressionUnit()),
-      };
+
+      let nextStatement = astStepper.next(new ExpressionUnit());
+      if (nextStatement) {
+        return {
+          ...state,
+          mode: Mode.SelectingStatement,
+          message: 'The program has been loaded. What happens next?',
+          program: action.payload,
+          astStepper: astStepper,
+          activeStatement: nextStatement,
+        };
+      } else {
+        return {
+          ...state,
+          message: 'This program doesn\'t have anything in it!',
+          mode: Mode.Celebrating,
+        };
+      }
     case Action.EditInput:
       return {
         ...state,
@@ -197,14 +207,36 @@ export default function reducer(state = initialState, action) {
       };
 
     case Action.SelectRightStatement:
-      return {
-        ...state,
-        activeStatement: action.payload,
-        expression: action.payload.clone(),
-        message: 'Let\'s evaluate.',
-        isBadSelection: false,
-        mode: Mode.SelectingSubexpression,
-      };
+      let expression = action.payload;
+
+      if (expression.isSimplified()) {
+        let nextStatement = state.astStepper.next(new ExpressionUnit());
+        if (nextStatement) {
+          return {
+            ...state,
+            activeStatement: nextStatement ? nextStatement : state.activeStatement,
+            message: 'What\'s the next statement?',
+            isBadSelection: false,
+            mode: Mode.SelectingStatement,
+          };
+        } else {
+          return {
+            ...state,
+            activeStatement: null,
+            message: 'You did did did it!',
+            isBadSelection: false,
+            mode: Mode.Celebrating,
+          };
+        }
+      } else {
+        return {
+          ...state,
+          expression: expression.clone(),
+          message: 'Let\'s evaluate.',
+          isBadSelection: false,
+          mode: Mode.SelectingSubexpression,
+        };
+      }
 
     case Action.SelectWrongStatement:
       return {

@@ -21,19 +21,21 @@ import {
 
 class App extends React.Component {
   componentDidMount() {
-    const tokens = lex(`print(5 + 6)
-if a > 5
-  if a > 2
-    !true
-    3 + 2
-    print(max(5, 3))
-  else
-    print("foo")
-  7 * 8
-else
-  9 / 3
-9 + 2
-a = 7 << 1`);
+    const tokens = lex(``);
+    // const tokens = lex(`print(5 + 6)
+// 0
+// if a > 5
+  // if a > 2
+    // !true
+    // 3 + 2
+    // print(max(5, 3))
+  // else
+    // print("foo")
+  // 7 * 8
+// else
+  // 9 / 3
+// 9 + 2
+// a = 7 << 1`);
     const ast = parse(tokens);
 
     // let stepper = new TreeStepper(ast);
