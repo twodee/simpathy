@@ -58,9 +58,9 @@
   display: inline-block;
 }
 
-.binary-infix-operator {
-  margin: 0 15px;
-}
+/* .binary-infix-operator { */
+  /* margin: 0 15px; */
+/* } */
 
 .literal {
   color: red;
@@ -175,6 +175,6 @@
   width: 100%;
 }
 
-.indentation {
+.space {
   white-space: pre;
 }

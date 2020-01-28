@@ -360,7 +360,7 @@ class ExpressionUnaryOperator extends Expression {
 
     return (
       <>
-        <span className="indentation">{indentation}</span>
+        <span className="space">{indentation}</span>
         {element}
       </>
     );
@@ -405,7 +405,9 @@ class ExpressionBinaryOperator extends Expression {
       <span className={`subexpression ${props.mode === Mode.EvaluatingSubexpression && props.activeSubexpression === this ? 'active' : ''}`}>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
         {this.a.evaluatorify(component, props, this.isLeftAssociative ? this.precedence > this.a.precedence : this.precedence >= this.a.precedence)}
+        <span className="space">{' '}</span>
         {operatorElement}
+        <span className="space">{' '}</span>
         {this.b.evaluatorify(component, props, this.isLeftAssociative ? this.precedence >= this.b.precedence : this.precedence > this.b.precedence)}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
         {this.evaluatePopup(component, props)}
@@ -446,7 +448,9 @@ class ExpressionBinaryOperator extends Expression {
       <>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
         {this.a.programify(component, props, this.isLeftAssociative ? this.precedence > this.a.precedence : this.precedence >= this.a.precedence, false, '')}
+        <span className="space">{' '}</span>
         <span className="binary-infix-operator expression-piece">{this.operator}</span>
+        <span className="space">{' '}</span>
         {this.b.programify(component, props, this.isLeftAssociative ? this.precedence >= this.b.precedence : this.precedence > this.b.precedence, false, '')}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
       </>
@@ -454,7 +458,7 @@ class ExpressionBinaryOperator extends Expression {
 
     return (
       <>
-        <span className="indentation">{indentation}</span>
+        <span className="space">{indentation}</span>
         {element}
       </>
     );
@@ -544,7 +548,7 @@ class ExpressionBuiltin extends Expression {
 
     return (
       <>
-        <span className="indentation">{indentation}</span>
+        <span className="space">{indentation}</span>
         {element}
       </>
     );
@@ -603,11 +607,11 @@ export class ExpressionIf extends Expression {
   programify(component, props, isParenthesized, isSelectable, indentation) {
     return (
       <span>
-        <span className="indentation">{indentation}</span>
+        <span className="space">{indentation}</span>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
         if ({this.conditions[0].programify(component, props, false, true, '')})
           {this.thenBlocks[0].programify(component, props, false, false, indentation + '  ')}
-        <span className="indentation">{indentation}</span>
+        <span className="space">{indentation}</span>
         else
           {this.elseBlock.programify(component, props, false, false, indentation + '  ')}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
@@ -723,7 +727,9 @@ export class ExpressionAssignment extends Expression {
       <span className={`subexpression ${props.mode === Mode.EvaluatingSubexpression && props.activeSubexpression === this ? 'active' : ''}`}>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
         {this.identifier.source}
+        <span className="space">{' '}</span>
         {operatorElement}
+        <span className="space">{' '}</span>
         {this.value.evaluatorify(component, props, this.precedence > this.value.precedence)}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
         {this.evaluatePopup(component, props)}
@@ -761,7 +767,9 @@ export class ExpressionAssignment extends Expression {
       <>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
         {this.identifier.source}
+        <span className="space">{' '}</span>
         <span className="binary-infix-operator expression-piece">=</span>
+        <span className="space">{' '}</span>
         {this.value.programify(component, props, this.precedence > this.value.precedence, false, '')}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
       </>
@@ -769,7 +777,7 @@ export class ExpressionAssignment extends Expression {
 
     return (
       <>
-        <span className="indentation">{indentation}</span>
+        <span className="space">{indentation}</span>
         {element}
       </>
     );
@@ -1154,7 +1162,7 @@ export class ExpressionLiteral extends Expression {
     const element = React.createElement('span', attributes, this.value.toString());
     return (
       <>
-        <span className="indentation">{indentation}</span>
+        <span className="space">{indentation}</span>
         {element}
       </>
     );
