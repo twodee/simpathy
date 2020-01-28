@@ -123,7 +123,7 @@
   margin: 10px;
   padding: 5px;
   display: grid;
-  grid-template-columns: 7em 7em auto 10em 1fr;
+  grid-template-columns: 7em 7em auto 10em 1fr auto;
   border-radius: 5px;
   box-shadow: rgba(0,0,0,0.2) 0px 2px 3px, inset rgba(0,0,0,0.2) 0px -1px 2px;
   background-color: white;
@@ -150,6 +150,16 @@
 
 .variable-history-cell {
   color: darkgray;
+}
+
+.close-cell {
+  color: red;
+  cursor: pointer;
+}
+
+.close-cell:hover {
+  transform: scale(1.2);
+  text-shadow: 0 0 2px;
 }
 
 .old {

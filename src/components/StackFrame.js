@@ -70,9 +70,10 @@ class StackFrame extends React.Component {
             return (
               <React.Fragment key={variable.name}>
                 <div className="code cell variable-name-cell">{variable.name}</div>
-                <div className={`cell arrow-cell cell-in-row-${i}`}>&rarr;</div>
+                <div className={`cell arrow-cell`}>&rarr;</div>
                 <div className="code cell variable-value-cell">{element}</div>
                 <div className="code cell variable-history-cell">{variable.history.map((old, i) => <span key={`value-${variable.history.length - 1 - i}`} className="old">{old.value}</span>)}</div>
+                {i === 0 && <div className={`cell close-cell`}>&#x2716;</div>}
               </React.Fragment>
             );
           })

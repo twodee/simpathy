@@ -7,6 +7,88 @@ import {
 
 // --------------------------------------------------------------------------- 
 
+export class TreeStepper {
+  constructor(tree) {
+    this.tree = tree;
+    this.stack = [this.tree.stepper()];
+  }
+
+  next(bequest) {
+    while (this.stack.length > 0) {
+      let stepper = this.stack[this.stack.length - 1];
+      let result = stepper.next(bequest);
+      if (result === null) {
+        this.stack.pop();
+      } else if (result instanceof Stepper) {
+        this.stack.push(result);
+      } else {
+        return result;
+      }
+    }
+
+    return null;
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+class Stepper {
+  constructor(expression) {
+    this.expression = expression;
+    this.i = -1;
+  }
+
+  next(bequest) {
+    this.i += 1;
+  }
+}
+
+class ExpressionStepper extends Stepper {
+  next(bequest) {
+    super.next(bequest);
+    if (this.i === 0) {
+      return this.expression;
+    } else {
+      return null;
+    }
+  }
+}
+
+class BlockStepper extends Stepper {
+  next(bequest) {
+    super.next(bequest);
+    if (this.i < this.expression.statements.length) {
+      return this.expression.statements[this.i].stepper();
+    } else {
+      return null;
+    }
+  }
+}
+
+class IfStepper extends Stepper {
+  next(bequest) {
+    super.next(bequest);
+    // 0 -> condition 0 always
+    // 1 -> then 0 if bequest is true, condition 1 if bequest is false
+    // 2 -> then 1 if bequest is true, condition 2 if bequest is false
+    // i -> then i - 1 if bequest is true, condition i or else if bequest is false
+
+    if (this.i === 0) {
+      return this.expression.conditions[0].stepper();
+    } else if (bequest.value && this.i <= this.expression.thenBlocks.length) {
+      return this.expression.thenBlocks[this.i - 1].stepper();
+    } else if (!bequest.value && this.i < this.expression.conditions.length) {
+      return this.expression.conditions[this.i].stepper();
+    } else if (!bequest.value && this.i === this.expression.conditions.length) {
+      return this.expression.elseBlock.stepper();
+    } else {
+      return null;
+    }
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
 class Expression {
   constructor(precedence, where = null) {
     this.precedence = precedence;
@@ -15,6 +97,10 @@ class Expression {
 
   getFirstStatement() {
     return this;
+  }
+  
+  stepper() {
+    return new ExpressionStepper(this);
   }
 
   getNextStatement(value, afterChild = null) {
@@ -116,6 +202,10 @@ export class ExpressionBlock extends Expression {
     } else {
       return super.getNextStatement();
     }
+  }
+  
+  stepper() {
+    return new BlockStepper(this);
   }
 
   programify(component, props, isParenthesized, isSelectable, indentation) {
@@ -259,12 +349,19 @@ class ExpressionUnaryOperator extends Expression {
       this.addSelectable(attributes, props, props.activeStatement, props.program, props.expression);
     }
 
-    return React.createElement('span', attributes,
+    const element = React.createElement('span', attributes,
       <>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
         <span className="unary-prefix-operator expression-piece">{this.operator}</span>
         {this.a.programify(component, props, this.precedence > this.a.precedence, false, '')}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
+      </>
+    );
+
+    return (
+      <>
+        <span className="indentation">{indentation}</span>
+        {element}
       </>
     );
   }
@@ -345,13 +442,20 @@ class ExpressionBinaryOperator extends Expression {
       this.addSelectable(attributes, props, props.activeStatement, props.program, props.expression);
     }
 
-    return React.createElement('span', attributes,
+    const element = React.createElement('span', attributes,
       <>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
         {this.a.programify(component, props, this.isLeftAssociative ? this.precedence > this.a.precedence : this.precedence >= this.a.precedence, false, '')}
         <span className="binary-infix-operator expression-piece">{this.operator}</span>
         {this.b.programify(component, props, this.isLeftAssociative ? this.precedence >= this.b.precedence : this.precedence > this.b.precedence, false, '')}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
+      </>
+    );
+
+    return (
+      <>
+        <span className="indentation">{indentation}</span>
+        {element}
       </>
     );
   }
@@ -423,7 +527,7 @@ class ExpressionBuiltin extends Expression {
       this.addSelectable(attributes, props, props.activeStatement, props.program, props.expression);
     }
 
-    return React.createElement('span', attributes,
+    const element = React.createElement('span', attributes,
       <>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
         {this.name}({
@@ -436,7 +540,14 @@ class ExpressionBuiltin extends Expression {
         })
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
       </>
-    )
+    );
+
+    return (
+      <>
+        <span className="indentation">{indentation}</span>
+        {element}
+      </>
+    );
   }
 }
 
@@ -459,6 +570,10 @@ export class ExpressionIf extends Expression {
 
   isSimplified() {
     return false;
+  }
+  
+  stepper() {
+    return new IfStepper(this);
   }
 
   getFirstStatement() {
@@ -488,9 +603,11 @@ export class ExpressionIf extends Expression {
   programify(component, props, isParenthesized, isSelectable, indentation) {
     return (
       <span>
+        <span className="indentation">{indentation}</span>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
         if ({this.conditions[0].programify(component, props, false, true, '')})
           {this.thenBlocks[0].programify(component, props, false, false, indentation + '  ')}
+        <span className="indentation">{indentation}</span>
         else
           {this.elseBlock.programify(component, props, false, false, indentation + '  ')}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
@@ -1034,7 +1151,13 @@ export class ExpressionLiteral extends Expression {
       this.addSelectable(attributes, props, props.activeStatement, props.program, props.expression);
     }
 
-    return React.createElement('span', attributes, this.value.toString());
+    const element = React.createElement('span', attributes, this.value.toString());
+    return (
+      <>
+        <span className="indentation">{indentation}</span>
+        {element}
+      </>
+    );
   }
 }
 
