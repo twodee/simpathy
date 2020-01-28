@@ -51,9 +51,9 @@ const mapDispatchToProps = dispatch => {
         // console.log('next:', activeElement.getNextStatement(currentValue));
       // }
       
-      if (mode === Mode.SelectingStatement &&
-          ((activeElement === null && clickedElement === program.getFirstStatement()) ||
-           (activeElement !== null && activeElement.getNextStatement(currentValue) === clickedElement))) {
+      if (mode === Mode.SelectingStatement && activeElement === clickedElement) {
+          // ((activeElement === null && clickedElement === program.getFirstStatement()) ||
+           // (activeElement !== null && activeElement === clickedElement))) {
         dispatch(selectRightStatement(clickedElement));
       } else {
         dispatch(selectWrongStatement(clickedElement));

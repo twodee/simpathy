@@ -14,10 +14,10 @@ import {
   loadProgram,
 } from './actions';
 
-import {
-  ExpressionBoolean,
-  TreeStepper,
-} from './ast';
+// import {
+  // ExpressionBoolean,
+  // TreeStepper,
+// } from './ast';
 
 class App extends React.Component {
   componentDidMount() {
@@ -25,7 +25,7 @@ class App extends React.Component {
 if a > 5
   if a > 2
     !true
-    3
+    3 + 2
     print(max(5, 3))
   else
     print("foo")
@@ -36,13 +36,13 @@ else
 a = 7 << 1`);
     const ast = parse(tokens);
 
-    let stepper = new TreeStepper(ast);
+    // let stepper = new TreeStepper(ast);
     
-    let next = stepper.next(new ExpressionBoolean(true));
-    while (next) {
-      console.log(next);
-      next = stepper.next(new ExpressionBoolean(true));
-    }
+    // let next = stepper.next(new ExpressionBoolean(true));
+    // while (next) {
+      // console.log(next);
+      // next = stepper.next(new ExpressionBoolean(true));
+    // }
     
     // console.log("stepper.next(0):", stepper.next(0));
     // console.log("stepper.next(0):", stepper.next(0));

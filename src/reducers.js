@@ -5,6 +5,8 @@ import {
   ExpressionInteger,
   // ExpressionReal,
   ExpressionString,
+  ExpressionUnit,
+  TreeStepper,
 } from './ast';
 
 import {
@@ -83,11 +85,14 @@ export default function reducer(state = initialState, action) {
         expression: action.payload,
       };
     case Action.LoadProgram:
+      let astStepper = new TreeStepper(action.payload);
       return {
         ...state,
         mode: Mode.SelectingStatement,
         message: 'The program has been loaded. What happens next?',
         program: action.payload,
+        astStepper: astStepper,
+        activeStatement: astStepper.next(new ExpressionUnit()),
       };
     case Action.EditInput:
       return {
@@ -123,10 +128,15 @@ export default function reducer(state = initialState, action) {
 
     case Action.EnterRightSubexpressionValue: {
       const simplifiedExpression = state.expression.simplify(state.activeSubexpression, action.payload);
+
+      let nextStatement = null;
+      if (simplifiedExpression.isSimplified()) {
+        nextStatement = state.astStepper.next(simplifiedExpression);
+      }
      
       let mode;
       let message;
-      if (simplifiedExpression.isSimplified() && state.activeStatement.getNextStatement(simplifiedExpression) === null) {
+      if (simplifiedExpression.isSimplified() && nextStatement === null) {
         mode = Mode.Celebrating;
         message = "You are all done!";
       } else if (simplifiedExpression.isSimplified()) {
@@ -139,6 +149,7 @@ export default function reducer(state = initialState, action) {
       
       return {
         ...state,
+        activeStatement: nextStatement ? nextStatement : state.activeStatement,
         isBadInput: false,
         activeSubexpression: null,
         mode: mode,
@@ -208,9 +219,14 @@ export default function reducer(state = initialState, action) {
       const topFrame = state.frames[0];
       const simplifiedExpression = state.expression.simplify(state.activeSubexpression, state.activeSubexpression.value);
 
+      let nextStatement = null;
+      if (simplifiedExpression.isSimplified()) {
+        nextStatement = state.astStepper.next(simplifiedExpression);
+      }
+
       let mode;
       let message;
-      if (simplifiedExpression.isSimplified() && state.activeStatement.getNextStatement(simplifiedExpression) === null) {
+      if (simplifiedExpression.isSimplified() && nextStatement === null) {
         mode = Mode.Celebrating;
         message = "You are all done!";
       } else if (simplifiedExpression.isSimplified()) {
@@ -224,6 +240,7 @@ export default function reducer(state = initialState, action) {
       return {
         ...state,
         isBadInput: false,
+        activeStatement: nextStatement ? nextStatement : state.activeStatement,
         currentInput: '',
         message: message,
         mode: mode,
