@@ -1,12 +1,9 @@
 import React from 'react';
-import { connect } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 
 import {
-  hover,
   selectRightStatement,
   selectWrongStatement,
-  stopShaking,
-  unhover,
 } from '../actions';
 
 import {
@@ -15,53 +12,34 @@ import {
 
 // --------------------------------------------------------------------------- 
 
-class Program extends React.Component {
-  render() {
-    return (
-      <div id="program" className="code">
-        {this.props.program && this.props.program.programify(this, this.props, false, false, '')}
-      </div>
-    );
-  }
-}
-
-// --------------------------------------------------------------------------- 
-
-const mapStateToProps = state => {
-  return {
-    hoveredElement: state.hoveredElement,
-    clickedElement: state.clickedElement,
-    program: state.program,
-    mode: state.mode,
-    activeStatement: state.activeStatement,
-    isBadSelection: state.isBadSelection,
-    expression: state.expression,
+const Program = () => {
+  const state = {
+    hoveredElement: useSelector(state => state.hoveredElement),
+    clickedElement: useSelector(state => state.clickedElement),
+    program: useSelector(state => state.program),
+    mode: useSelector(state => state.mode),
+    activeStatement: useSelector(state => state.activeStatement),
+    isBadSelection: useSelector(state => state.isBadSelection),
+    expression: useSelector(state => state.expression),
   };
-};
 
-const mapDispatchToProps = dispatch => {
-  return {
-    onHover: (event, element) => dispatch(hover(element)),
-    onUnhover: (event, element) => dispatch(unhover(element)),
-    onStopShaking: () => dispatch(stopShaking()),
-    onClick: (mode, clickedElement, activeElement, program, currentValue) => {
-      // if (mode === Mode.SelectingStatement && activeElement !== null) {
-        // console.log("activeElement:", activeElement);
-        // console.log("currentValue:", currentValue);
-        // console.log('next:', activeElement.getNextStatement(currentValue));
-      // }
-      
-      if (mode === Mode.SelectingStatement && activeElement === clickedElement) {
-          // ((activeElement === null && clickedElement === program.getFirstStatement()) ||
-           // (activeElement !== null && activeElement === clickedElement))) {
+  const dispatch = useDispatch();
+
+  const callbacks = {
+    onClick: (clickedElement, activeElement, program, currentValue) => {
+      if (state.mode === Mode.SelectingStatement && activeElement === clickedElement) {
         dispatch(selectRightStatement(clickedElement));
       } else {
         dispatch(selectWrongStatement(clickedElement));
       }
     },
   };
-};
 
-Program = connect(mapStateToProps, mapDispatchToProps)(Program);
+  return (
+    <div id="program" className="code">
+      {state.program && state.program.programify(state, dispatch, callbacks, false, false, '')}
+    </div>
+  );
+};
 
 export default Program;

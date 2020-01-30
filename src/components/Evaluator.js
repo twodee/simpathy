@@ -1,72 +1,51 @@
 import React from 'react';
-import { connect } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 
 import {
-  editInput,
-  hover,
   enterRightSubexpressionValue,
   enterWrongSubexpressionValue,
   selectRightSubexpression,
   selectWrongSubexpression,
-  stopShaking,
-  unhover,
 } from '../actions';
 
 import {
   parseLiteral,
 } from '../ast';
 
+import {
+  Mode,
+} from '../constants';
+
 // --------------------------------------------------------------------------- 
 
-class Evaluator extends React.Component {
-  render() {
-    return (
-      <div id="evaluator">
-        <div id="expression" className="code">
-          {this.props.expression && this.props.expression.evaluatorify(this, this.props)}
-        </div>
-      </div>
-    );
-  }
-}
-
-const mapStateToProps = state => {
-  return {
-    expression: state.expression,
-    hoveredElement: state.hoveredElement,
-    clickedElement: state.clickedElement,
-    activeSubexpression: state.activeSubexpression,
-    isBadInput: state.isBadInput,
-    isBadSelection: state.isBadSelection,
-    mode: state.mode,
-    currentInput: state.currentInput,
-    env: state.frames[0],
+const Evaluator = () => {
+  const state = {
+    hoveredElement: useSelector(state => state.hoveredElement),
+    clickedElement: useSelector(state => state.clickedElement),
+    program: useSelector(state => state.program),
+    mode: useSelector(state => state.mode),
+    activeSubexpression: useSelector(state => state.activeSubexpression),
+    isBadSelection: useSelector(state => state.isBadSelection),
+    isBadInput: useSelector(state => state.isBadInput),
+    expression: useSelector(state => state.expression),
+    currentInput: useSelector(state => state.currentInput),
+    env: useSelector(state => state.frames[0]),
   };
-};
 
-const mapDispatchToProps = dispatch => {
-  return {
-    onHover: (e, expression) => {
-      e.stopPropagation();
-      dispatch(hover(expression));
-    },
-    onUnhover: (e, expression) => {
-      e.stopPropagation();
-      dispatch(unhover(expression));
-    },
-    onClick: (mode, clickedElement, expression) => {
-      if (expression.nextNonterminal === clickedElement) {
+  const dispatch = useDispatch();
+
+  const callbacks = {
+    onClick: clickedElement => {
+      if (state.mode === Mode.SelectingSubexpression && state.expression.nextNonterminal === clickedElement) {
         dispatch(selectRightSubexpression(clickedElement));
       } else {
         dispatch(selectWrongSubexpression(clickedElement));
       }
     },
-    onStopShaking: () => dispatch(stopShaking()),
-    onEditInput: value => dispatch(editInput(value)),
-    onKeyDown: (e, env, expression, value) => {
+    onKeyDown: e => {
       if (e.key === 'Enter') {
-        const expected = expression.evaluate(env);
-        let actual = parseLiteral(value);
+        const expected = state.activeSubexpression.evaluate(state.env);
+        let actual = parseLiteral(state.currentInput);
 
         if (expected.equals(actual)) {
           dispatch(enterRightSubexpressionValue(actual));
@@ -76,8 +55,14 @@ const mapDispatchToProps = dispatch => {
       }
     }
   };
-};
 
-Evaluator = connect(mapStateToProps, mapDispatchToProps)(Evaluator);
+  return (
+    <div id="evaluator">
+      <div id="expression" className="code">
+        {state.expression && state.expression.evaluatorify(state, dispatch, callbacks)}
+      </div>
+    </div>
+  );
+};
 
 export default Evaluator;
