@@ -36,7 +36,8 @@ const StackFrame = props => {
 
   return (
     <div className="stack-frame">
-      <div className="code cell function-name-cell cell-in-row-0">{frame.name}</div>
+      <div className="code cell function-name-cell">{frame.name}</div>
+
       {
         frame.variables.map((variable, i) => {
           let element;
@@ -87,13 +88,19 @@ const StackFrame = props => {
             element = React.createElement('span', attributes, variable.current.value.toString());
           }
 
+          let nameElement;
+          if (variable.name === '') {
+            nameElement = <input type="text" className="variable-name-input" />;
+          } else {
+            nameElement = variable.name;
+          }
+
           return (
             <React.Fragment key={variable.name}>
-              <div className="code cell variable-name-cell">{variable.name}</div>
+              <div className="code cell variable-name-cell">{nameElement}</div>
               <div className={`cell arrow-cell`}>&rarr;</div>
               <div className="code cell variable-value-cell">{element}</div>
               <div className="code cell variable-history-cell">{variable.history.map((old, i) => <span key={`value-${variable.history.length - 1 - i}`} className="old">{old.value}</span>)}</div>
-              {i === 0 && <div className={`cell close-cell`}>&#x2716;</div>}
             </React.Fragment>
           );
         })

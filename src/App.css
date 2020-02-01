@@ -117,13 +117,35 @@
   background-color: rgb(85%, 85%, 85%);
   grid-row: 3 / span 1;
   grid-column: 2 / span 1;
+  overflow: auto;
+}
+
+button {
+  background: none;
+  border: none;
+  font-family: sans-serif;
+  color: blue;
+  padding: 0;
+  margin: 0;
+  outline: none;
+}
+
+button:hover {
+  text-decoration: underline;
+}
+
+#memory-tools {
+  text-align: right;
+  margin-right: 10px;
+  margin-bottom: 3px;
 }
 
 .stack-frame {
-  margin: 10px;
+  margin: 0 10px 10px 10px;
   padding: 5px;
   display: grid;
-  grid-template-columns: 7em 7em auto 10em 1fr auto;
+  grid-template-columns: 7em 7em auto 10em 1fr;
+  grid-auto-flow: dense;
   border-radius: 5px;
   box-shadow: rgba(0,0,0,0.2) 0px 2px 3px, inset rgba(0,0,0,0.2) 0px -1px 2px;
   background-color: white;
@@ -139,9 +161,18 @@
   grid-row: 1;
 }
 
+.add-variable-cell {
+  grid-column: 1;
+  grid-row: 2 / span 2;
+}
+
 .variable-name-cell {
   grid-column: 2;
   text-align: right;
+}
+
+.arrow-cell {
+  grid-column: 3;
 }
 
 .variable-value-cell {
@@ -155,11 +186,17 @@
 .close-cell {
   color: red;
   cursor: pointer;
+  grid-column: 6;
 }
 
 .close-cell:hover {
   transform: scale(1.2);
   text-shadow: 0 0 2px;
+}
+
+.variable-name-input {
+  display: inline-block;
+  width: 100%;
 }
 
 .old {

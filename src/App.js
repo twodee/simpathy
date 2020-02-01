@@ -22,7 +22,8 @@ import {
 class App extends React.Component {
   componentDidMount() {
     // const tokens = lex(``);
-    const tokens = lex(`print(5 + 6)
+    const tokens = lex(`d = 3
+print(5 + 6)
 0
 if a > 5
   if a > 2

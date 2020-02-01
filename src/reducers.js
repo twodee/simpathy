@@ -37,6 +37,11 @@ const initialState = {
       name: 'main',
       variables: [
         {
+          name: 'fff',
+          current: new ExpressionString('undefined'),
+          history: [],
+        },
+        {
           name: 'a',
           current: new ExpressionInteger(6),
           history: [],
@@ -111,14 +116,38 @@ export default function reducer(state = initialState, action) {
       };
     case Action.SelectRightSubexpression:
       const isAssignment = action.payload instanceof ExpressionAssignment;
-      return {
-        ...state,
-        isBadSelection: false,
-        message: isAssignment ? 'what memory cell?' : 'what next?',
-        activeSubexpression: action.payload,
-        hoveredElement: null,
-        mode: isAssignment ? Mode.SelectingMemoryValue : Mode.EvaluatingSubexpression,
-      };
+
+      if (isAssignment) {
+        const hasVariable = state.frames[state.frames.length - 1].variables.some(variable => variable.name === action.payload.identifier.source);
+
+        if (hasVariable) {
+          return {
+            ...state,
+            isBadSelection: false,
+            message: 'what memory cell?',
+            activeSubexpression: action.payload,
+            hoveredElement: null,
+            mode: Mode.SelectingMemoryValue,
+          };
+        } else {
+          return {
+            ...state,
+            isBadSelection: false,
+            message: 'what happens next?',
+            hoveredElement: null,
+            mode: Mode.AddingNewVariable,
+          };
+        }
+      } else {
+        return {
+          ...state,
+          isBadSelection: false,
+          message: 'what next?',
+          activeSubexpression: action.payload,
+          hoveredElement: null,
+          mode: Mode.EvaluatingSubexpression,
+        };
+      }
     case Action.SelectWrongSubexpression:
       return {
         ...state,
@@ -134,6 +163,7 @@ export default function reducer(state = initialState, action) {
         clickedElement: null,
         isBadSelection: false,
         isBadInput: false,
+        isBadAddNewVariable: false,
       };
 
     case Action.EnterRightSubexpressionValue: {
@@ -299,6 +329,30 @@ export default function reducer(state = initialState, action) {
         ...state,
         message: "That's not the right value.",
         isBadInput: true,
+      };
+
+    case Action.AddNewVariableRightly:
+      const newVariable = {
+        name: '',
+        current: new ExpressionString('undefined'),
+        history: [],
+      };
+
+      const topFrame = state.frames[state.frames.length - 1];
+
+      return {
+        ...state,
+        isBadAddNewVariable: false,
+        frames: [...state.frames.slice(0, state.frames.length - 1), {
+          name: topFrame.name,
+          variables: [newVariable, ...topFrame.variables]
+        }],
+      };
+
+    case Action.AddNewVariableWrongly:
+      return {
+        ...state,
+        isBadAddNewVariable: true,
       };
 
     default:

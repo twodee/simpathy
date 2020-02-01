@@ -4,6 +4,8 @@ export const Action = Object.freeze({
   LoadProgram: 'LoadProgram',
   EditInput: 'EditInput',
   StopShaking: 'StopShaking',
+  AddNewVariableRightly: 'AddNewVariableRightly',
+  AddNewVariableWrongly: 'AddNewVariableWrongly',
 
   SelectRightSubexpression: 'SelectRightSubexpression',
   SelectWrongSubexpression: 'SelectWrongSubexpression',
@@ -167,6 +169,14 @@ export function selectWrongStatement(piece) {
     payload: piece,
   };
 }
+
+export const addNewVariableRightly = () => ({
+  type: Action.AddNewVariableRightly,
+});
+
+export const addNewVariableWrongly = () => ({
+  type: Action.AddNewVariableWrongly,
+});
 
 // --------------------------------------------------------------------------- 
 
