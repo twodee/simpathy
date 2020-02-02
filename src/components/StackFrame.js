@@ -5,6 +5,8 @@ import {
   editInput,
   enterRightMemoryValue,
   enterWrongMemoryValue,
+  enterRightVariableName,
+  enterWrongVariableName,
   hover,
   selectRightMemoryValue,
   selectWrongMemoryValue,
@@ -32,7 +34,10 @@ const StackFrame = props => {
   const mode = useSelector(state => state.mode);
   const currentInput = useSelector(state => state.currentInput);
 
+  const isTopFrame = props.index === frames.length - 1;
   const frame = frames[props.index];
+
+  console.log("activeSubexpression:", activeSubexpression);
 
   return (
     <div className="stack-frame">
@@ -41,7 +46,7 @@ const StackFrame = props => {
       {
         frame.variables.map((variable, i) => {
           let element;
-          if (mode === Mode.EnteringMemoryValue && props.index === 0 && activeSubexpression.identifier.source === variable.name) {
+          if (isTopFrame && mode === Mode.EnteringMemoryValue && activeSubexpression.identifier.source === variable.name) {
             element = <input
               type="text"
               autoFocus
@@ -69,7 +74,7 @@ const StackFrame = props => {
             attributes.onMouseOver = event => dispatch(hover(event, variable));
             attributes.onMouseOut = event => dispatch(unhover(event, variable));
             attributes.onClick = () => {
-              if (mode === Mode.SelectingMemoryValue && props.index === 0 && activeSubexpression.identifier.source === variable.name) {
+              if (isTopFrame && mode === Mode.SelectingMemoryValue && activeSubexpression.identifier.source === variable.name) {
                 dispatch(selectRightMemoryValue(variable));
               } else {
                 dispatch(selectWrongMemoryValue(variable));
@@ -89,8 +94,26 @@ const StackFrame = props => {
           }
 
           let nameElement;
-          if (variable.name === '') {
-            nameElement = <input type="text" className="variable-name-input" />;
+          if (mode === Mode.NamingNewVariable && variable.name === '') {
+            let nameAttributes = {
+              className: `variable-name-input ${isBadInput ? 'shaking' : ''}`,
+              value: currentInput,
+              autoFocus: true,
+              onAnimationEnd: () => dispatch(stopShaking()),
+              onChange: e => dispatch(editInput(e.target.value)),
+              onKeyDown: e => {
+                if (e.key === 'Enter') {
+                  const expected = activeSubexpression.identifier.source;
+                  const actual = currentInput;
+                  if (expected === actual) {
+                    dispatch(enterRightVariableName());
+                  } else {
+                    dispatch(enterWrongVariableName());
+                  }
+                }
+              },
+            };
+            nameElement = React.createElement('input', nameAttributes);
           } else {
             nameElement = variable.name;
           }

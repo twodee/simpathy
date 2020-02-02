@@ -18,6 +18,8 @@ export const Action = Object.freeze({
   EnterWrongSubexpressionValue: 'EnterWrongSubexpressionValue',
   EnterRightMemoryValue: 'EnterRightMemoryValue',
   EnterWrongMemoryValue: 'EnterWrongMemoryValue',
+  EnterRightVariableName: 'EnterRightVariableName',
+  EnterWrongVariableName: 'EnterWrongVariableName',
 });
 
 // --------------------------------------------------------------------------- 
@@ -170,13 +172,10 @@ export function selectWrongStatement(piece) {
   };
 }
 
-export const addNewVariableRightly = () => ({
-  type: Action.AddNewVariableRightly,
-});
-
-export const addNewVariableWrongly = () => ({
-  type: Action.AddNewVariableWrongly,
-});
+export const addNewVariableRightly = () => ({type: Action.AddNewVariableRightly});
+export const addNewVariableWrongly = () => ({type: Action.AddNewVariableWrongly});
+export const enterRightVariableName = () => ({type: Action.EnterRightVariableName});
+export const enterWrongVariableName = () => ({type: Action.EnterWrongVariableName});
 
 // --------------------------------------------------------------------------- 
 

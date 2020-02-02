@@ -134,6 +134,7 @@ export default function reducer(state = initialState, action) {
             ...state,
             isBadSelection: false,
             message: 'what happens next?',
+            activeSubexpression: action.payload,
             hoveredElement: null,
             mode: Mode.AddingNewVariable,
           };
@@ -278,7 +279,7 @@ export default function reducer(state = initialState, action) {
       };
 
     case Action.EnterRightMemoryValue: {
-      const topFrame = state.frames[0];
+      const topFrame = state.frames[state.frames.length - 1];
       const simplifiedExpression = state.expression.simplify(state.activeSubexpression, state.activeSubexpression.value);
 
       let nextStatement = null;
@@ -307,7 +308,7 @@ export default function reducer(state = initialState, action) {
         message: message,
         mode: mode,
         expression: simplifiedExpression,
-        frames: [{
+        frames: [...state.frames.slice(0, state.frames.length - 1), {
           name: topFrame.name,
           variables: topFrame.variables.map(variable => {
             if (variable.name === state.activeSubexpression.identifier.source) {
@@ -320,9 +321,36 @@ export default function reducer(state = initialState, action) {
               return variable;
             }
           }),
-        }].concat(state.frames.slice(1)),
+        }],
       };
     }
+
+    case Action.EnterRightVariableName: {
+      const topFrame = state.frames[state.frames.length - 1];
+      return {
+        ...state,
+        isBadInput: false,
+        currentInput: '',
+        message: 'That\'s the right name!',
+        mode: Mode.SelectingMemoryValue,
+        frames: [...state.frames.slice(0, state.frames.length - 1), {
+          name: topFrame.name,
+          variables: [{
+            name: state.activeSubexpression.identifier.source,
+            current: topFrame.variables[0].current,
+            history: topFrame.variables[0].history,
+          }, ...topFrame.variables.slice(1)],
+        }],
+      };
+    }
+
+    case Action.EnterWrongVariableName:
+      return {
+        ...state,
+        message: "That's not the right name.",
+        isBadInput: true,
+      };
+
 
     case Action.EnterWrongMemoryValue:
       return {
@@ -343,6 +371,7 @@ export default function reducer(state = initialState, action) {
       return {
         ...state,
         isBadAddNewVariable: false,
+        mode: Mode.NamingNewVariable,
         frames: [...state.frames.slice(0, state.frames.length - 1), {
           name: topFrame.name,
           variables: [newVariable, ...topFrame.variables]

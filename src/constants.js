@@ -19,4 +19,5 @@ export const Mode = Object.freeze({
   EvaluatingSubexpression: 'EvaluatingSubexpression',
   EnteringMemoryValue: 'EnteringMemoryValue',
   AddingNewVariable: 'AddingNewVariable',
+  NamingNewVariable: 'NamingNewVariable',
 });
