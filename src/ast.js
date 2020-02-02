@@ -1113,6 +1113,10 @@ export class ExpressionLiteral extends Expression {
     return this;
   }
 
+  toString() {
+    return this.value.toString();
+  }
+
   isSimplified() {
     return true;
   }
@@ -1184,6 +1188,34 @@ export class ExpressionUnit extends Expression {
 
   programify(state, dispatch, callbacks, isParenthesized, isSelectable, indentation) {
     return null;
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionUndefined extends Expression {
+  constructor(where) {
+    super(Precedence.Atom, where);
+  }
+
+  clone() {
+    return new this.constructor(this.where);
+  }
+
+  toString() {
+    return 'undefined';
+  }
+
+  evaluate(env) {
+    return this;
+  }
+
+  isSimplified() {
+    return true;
+  }
+
+  equals(that) {
+    return this.constructor === that.constructor;
   }
 }
 

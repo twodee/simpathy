@@ -6,6 +6,7 @@ import {
   // ExpressionReal,
   ExpressionString,
   ExpressionUnit,
+  ExpressionUndefined,
   TreeStepper,
 } from './ast';
 
@@ -315,7 +316,7 @@ export default function reducer(state = initialState, action) {
               return {
                 name: variable.name,
                 current: state.activeSubexpression.value,
-                history: [variable.current].concat(variable.history),
+                history: variable.current instanceof ExpressionUndefined ? variable.history : [variable.current].concat(variable.history),
               };
             } else {
               return variable;
@@ -362,7 +363,7 @@ export default function reducer(state = initialState, action) {
     case Action.AddNewVariableRightly:
       const newVariable = {
         name: '',
-        current: new ExpressionString('undefined'),
+        current: new ExpressionUndefined(),
         history: [],
       };
 

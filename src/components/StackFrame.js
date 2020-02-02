@@ -90,7 +90,7 @@ const StackFrame = props => {
               attributes.className += ' shaking';
             }
 
-            element = React.createElement('span', attributes, variable.current.value.toString());
+            element = React.createElement('span', attributes, variable.current.toString());
           }
 
           let nameElement;
