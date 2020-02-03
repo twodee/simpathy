@@ -38,6 +38,7 @@ import {
   ExpressionOr,
   ExpressionPower,
   ExpressionPrint,
+  ExpressionPrintln,
   ExpressionReal,
   ExpressionRightShift,
   ExpressionModulus,
@@ -410,6 +411,8 @@ export function parse(tokens) {
         return new ExpressionMin(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else if (nameToken.source === 'print') {
         return new ExpressionPrint(actuals, SourceLocation.span(nameToken, sourceEnd));
+      } else if (nameToken.source === 'println') {
+        return new ExpressionPrintln(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else if (nameToken.source === 'sign') {
         return new ExpressionSign(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else {

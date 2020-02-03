@@ -676,6 +676,28 @@ export class ExpressionPrint extends ExpressionBuiltin {
     console.log(values);
     return new ExpressionUnit();
   }
+
+  get output() {
+    return this.operands[0].value.toString();
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionPrintln extends ExpressionBuiltin {
+  constructor(operands, where) {
+    super('println', operands, where);
+  }
+
+  evaluate(env) {
+    const values = this.operands.map(operand => operand.evaluate(env).value).join(' ');
+    console.log(values);
+    return new ExpressionUnit();
+  }
+
+  get output() {
+    return this.operands[0].value.toString() + '\n';
+  }
 }
 
 // --------------------------------------------------------------------------- 

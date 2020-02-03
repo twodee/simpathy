@@ -5,6 +5,8 @@ import {
   ExpressionInteger,
   // ExpressionReal,
   ExpressionString,
+  ExpressionPrint,
+  ExpressionPrintln,
   ExpressionUnit,
   ExpressionUndefined,
   TreeStepper,
@@ -19,6 +21,7 @@ const initialState = {
 
   expression: null,
   program: null,
+  output: '',
 
   activeStatement: null,
   clickedElement: null,
@@ -143,6 +146,7 @@ export default function reducer(state = initialState, action) {
       } else {
         return {
           ...state,
+          output: (action.payload instanceof ExpressionPrint || action.payload instanceof ExpressionPrintln) ? state.output + action.payload.output : state.output,
           isBadSelection: false,
           message: 'what next?',
           activeSubexpression: action.payload,
@@ -150,6 +154,7 @@ export default function reducer(state = initialState, action) {
           mode: Mode.EvaluatingSubexpression,
         };
       }
+
     case Action.SelectWrongSubexpression:
       return {
         ...state,

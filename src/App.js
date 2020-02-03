@@ -7,6 +7,7 @@ import Prompter from './components/Prompter';
 import Program from './components/Program';
 import Evaluator from './components/Evaluator';
 import Memory from './components/Memory';
+import Console from './components/Console';
 import { lex } from './lexer';
 import { parse } from './parser';
 
@@ -22,7 +23,10 @@ import {
 class App extends React.Component {
   componentDidMount() {
     // const tokens = lex(``);
-    const tokens = lex(`d = 3
+    const tokens = lex(`print(62)
+println(78)
+print(54)
+d = 3
 print(5 + 6)
 0
 if a > 5
@@ -38,30 +42,25 @@ else
 9 + 2
 a = 7 << 1`);
     const ast = parse(tokens);
-
-    // let stepper = new TreeStepper(ast);
-    
-    // let next = stepper.next(new ExpressionBoolean(true));
-    // while (next) {
-      // console.log(next);
-      // next = stepper.next(new ExpressionBoolean(true));
-    // }
-    
-    // console.log("stepper.next(0):", stepper.next(0));
-    // console.log("stepper.next(0):", stepper.next(0));
-    // console.log("stepper.next(0):", stepper.next(0));
-    // console.log("stepper.next(0):", stepper.next(0));
-
     this.props.onLoadProgram(ast);
   }
 
   render() {
     return (
       <div className="App">
-        <Prompter />
-        <Program />
-        <Evaluator />
-        <Memory />
+        <div id="top-panel">
+          <Prompter />
+        </div>
+        <div id="bottom-panel">
+          <div id="left-panel">
+            <Program />
+            <Console />
+          </div>
+          <div id="right-panel">
+            <Evaluator />
+            <Memory />
+          </div>
+        </div>
       </div>
     );
   }
