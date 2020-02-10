@@ -36,8 +36,11 @@ const Program = () => {
   };
 
   return (
-    <div id="program" className="code">
-      {state.program && state.program.programify(state, dispatch, callbacks, false, false, '')}
+    <div id="program-panel">
+      <h1>Program</h1>
+      <div id="program" className="code">
+        {state.program && state.program.programify(state, dispatch, callbacks, false, false, '')}
+      </div>
     </div>
   );
 };

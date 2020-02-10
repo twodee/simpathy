@@ -57,9 +57,12 @@ const Evaluator = () => {
   };
 
   return (
-    <div id="evaluator">
-      <div id="expression" className="code">
-        {state.expression && state.expression.evaluatorify(state, dispatch, callbacks)}
+    <div id="evaluator-panel">
+      <h1>Evaluator</h1>
+      <div id="evaluator">
+        <div id="expression" className="code">
+          {state.expression && state.expression.evaluatorify(state, dispatch, callbacks)}
+        </div>
       </div>
     </div>
   );

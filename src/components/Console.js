@@ -12,7 +12,12 @@ const Console = () => {
   const output = useSelector(state => state.output);
 
   return (
-    <div id="console">{output}</div>
+    <div id="console-panel">
+      <h1>Console</h1>
+      <div id="console">
+        {output}
+      </div>
+    </div>
   );
 };
 

@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 const Prompter = () => {
   const message = useSelector(state => state.message);
   return (
-    <div id="prompter">
+    <div id="prompter-panel">
       <div id="message">{message}</div>
     </div>
   );

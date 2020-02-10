@@ -10,6 +10,7 @@
   bottom: 0;
   display: flex;
   flex-direction: column;
+  background-color: rgb(85%, 85%, 85%);
 }
 
 #top-panel {
@@ -34,13 +35,29 @@
   flex-direction: column;
 }
 
-#prompter {
+#prompter-panel {
   background-color: green;
   grid-row: 1 / span 1;
   grid-column: 1 / span 2;
   display: flex;
   align-items: center;
-  padding: 10px;
+}
+
+h1 {
+  font-weight: normal;
+  font-size: 14pt;
+  margin: 0;
+  margin-bottom: 5px;
+  font-variant: small-caps;
+  color: #888888;
+}
+
+#top-bottom-separator, #evaluator-memory-separator, #program-console-separator {
+  height: 10px;
+}
+
+#left-right-separator, #stack-heap-separator {
+  width: 10px;
 }
 
 #message {
@@ -48,30 +65,28 @@
 }
 
 #program {
-  flex: 4;
-  background-color: pink;
-  grid-row: 2 / span 2;
-  grid-column: 1 / span 1;
-  padding: 10px;
   font-size: 18pt;
   overflow: auto;
   white-space: nowrap;
 }
 
 #console {
-  flex: 1;
-  padding: 10px;
   white-space: pre;
 }
 
 #evaluator {
   flex: 1;
-  background-color: cyan;
-  grid-row: 2 / span 1;
-  grid-column: 2 / span 1;
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+#left-right-separator, #stack-heap-separator {
+  cursor: col-resize;
+}
+
+#top-bottom-separator, #program-console-separator, #evaluator-memory-separator {
+  cursor: row-resize;
 }
 
 #expression, #evaluate-box {
@@ -142,12 +157,57 @@
    40%, 60% { transform: translateX(4px); }
 }
 
-#memory {
+#memory-panel {
+  display: flex;
+  flex-direction: row;
+}
+
+#heap-panel, #stack-panel, #evaluator-panel, #program-panel, #console-panel, #prompter-panel {
+  padding: 10px;
+  box-shadow: rgba(0,0,0,0.2) 0px 2px 3px, inset rgba(0,0,0,0.2) 0px -1px 2px;
+  background-color: white;
+  margin: 0;
+}
+
+#console-panel {
+  flex: 1;
+  background-color: #FFFBE6;
+  border-top-right-radius: 5px;
+}
+
+#stack-panel {
   flex: 1;
   background-color: rgb(85%, 85%, 85%);
   grid-row: 3 / span 1;
   grid-column: 2 / span 1;
   overflow: auto;
+  border-radius: 5px 5px 0 0;
+  background-color: #E8DCD1;
+}
+
+#heap-panel {
+  flex: 1;
+  border-radius: 5px 0 0 0;
+  background-color: #E0D1E8;
+}
+
+#program-panel {
+  flex: 4;
+  grid-row: 2 / span 2;
+  grid-column: 1 / span 1;
+  border-radius: 0 5px 5px 0;
+  background-color: #DBE5FF;
+}
+
+#evaluator-panel {
+  flex: 1;
+  background-color: cyan;
+  grid-row: 2 / span 1;
+  grid-column: 2 / span 1;
+  border-radius: 5px 0 0 5px;
+  display: flex;
+  flex-direction: column;
+  background-color: #FFF3F3;
 }
 
 button {
@@ -164,7 +224,7 @@ button:hover {
   text-decoration: underline;
 }
 
-#memory-tools {
+#stack-tools {
   text-align: right;
   margin-right: 10px;
   margin-bottom: 3px;
@@ -176,9 +236,6 @@ button:hover {
   display: grid;
   grid-template-columns: 7em 7em auto 10em 1fr;
   grid-auto-flow: dense;
-  border-radius: 5px;
-  box-shadow: rgba(0,0,0,0.2) 0px 2px 3px, inset rgba(0,0,0,0.2) 0px -1px 2px;
-  background-color: white;
 }
 
 .cell {

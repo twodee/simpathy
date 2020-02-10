@@ -6,7 +6,7 @@ import './App.css';
 import Prompter from './components/Prompter';
 import Program from './components/Program';
 import Evaluator from './components/Evaluator';
-import Memory from './components/Memory';
+import Stack from './components/Stack';
 import Console from './components/Console';
 import { lex } from './lexer';
 import { parse } from './parser';
@@ -51,14 +51,24 @@ a = 7 << 1`);
         <div id="top-panel">
           <Prompter />
         </div>
+        <div id="top-bottom-separator"></div>
         <div id="bottom-panel">
           <div id="left-panel">
             <Program />
+            <div id="program-console-separator"></div>
             <Console />
           </div>
+          <div id="left-right-separator"></div>
           <div id="right-panel">
             <Evaluator />
-            <Memory />
+            <div id="evaluator-memory-separator"></div>
+            <div id="memory-panel">
+              <Stack />
+              <div id="stack-heap-separator"></div>
+              <div id="heap-panel">
+                <h1>Heap</h1>
+              </div>
+            </div>
           </div>
         </div>
       </div>

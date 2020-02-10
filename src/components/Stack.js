@@ -13,7 +13,7 @@ import {
   Mode,
 } from '../constants';
 
-const Memory = () => {
+const Stack = () => {
   const frames = useSelector(state => state.frames);
   const mode = useSelector(state => state.mode);
   const isBadAddNewVariable = useSelector(state => state.isBadAddNewVariable);
@@ -33,8 +33,9 @@ const Memory = () => {
   const addNewVariableButton = React.createElement('button', attributes, 'add variable');
 
   return (
-    <div id="memory">
-      <div id="memory-tools">
+    <div id="stack-panel">
+      <h1>Stack</h1>
+      <div id="stack-tools">
         {addNewVariableButton} &middot; <button>pop frame</button>
       </div>
       <div id="frames">
@@ -44,4 +45,4 @@ const Memory = () => {
   );
 };
 
-export default Memory;
+export default Stack;
