@@ -37,8 +37,6 @@ const StackFrame = props => {
   const isTopFrame = props.index === frames.length - 1;
   const frame = frames[props.index];
 
-  console.log("activeSubexpression:", activeSubexpression);
-
   return (
     <div className="stack-frame">
       <div className="code cell function-name-cell">{frame.name}</div>

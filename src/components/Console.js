@@ -4,9 +4,9 @@ import { useSelector } from 'react-redux';
 import {
 } from '../actions';
 
-import {
-  Mode,
-} from '../constants';
+// import {
+  // Mode,
+// } from '../constants';
 
 const Console = () => {
   const output = useSelector(state => state.output);

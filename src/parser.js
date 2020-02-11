@@ -107,6 +107,7 @@ export function parse(tokens) {
     let indentation = tokens[i];
 
     if (indentation.source.length <= indents[indents.length - 1]) {
+      console.log("i:", i);
       throw new LocatedException(indentation.where, 'I expected the indentation to increase upon entering a block.');
     }
     indents.push(indentation.source.length);
