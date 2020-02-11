@@ -34,11 +34,13 @@ const Stack = () => {
 
   return (
     <div id="stack-panel">
-      <h1>Stack</h1>
       <div id="stack-tools">
         {addNewVariableButton} &middot; <button>pop frame</button>
       </div>
-      <div id="frames">
+      <h1>
+        Stack
+      </h1>
+      <div id="stack-frames">
         { frames.map((frame, i) => <StackFrame key={`${frame.name}-${i}`} index={frames.length - 1 - i} />) }
       </div>
     </div>
