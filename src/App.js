@@ -14,24 +14,27 @@ import { lex } from './lexer';
 import { parse } from './parser';
 
 function getAst() {
-  const source = `print(62)
-println(78)
-print(54)
-d = 3
-print(5 + 6)
-0
-if a > 5
-  if a > 2
-    !true
-    3 + 2
-    print(max(5, 3))
-  else
-    print("foo")
-  7 * 8
-else
-  9 / 3
-  9 + 2
-a = 7 << 1`;
+  const source = `while a < 3
+  print(a)
+  a = a + 1`;
+  // const source = `print(62)
+// println(78)
+// print(54)
+// d = 3
+// print(5 + 6)
+// 0
+// if a > 5
+  // if a > 2
+    // !true
+    // 3 + 2
+    // print(max(5, 3))
+  // else
+    // print("foo")
+  // 7 * 8
+// else
+  // 9 / 3
+  // 9 + 2
+// a = 7 << 1`;
   const tokens = lex(source);
   const ast = parse(tokens);
   return ast;

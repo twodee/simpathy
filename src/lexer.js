@@ -112,6 +112,8 @@ export function lex(source) {
       emit(Token.T);
     } else if (tokenSoFar === 'repeat') {
       emit(Token.Repeat);
+    } else if (tokenSoFar === 'while') {
+      emit(Token.While);
     } else if (tokenSoFar === 'true') {
       emit(Token.Boolean);
     } else if (tokenSoFar === 'false') {

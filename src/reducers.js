@@ -57,7 +57,7 @@ const initialState = {
       variables: [
         {
           name: 'a',
-          current: new ExpressionString("barm"),
+          current: new ExpressionInteger(0),
           history: [],
         },
         {

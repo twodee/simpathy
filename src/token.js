@@ -49,6 +49,7 @@ let TokenTypes = Object.freeze({
   Then: 'Then',
   Through: 'Through',
   To: 'To',
+  While: 'While',
 });
 
 export class SourceLocation {

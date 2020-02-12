@@ -94,6 +94,21 @@ class IfStepper extends Stepper {
   }
 }
 
+class WhileStepper extends Stepper {
+  next(bequest) {
+    super.next(bequest);
+
+    console.log("bequest:", bequest);
+    if (this.i % 2 === 0) {
+      return this.expression.condition.stepper();
+    } else if (bequest.value) {
+      return this.expression.body.stepper();
+    } else {
+      return null;
+    }
+  }
+}
+
 // --------------------------------------------------------------------------- 
 
 class Expression {
@@ -543,6 +558,50 @@ class ExpressionBuiltin extends Expression {
 }
 
 // --------------------------------------------------------------------------- 
+
+export class ExpressionWhile extends Expression {
+  constructor(condition, body, where = null) {
+    super(Precedence.Atom, where);
+    this.condition = condition;
+    this.body = body;
+    this.condition.parent = this;
+    this.body.parent = this;
+  }
+
+  isSimplified() {
+    return false;
+  }
+  
+  stepper() {
+    return new WhileStepper(this);
+  }
+
+  getFirstStatement() {
+    return this.condition.getFirstStatement();
+  }
+
+  getNextStatement(value, afterChild) {
+    console.log("value:", value);
+    console.log("afterChild:", afterChild);
+    if (this.condition === afterChild) {
+      return this.body.getFirstStatement();
+    } else {
+      return super.getNextStatement();
+    }
+  }
+
+  programify(state, dispatch, callbacks, isParenthesized, isSelectable, indentation) {
+    return (
+      <span>
+        <span className="space">{indentation}</span>
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        while ({this.condition.programify(state, dispatch, callbacks, false, true, '')})
+          {this.body.programify(state, dispatch, callbacks, false, false, indentation + '  ')}
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+      </span>
+    );
+  }
+}
 
 export class ExpressionIf extends Expression {
   constructor(conditions, thenBlocks, elseBlock, where = null) {

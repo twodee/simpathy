@@ -29,7 +29,7 @@ const Evaluator = () => {
     isBadInput: useSelector(state => state.isBadInput),
     expression: useSelector(state => state.expression),
     currentInput: useSelector(state => state.currentInput),
-    env: useSelector(state => state.frames[0]),
+    env: useSelector(state => state.frames[state.frames.length - 1]),
   };
 
   const dispatch = useDispatch();
@@ -46,6 +46,8 @@ const Evaluator = () => {
       if (e.key === 'Enter') {
         const expected = state.activeSubexpression.evaluate(state.env);
         let actual = parseLiteral(state.currentInput);
+        console.log("expected:", expected);
+        console.log("actual:", actual);
 
         if (expected.equals(actual)) {
           dispatch(enterRightSubexpressionValue(actual));

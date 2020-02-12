@@ -48,6 +48,7 @@ import {
   // ExpressionSubscript,
   // ExpressionSubtract,
   // ExpressionVector,
+  ExpressionWhile,
 } from './ast';
 
 // import {
@@ -355,6 +356,7 @@ export function parse(tokens) {
            has(Token.LeftSquareBracket, offset) ||
            has(Token.LeftParenthesis, offset) ||
            has(Token.Repeat, offset) ||
+           has(Token.While, offset) ||
            has(Token.For, offset) ||
            has(Token.If, offset);
   }
@@ -564,6 +566,26 @@ export function parse(tokens) {
       }
 
       return new ExpressionIf(conditions, thenBlocks, elseBlock, SourceLocation.span(sourceStart, sourceEnd));
+    } else if (has(Token.While)) {
+      let sourceStart = tokens[i].where;
+      consume(); // eat while
+      let condition = expression();
+      if (!has(Token.Linebreak)) {
+        throw new LocatedException(SourceLocation.span(sourceStart, condition.where), 'I expected a linebreak after this while\'s condition.');
+      }
+      consume(); // eat linebreak
+      let body = block();
+      return new ExpressionWhile(condition, body, SourceLocation.span(sourceStart, body.where));
+    // } else if (has(Token.Repeat)) {
+      // let sourceStart = tokens[i].where;
+      // consume(); // eat repeat
+      // let count = expression();
+      // if (!has(Token.Linebreak)) {
+        // throw new LocatedException(SourceLocation.span(sourceStart, count.where), 'I expected a linebreak after this repeat\'s count.');
+      // }
+      // consume(); // eat linebreak
+      // let body = block();
+      // return new ExpressionRepeat(count, body, SourceLocation.span(sourceStart, body.where));
     // } else if (has(Token.For)) {
       // let sourceStart = tokens[i].where;
       // consume();
@@ -657,16 +679,6 @@ export function parse(tokens) {
       // }
 
       // return new ExpressionFunctionCall(nameToken, actuals, SourceLocation.span(sourceStart, sourceEnd));
-    // } else if (has(Token.Repeat)) {
-      // let sourceStart = tokens[i].where;
-      // consume(); // eat repeat
-      // let count = expression();
-      // if (!has(Token.Linebreak)) {
-        // throw new LocatedException(SourceLocation.span(sourceStart, count.where), 'I expected a linebreak after this repeat\'s count.');
-      // }
-      // consume(); // eat linebreak
-      // let body = block();
-      // return new ExpressionRepeat(count, body, SourceLocation.span(sourceStart, body.where));
     // } else {
       // if (!has(Token.Linebreak)) {
         // throw new LocatedException(tokens[i].where, `I don't know what "${tokens[i].source}" means here.`);
