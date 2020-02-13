@@ -1337,7 +1337,7 @@ export function parseLiteral(expression) {
   } else if (expression.match(/^x[0-9A-Fa-f]+$/)) {
     return new ExpressionAddress(expression.slice(1));
   } else {
-    return new null;
+    return null;
   }
 }
 
