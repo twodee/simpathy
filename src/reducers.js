@@ -42,7 +42,7 @@ const initialState = {
       variables: [
         {
           name: 'fff',
-          current: new ExpressionString('undefined'),
+          current: new ExpressionUndefined(),
           history: [],
         },
         {

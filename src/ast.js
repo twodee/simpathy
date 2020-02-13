@@ -1208,7 +1208,7 @@ export class ExpressionLiteral extends Expression {
 
   evaluatorify(state, dispatch, callbacks, isParenthesized) {
     return (
-      <span className="subexpression expression-piece literal">{this.value.toString()}</span>
+      <span className="subexpression expression-piece literal">{this.toString()}</span>
     );
   }
 
@@ -1235,6 +1235,23 @@ export class ExpressionReal extends ExpressionLiteral {
 }
 
 export class ExpressionString extends ExpressionLiteral {
+  toString() {
+    // TODO escape
+    return `"${this.value.toString()}"`;
+  }
+}
+
+export class ExpressionCharacter extends ExpressionLiteral {
+  toString() {
+    // TODO escape
+    return `'${this.value.toString()}'`;
+  }
+}
+
+export class ExpressionAddress extends ExpressionLiteral {
+  toString() {
+    return `x${this.value.toString()}`;
+  }
 }
 
 export class ExpressionBoolean extends ExpressionLiteral {
@@ -1305,18 +1322,22 @@ export class ExpressionUndefined extends Expression {
 export function parseLiteral(expression) {
   if (expression.match(/^-?\d+$/)) {
     return new ExpressionInteger(parseInt(expression));
-  } else if (expression.match(/^$/)) {
-    return new ExpressionUnit();
   } else if (expression.match(/^-?(\d+\.\d*|\d*.\d+)$/)) {
     return new ExpressionReal(parseFloat(expression));
   } else if (expression.match(/^true$/)) {
     return new ExpressionBoolean(true);
   } else if (expression.match(/^false$/)) {
     return new ExpressionBoolean(false);
+  } else if (expression.match(/^void$/)) {
+    return new ExpressionUnit();
+  } else if (expression.match(/^'.'$/)) {
+    return new ExpressionCharacter(expression.slice(1, -1));
   } else if (expression.match(/^".*"$/)) {
     return new ExpressionString(expression.slice(1, -1));
+  } else if (expression.match(/^x[0-9A-Fa-f]+$/)) {
+    return new ExpressionAddress(expression.slice(1));
   } else {
-    return new ExpressionString(expression);
+    return new null;
   }
 }
 
