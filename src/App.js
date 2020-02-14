@@ -46,25 +46,93 @@ const App = () => {
     dispatch(loadProgram(getAst()));
   }, [dispatch]);
 
+  const programConsoleResizer = React.createRef();
+  const evaluatorMemoryResizer = React.createRef();
+  const leftRightResizer = React.createRef();
+  const stackHeapResizer = React.createRef();
+
+  const onStartVerticalDragging = (resizer) => {
+    const onMouseMove = e => {
+      const element = resizer.current;
+      const parentPanel = element.parentNode;
+      const bounds = element.parentNode.getBoundingClientRect();
+      const proportion = (e.clientY - bounds.y) / bounds.height;
+      parentPanel.children[0].style['flex-grow'] = proportion;
+      parentPanel.children[2].style['flex-grow'] = 1 - proportion;
+      e.preventDefault();
+    };
+
+    const onMouseDown = e => {
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', () => {
+        document.removeEventListener('mousemove', onMouseMove);
+      });
+      e.preventDefault();
+    };
+
+    return onMouseDown;
+  }
+
+  const onStartHorizontalDragging = (resizer) => {
+    const onMouseMove = e => {
+      const element = resizer.current;
+      const parentPanel = element.parentNode;
+      const bounds = element.parentNode.getBoundingClientRect();
+      const proportion = (e.clientX - bounds.x) / bounds.width;
+      parentPanel.children[0].style['flex-grow'] = proportion;
+      parentPanel.children[2].style['flex-grow'] = 1 - proportion;
+      e.preventDefault();
+    };
+
+    const onMouseDown = e => {
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', () => {
+        document.removeEventListener('mousemove', onMouseMove);
+      });
+      e.preventDefault();
+    };
+
+    return onMouseDown;
+  }
+
+
   return (
     <div className="App">
       <div id="top-panel">
         <Prompter />
       </div>
-      <div id="top-bottom-separator"></div>
+      <div
+        id="top-bottom-separator"
+      ></div>
       <div id="bottom-panel">
         <div id="left-panel">
           <Program />
-          <div id="program-console-separator"></div>
+          <div
+            id="program-console-separator"
+            ref={programConsoleResizer}
+            onMouseDown={onStartVerticalDragging(programConsoleResizer)}
+          ></div>
           <Console />
         </div>
-        <div id="left-right-separator"></div>
+        <div
+          id="left-right-separator"
+          ref={leftRightResizer}
+          onMouseDown={onStartHorizontalDragging(leftRightResizer)}
+        ></div>
         <div id="right-panel">
           <Evaluator />
-          <div id="evaluator-memory-separator"></div>
+          <div
+            id="evaluator-memory-separator"
+            ref={evaluatorMemoryResizer}
+            onMouseDown={onStartVerticalDragging(evaluatorMemoryResizer)}
+          ></div>
           <div id="memory-panel">
             <Stack />
-            <div id="stack-heap-separator"></div>
+            <div
+              id="stack-heap-separator"
+              ref={stackHeapResizer}
+              onMouseDown={onStartHorizontalDragging(stackHeapResizer)}
+            ></div>
             <div id="heap-panel">
               <h1>Heap</h1>
             </div>

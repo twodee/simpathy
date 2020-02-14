@@ -98,7 +98,7 @@ h1 {
   cursor: col-resize;
 }
 
-#top-bottom-separator, #program-console-separator, #evaluator-memory-separator {
+#program-console-separator, #evaluator-memory-separator {
   cursor: row-resize;
 }
 
