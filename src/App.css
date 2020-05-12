@@ -28,8 +28,7 @@ body {
 }
 
 #bottom-panel {
-  flex: 1 1;
-  flex-basis: 0;
+  flex: 1 1 0;
   min-height: 0;
   display: flex;
   flex-direction: row;
@@ -78,8 +77,7 @@ h1 {
   font-size: 18pt;
   overflow: auto;
   white-space: nowrap;
-  flex: 1 1;
-  flex-basis: 0;
+  flex: 1 1 0;
 }
 
 #console {
@@ -178,8 +176,7 @@ h1 {
 #memory-panel {
   display: flex;
   flex-direction: row;
-  flex: 2 1;
-  flex-basis: 0;
+  flex: 2 1 0;
   min-height: 0;
 }
 
@@ -205,8 +202,7 @@ h1 {
 }
 
 #stack-panel {
-  flex: 1 1;
-  flex-basis: 0;
+  flex: 1 1 0;
   min-width: 0;
   background-color: rgb(85%, 85%, 85%);
   border-radius: 5px 5px 0 0;
@@ -214,16 +210,14 @@ h1 {
 }
 
 #heap-panel {
-  flex: 1 1;
-  flex-basis: 0;
+  flex: 1 1 0;
   min-width: 0;
   border-radius: 5px 0 0 0;
   background-color: cornsilk;
 }
 
 #program-panel {
-  flex: 4 1;
-  flex-basis: 0;
+  flex: 4 1 0;
   min-height: 0;
   border-radius: 0 5px 5px 0;
   background-color: #D4F9FC;
@@ -232,8 +226,7 @@ h1 {
 }
 
 #evaluator-panel {
-  flex: 1 1;
-  flex-basis: 0;
+  flex: 1 1 0;
   min-height: 0;
   background-color: cyan;
   border-radius: 5px 0 0 5px;
