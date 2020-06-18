@@ -2,10 +2,11 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 const Prompter = () => {
-  const message = useSelector(state => state.message);
+  const feedback = useSelector(state => state.feedback);
+  const objective = useSelector(state => state.objective);
   return (
     <div id="prompter-panel">
-      <div id="message">{message}</div>
+      <div id="message">{feedback} {objective}</div>
     </div>
   );
 }

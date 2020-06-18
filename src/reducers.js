@@ -1,3 +1,4 @@
+import React from 'react';
 import { Action } from './actions';
 
 import {
@@ -23,6 +24,7 @@ const initialState = {
   program: null,
   output: '',
 
+  statementStack: [],
   activeStatement: null,
   clickedElement: null,
   hoveredElement: null,
@@ -30,11 +32,13 @@ const initialState = {
   activeElement: null,
   isBadSelection: null,
   isBadInput: null,
+  isStatementEvaluated: false,
 
   activeSubexpression: null,
   currentInput: '',
 
-  message: null,
+  objective: null,
+  feedback: null,
 
   frames: [
     {
@@ -101,7 +105,8 @@ export default function reducer(state = initialState, action) {
         return {
           ...state,
           mode: Mode.SelectingStatement,
-          message: 'The program has been loaded. What happens next?',
+          feedback: <><span className="panel-name">PROGRAM</span> is loaded.</>,
+          objective: <>What code is evaluated first?</>,
           program: action.payload,
           astStepper: astStepper,
           activeStatement: nextStatement,
@@ -109,7 +114,7 @@ export default function reducer(state = initialState, action) {
       } else {
         return {
           ...state,
-          message: 'This program doesn\'t have anything in it!',
+          objective: <>This program doesn't have anything in it! There's nothing to do.</>,
           mode: Mode.Celebrating,
         };
       }
@@ -118,51 +123,55 @@ export default function reducer(state = initialState, action) {
         ...state,
         currentInput: action.payload,
       };
-    case Action.SelectRightSubexpression:
-      const isAssignment = action.payload instanceof ExpressionAssignment;
+    case Action.SelectRightSubexpression: {
+      const newState = {
+        ...state,
+        isBadSelection: false,
+        activeSubexpression: action.payload,
+        hoveredElement: null,
+        feedback: null,
+      };
 
+      const isAssignment = action.payload instanceof ExpressionAssignment;
       if (isAssignment) {
         const hasVariable = state.frames[state.frames.length - 1].variables.some(variable => variable.name === action.payload.identifier.source);
 
+        newState.objective = <>What happens in memory to execute this assignment?</>;
         if (hasVariable) {
-          return {
-            ...state,
-            isBadSelection: false,
-            message: 'what memory cell?',
-            activeSubexpression: action.payload,
-            hoveredElement: null,
-            mode: Mode.SelectingMemoryValue,
-          };
+          newState.mode = Mode.SelectingMemoryValue;
         } else {
-          return {
-            ...state,
-            isBadSelection: false,
-            message: 'what happens next?',
-            activeSubexpression: action.payload,
-            hoveredElement: null,
-            mode: Mode.AddingNewVariable,
-          };
+          newState.mode = Mode.AddingNewVariable;
         }
       } else {
-        return {
-          ...state,
-          output: (action.payload instanceof ExpressionPrint || action.payload instanceof ExpressionPrintln) ? state.output + action.payload.output : state.output,
-          isBadSelection: false,
-          message: 'what next?',
-          activeSubexpression: action.payload,
-          hoveredElement: null,
-          mode: Mode.EvaluatingSubexpression,
-        };
+        const isPrint = action.payload instanceof ExpressionPrint || action.payload instanceof ExpressionPrintln;
+        if (isPrint) {
+          newState.output = state.output + action.payload.output;
+          newState.feedback = <>The <code className="code prompt-code">{action.payload.name}</code> command has sent some output to <span className="panel-name">CONSOLE</span>.</>;
+        }
+
+        newState.objective = <>What is the value of <code className="code prompt-code">{action.payload.promptify(false)}</code>?</>;
+        newState.mode = Mode.EvaluatingSubexpression;
       }
 
-    case Action.SelectWrongSubexpression:
-      return {
+      return newState;
+    }
+
+    case Action.SelectWrongSubexpression: {
+      const newState = {
         ...state,
-        message: "No, that's not it.",
         clickedElement: action.payload,
         hoveredElement: null,
         isBadSelection: true,
       };
+
+      if (action.payload.isSimplified()) {
+        newState.feedback = <>No, <code className="code prompt-code">{action.payload.promptify(false)}</code> is a primitive and can't be evaluated further.</>;
+      } else {
+        newState.feedback = <>No, we'll evaluate <code className="code prompt-code">{action.payload.promptify(false)}</code> soon, but not yet.</>;
+      }
+
+      return newState;
+    }
 
     case Action.StopShaking:
       return {
@@ -176,34 +185,34 @@ export default function reducer(state = initialState, action) {
     case Action.EnterRightSubexpressionValue: {
       const simplifiedExpression = state.expression.simplify(state.activeSubexpression, action.payload);
 
-      let nextStatement = null;
-      if (simplifiedExpression.isSimplified()) {
-        nextStatement = state.astStepper.next(simplifiedExpression);
-      }
-     
-      let mode;
-      let message;
-      if (simplifiedExpression.isSimplified() && nextStatement === null) {
-        mode = Mode.Celebrating;
-        message = "You are all done!";
-      } else if (simplifiedExpression.isSimplified()) {
-        mode = Mode.SelectingStatement;
-        message = "next statement?";
-      } else {
-        mode = Mode.SelectingSubexpression;
-        message = "next expression?";
-      }
-      
-      return {
+      const newState = {
         ...state,
-        activeStatement: nextStatement ? nextStatement : state.activeStatement,
         isBadInput: false,
         activeSubexpression: null,
-        mode: mode,
-        message: message,
         currentInput: '',
         expression: simplifiedExpression,
       };
+
+      if (simplifiedExpression.isSimplified()) {
+        newState.activeStatement = state.astStepper.next(simplifiedExpression);
+        newState.isStatementEvaluated = true;
+      }
+     
+      if (!newState.activeStatement) {
+        newState.mode = Mode.Celebrating;
+        newState.feedback = null;
+        newState.objective = "You are all done!";
+      } else if (simplifiedExpression.isSimplified()) {
+        newState.mode = Mode.SelectingStatement;
+        newState.feedback = <>You've whittled <code className="code prompt-code">{state.activeStatement.promptify(false)}</code> down to <code className="code prompt-code">{simplifiedExpression.promptify(false)}</code>, a primitive.</>;
+        newState.objective = <>What code in <span className="panel-name">PROGRAM</span> is evaluated next?</>;
+      } else {
+        newState.mode = Mode.SelectingSubexpression;
+        newState.feedback = "That's right.";
+        newState.objective = "What subexpression is evaluated next?";
+      }
+      
+      return newState;
     }
 
     case Action.EnterWrongSubexpressionValue:
@@ -212,16 +221,11 @@ export default function reducer(state = initialState, action) {
         isBadInput: true,
       };
 
-    case Action.ShowMessage:
-      return {
-        ...state,
-        message: action.payload,
-      };
-
     case Action.SelectAssignment:
       return {
         ...state,
-        message: 'Which value in memory is being assigned?',
+        feedback: null,
+        objective: 'Which value in memory is being assigned?',
         mode: Mode.SelectingMemoryValue,
         activeSubexpression: action.payload,
       };
@@ -229,7 +233,8 @@ export default function reducer(state = initialState, action) {
     case Action.SelectRightMemoryValue:
       return {
         ...state,
-        message: 'What\'s the new value of this variable?',
+        feedback: <>Yes, we must update variable <code className="code prompt-code">{state.activeSubexpression.identifier.source}</code>.</>,
+        objective: <>What's the new value of <code className="code prompt-code">{state.activeSubexpression.identifier.source}</code>?</>,
         isBadSelection: false,
         mode: Mode.EnteringMemoryValue,
       };
@@ -237,48 +242,62 @@ export default function reducer(state = initialState, action) {
     case Action.SelectWrongMemoryValue:
       return {
         ...state,
-        message: `No, that's variable ${action.payload.name}.`,
+        feedback: <>No, we're not updating variable <code className="code prompt-code">{action.payload.name}</code> right now.</>,
         clickedElement: action.payload,
         hoveredElement: null,
         isBadSelection: true,
       };
 
-    case Action.SelectRightStatement:
+    case Action.SelectRightStatement: {
       let expression = action.payload;
+
+      const newState = {
+        ...state,
+        isBadSelection: false,
+      };
+
+      if (state.isStatementEvaluated) {
+        Object.assign(newState, {
+          statementStack: state.statementStack.filter((statement, i) => i < state.statementStack.length - 1),
+          isStatementEvaluated: false,
+        });
+      }
 
       if (expression.isSimplified()) {
         let nextStatement = state.astStepper.next(new ExpressionUnit());
         if (nextStatement) {
-          return {
-            ...state,
+          Object.assign(newState, {
             activeStatement: nextStatement ? nextStatement : state.activeStatement,
-            message: 'What\'s the next statement?',
-            isBadSelection: false,
+            feedback: null,
+            objective: 'What\'s the next statement?',
             mode: Mode.SelectingStatement,
-          };
+          });
         } else {
-          return {
-            ...state,
+          Object.assign(newState, {
             activeStatement: null,
-            message: 'You did did did it!',
-            isBadSelection: false,
+            feedback: 'You did did did it!',
+            objective: null,
             mode: Mode.Celebrating,
-          };
+          });
         }
       } else {
-        return {
-          ...state,
+        Object.assign(newState, {
           expression: expression.clone(),
-          message: 'Let\'s evaluate.',
-          isBadSelection: false,
+          feedback: <>That's right. Let's whittle <code className="code prompt-code">{state.activeStatement.promptify(false)}</code> down in <span className="panel-name">EVALUATOR</span>.</>,
+          objective: <>What subexpression is evaluated first?</>,
           mode: Mode.SelectingSubexpression,
-        };
+          statementStack: [...newState.statementStack, state.activeStatement],
+          isStatementEvaluated: false,
+        });
       }
+
+      return newState;
+    }
 
     case Action.SelectWrongStatement:
       return {
         ...state,
-        message: `No, that's not what happens next.`,
+        feedback: `No, that code is not executed next.`,
         clickedElement: action.payload,
         hoveredElement: null,
         isBadSelection: true,
@@ -288,31 +307,10 @@ export default function reducer(state = initialState, action) {
       const topFrame = state.frames[state.frames.length - 1];
       const simplifiedExpression = state.expression.simplify(state.activeSubexpression, state.activeSubexpression.value);
 
-      let nextStatement = null;
-      if (simplifiedExpression.isSimplified()) {
-        nextStatement = state.astStepper.next(simplifiedExpression);
-      }
-
-      let mode;
-      let message;
-      if (simplifiedExpression.isSimplified() && nextStatement === null) {
-        mode = Mode.Celebrating;
-        message = "You are all done!";
-      } else if (simplifiedExpression.isSimplified()) {
-        mode = Mode.SelectingStatement;
-        message = "next statement?";
-      } else {
-        mode = Mode.SelectingSubexpression;
-        message = "next expression?";
-      }
-
-      return {
+      const newState = {
         ...state,
         isBadInput: false,
-        activeStatement: nextStatement ? nextStatement : state.activeStatement,
         currentInput: '',
-        message: message,
-        mode: mode,
         expression: simplifiedExpression,
         frames: [...state.frames.slice(0, state.frames.length - 1), {
           name: topFrame.name,
@@ -329,6 +327,29 @@ export default function reducer(state = initialState, action) {
           }),
         }],
       };
+
+      if (simplifiedExpression.isSimplified()) {
+        Object.assign(newState, {
+          activeStatement: state.astStepper.next(simplifiedExpression),
+          isStatementEvaluated: true,
+        });
+      }
+
+      if (!newState.activeStatement) {
+        newState.mode = Mode.Celebrating;
+        newState.feedback = null;
+        newState.objective = "You are all done!";
+      } else if (simplifiedExpression.isSimplified()) {
+        newState.mode = Mode.SelectingStatement;
+        newState.feedback = <>You've whittled <code className="code prompt-code">{state.activeStatement.promptify(false)}</code> down to <code className="code prompt-code">{simplifiedExpression.promptify(false)}</code>, a primitive.</>;
+        newState.objective = <>What code in <span className="panel-name">PROGRAM</span> is evaluated next?</>;
+      } else {
+        newState.mode = Mode.SelectingSubexpression;
+        newState.feedback = null;
+        newState.objective = "next expression?";
+      }
+
+      return newState;
     }
 
     case Action.EnterRightVariableName: {
@@ -337,7 +358,7 @@ export default function reducer(state = initialState, action) {
         ...state,
         isBadInput: false,
         currentInput: '',
-        message: 'That\'s the right name!',
+        feedback: <>That's the right name!</>,
         mode: Mode.SelectingMemoryValue,
         frames: [...state.frames.slice(0, state.frames.length - 1), {
           name: topFrame.name,
@@ -353,7 +374,7 @@ export default function reducer(state = initialState, action) {
     case Action.EnterWrongVariableName:
       return {
         ...state,
-        message: "That's not the right name.",
+        feedback: "That's not the right name.",
         isBadInput: true,
       };
 
@@ -361,7 +382,7 @@ export default function reducer(state = initialState, action) {
     case Action.EnterWrongMemoryValue:
       return {
         ...state,
-        message: "That's not the right value.",
+        feedback: action.payload,
         isBadInput: true,
       };
 
@@ -387,6 +408,7 @@ export default function reducer(state = initialState, action) {
     case Action.AddNewVariableWrongly:
       return {
         ...state,
+        feedback: <>No, we don't need a new variable right now.</>,
         isBadAddNewVariable: true,
       };
 

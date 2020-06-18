@@ -14,6 +14,7 @@ import {
 
 const Program = () => {
   const state = {
+    statementStack: useSelector(state => state.statementStack),
     hoveredElement: useSelector(state => state.hoveredElement),
     clickedElement: useSelector(state => state.clickedElement),
     program: useSelector(state => state.program),

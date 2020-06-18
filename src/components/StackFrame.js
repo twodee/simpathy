@@ -58,10 +58,14 @@ const StackFrame = props => {
                 if (e.key === 'Enter') {
                   const expected = activeSubexpression.value;
                   const actual = parseLiteral(currentInput);
-                  if (expected.equals(actual)) {
+                  if (!actual) {
+                    dispatch(enterWrongMemoryValue(<>No, <code className="code prompt-code">{currentInput}</code> is not a legal primitive.</>));
+                  } else if (expected.equals(actual)) {
                     dispatch(enterRightMemoryValue());
+                  } else if (expected.constructor !== actual.constructor) {
+                    dispatch(enterWrongMemoryValue(<>No, <code className="code prompt-code">{currentInput}</code> is not of the right type.</>));
                   } else {
-                    dispatch(enterWrongMemoryValue());
+                    dispatch(enterWrongMemoryValue(<>No, <code className="code prompt-code">{currentInput}</code> is not the right value.</>));
                   }
                 }
               }}
@@ -69,8 +73,8 @@ const StackFrame = props => {
           } else {
             let attributes = {className: 'evaluatable'};
 
-            attributes.onMouseOver = event => dispatch(hover(event, variable));
-            attributes.onMouseOut = event => dispatch(unhover(event, variable));
+            attributes.onMouseOver = event => dispatch(hover(variable));
+            attributes.onMouseOut = event => dispatch(unhover(variable));
             attributes.onClick = () => {
               if (isTopFrame && mode === Mode.SelectingMemoryValue && activeSubexpression.identifier.source === variable.name) {
                 dispatch(selectRightMemoryValue(variable));

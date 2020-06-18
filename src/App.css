@@ -50,10 +50,17 @@ body {
 h1 {
   font-weight: normal;
   font-size: 14pt;
-  /* margin: 0; */
   margin: 5px 10px 5px 10px;
   margin-bottom: 5px;
-  font-variant: small-caps;
+  text-transform: uppercase;
+  color: #888888;
+}
+
+#message {
+  font-size: 18pt;
+}
+
+.panel-name {
   color: #888888;
 }
 
@@ -67,10 +74,6 @@ h1 {
   width: 10px;
   min-width: 10px;
   flex: 0 0;
-}
-
-#message {
-  font-size: 24pt;
 }
 
 #program {
@@ -103,7 +106,12 @@ h1 {
 }
 
 #expression, #evaluate-box {
-  user-select: none;
+  /*
+   I wanted to disable selection via clicking, but I don't seem to be able
+   isolate that behavior. If can either disable clicking or disable selecting.
+   */
+  /* user-select: none; */
+
   font-size: 24pt;
 }
 
@@ -111,8 +119,16 @@ h1 {
   font-family: 'Inconsolata', monospace;
 }
 
+.prompt-code {
+  background-color: rgb(240, 240, 240);
+  padding: 3px;
+  border-radius: 3px;
+  box-shadow: inset 0 0 2px gray;
+}
+
 .evaluatable {
   display: inline-block;
+  cursor: pointer;
 }
 
 /* .binary-infix-operator { */
@@ -123,9 +139,22 @@ h1 {
   color: red;
 }
 
+/* ------------------------------------------------------------------------- */
+/* Preserve the order of stack-top, stack-below, and hovered.                */
+
+.stack-below {
+  background-color: rgb(255, 221, 158);
+}
+
+.stack-top {
+  background-color: orange;
+}
+
 .hovered {
   background-color: cornflowerblue;
 }
+
+/* ------------------------------------------------------------------------- */
 
 .subexpression {
   display: inline-block;
@@ -133,8 +162,7 @@ h1 {
 }
 
 .active {
-  background: cornflowerblue;
-  border-radius: 10px;
+  background: orange;
 }
 
 .subexpression {
@@ -150,8 +178,8 @@ h1 {
 
 .evaluate-popup svg {
   display: block;
-  margin: 0 auto 5px auto;
-  fill: cornflowerblue;
+  margin: -1px auto 5px auto;
+  fill: orange;
 }
 
 #evaluate-box {
@@ -195,6 +223,7 @@ h1 {
   align-items: center;
   background-color: #DAECFE;
   padding: 10px;
+  font-size: 14pt;
 }
 
 #console-panel {

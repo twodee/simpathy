@@ -148,9 +148,10 @@ export function enterRightMemoryValue() {
 
 // --------------------------------------------------------------------------- 
 
-export function enterWrongMemoryValue() {
+export function enterWrongMemoryValue(feedback) {
   return {
     type: Action.EnterWrongMemoryValue,
+    payload: feedback,
   };
 }
 

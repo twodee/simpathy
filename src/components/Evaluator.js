@@ -46,8 +46,6 @@ const Evaluator = () => {
       if (e.key === 'Enter') {
         const expected = state.activeSubexpression.evaluate(state.env);
         let actual = parseLiteral(state.currentInput);
-        console.log("expected:", expected);
-        console.log("actual:", actual);
 
         if (expected.equals(actual)) {
           dispatch(enterRightSubexpressionValue(actual));

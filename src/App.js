@@ -14,9 +14,10 @@ import { lex } from './lexer';
 import { parse } from './parser';
 
 function getAst() {
-  const source = `while a < 3
-  print(a)
-  a = a + 1`;
+  const source = `print(max(5, 7))`;
+  // const source = `while a < 3
+  // println(a + 3)
+  // a = a + 1`;
   // const source = `print(62)
 // println(78)
 // print(54)
