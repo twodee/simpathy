@@ -4,8 +4,8 @@ export const Action = Object.freeze({
   LoadProgram: 'LoadProgram',
   EditInput: 'EditInput',
   StopShaking: 'StopShaking',
-  AddNewVariableRightly: 'AddNewVariableRightly',
-  AddNewVariableWrongly: 'AddNewVariableWrongly',
+  DeclareVariableRightly: 'DeclareVariableRightly',
+  DeclareVariableWrongly: 'DeclareVariableWrongly',
 
   SelectRightSubexpression: 'SelectRightSubexpression',
   SelectWrongSubexpression: 'SelectWrongSubexpression',
@@ -14,6 +14,7 @@ export const Action = Object.freeze({
   SelectRightStatement: 'SelectRightStatement',
   SelectWrongStatement: 'SelectWrongStatement',
 
+  EnterUserInput: 'EnterUserInput',
   EnterRightSubexpressionValue: 'EnterRightSubexpressionValue',
   EnterWrongSubexpressionValue: 'EnterWrongSubexpressionValue',
   EnterRightMemoryValue: 'EnterRightMemoryValue',
@@ -104,6 +105,15 @@ export function editInput(value) {
 
 // --------------------------------------------------------------------------- 
 
+export function enterUserInput(value) {
+  return {
+    type: Action.EnterUserInput,
+    payload: value,
+  };
+}
+
+// --------------------------------------------------------------------------- 
+
 export function enterRightSubexpressionValue(value) {
   return {
     type: Action.EnterRightSubexpressionValue,
@@ -173,8 +183,8 @@ export function selectWrongStatement(piece) {
   };
 }
 
-export const addNewVariableRightly = () => ({type: Action.AddNewVariableRightly});
-export const addNewVariableWrongly = () => ({type: Action.AddNewVariableWrongly});
+export const declareVariableRightly = () => ({type: Action.DeclareVariableRightly});
+export const declareVariableWrongly = () => ({type: Action.DeclareVariableWrongly});
 export const enterRightVariableName = () => ({type: Action.EnterRightVariableName});
 export const enterWrongVariableName = () => ({type: Action.EnterWrongVariableName});
 

@@ -792,6 +792,52 @@ export class ExpressionSign extends ExpressionBuiltin {
 
 // --------------------------------------------------------------------------- 
 
+export class ExpressionParseInt extends ExpressionBuiltin {
+  constructor(operands, where) {
+    super('parseInt', operands, where);
+  }
+
+  evaluate(env) {
+    const value = this.operands[0].evaluate(env);
+    if (value instanceof ExpressionString) {
+      return new ExpressionInteger(parseInt(value.value));
+    } else {
+      throw new Error('bad types');
+    }
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionParseFloat extends ExpressionBuiltin {
+  constructor(operands, where) {
+    super('parseFloat', operands, where);
+  }
+
+  evaluate(env) {
+    const value = this.operands[0].evaluate(env);
+    if (value instanceof ExpressionString) {
+      return new ExpressionReal(parseFloat(value.value));
+    } else {
+      throw new Error('bad types');
+    }
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionReadLine extends ExpressionBuiltin {
+  constructor(operands, where) {
+    super('readLine', operands, where);
+  }
+
+  evaluate(env) {
+    return new ExpressionUnit();
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
 export class ExpressionPrint extends ExpressionBuiltin {
   constructor(operands, where) {
     super('print', operands, where);
@@ -810,9 +856,9 @@ export class ExpressionPrint extends ExpressionBuiltin {
 
 // --------------------------------------------------------------------------- 
 
-export class ExpressionPrintln extends ExpressionBuiltin {
+export class ExpressionPrintLine extends ExpressionBuiltin {
   constructor(operands, where) {
-    super('println', operands, where);
+    super('printLine', operands, where);
   }
 
   evaluate(env) {
@@ -845,7 +891,13 @@ export class ExpressionAssignment extends Expression {
     this.addSelectable(attributes, state, dispatch, callbacks, state.expression);
 
     const operatorElement = React.createElement('span', attributes, '=');
-    const isActive = (state.mode === Mode.SelectingMemoryValue || state.mode === Mode.EnteringMemoryValue) && state.activeSubexpression === this;
+    const isActive = (
+      state.mode === Mode.SelectingMemoryValue ||
+      state.mode === Mode.EnteringMemoryValue ||
+      state.mode === Mode.AddingNewVariable ||
+      state.mode === Mode.EnteringMemoryValue ||
+      state.mode === Mode.NamingNewVariable
+    ) && state.activeSubexpression === this;
 
     return (
       <span className={`subexpression ${isActive ? 'active' : ''}`}>
@@ -1302,7 +1354,7 @@ export class ExpressionLiteral extends Expression {
       this.addHistory(attributes, state);
     }
 
-    const element = React.createElement('span', attributes, this.value.toString());
+    const element = React.createElement('span', attributes, this.toString());
     return (
       <>
         <span className="space">{indentation}</span>
@@ -1314,7 +1366,7 @@ export class ExpressionLiteral extends Expression {
   promptify(isParenthesized) {
     return <>
       {isParenthesized ? <span>(</span> : ''}
-      <span>{this.value.toString()}</span>
+      <span>{this.toString()}</span>
       {isParenthesized ? <span>)</span> : ''}
     </>;
   }

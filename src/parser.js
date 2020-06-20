@@ -38,10 +38,13 @@ import {
   ExpressionOr,
   ExpressionPower,
   ExpressionPrint,
-  ExpressionPrintln,
+  ExpressionPrintLine,
+  ExpressionReadLine,
   ExpressionReal,
   ExpressionRightShift,
   ExpressionModulus,
+  ExpressionParseInt,
+  ExpressionParseFloat,
   ExpressionSame,
   ExpressionSign,
   ExpressionString,
@@ -414,10 +417,16 @@ export function parse(tokens) {
         return new ExpressionMin(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else if (nameToken.source === 'print') {
         return new ExpressionPrint(actuals, SourceLocation.span(nameToken, sourceEnd));
-      } else if (nameToken.source === 'println') {
-        return new ExpressionPrintln(actuals, SourceLocation.span(nameToken, sourceEnd));
+      } else if (nameToken.source === 'printLine') {
+        return new ExpressionPrintLine(actuals, SourceLocation.span(nameToken, sourceEnd));
+      } else if (nameToken.source === 'readLine') {
+        return new ExpressionReadLine(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else if (nameToken.source === 'sign') {
         return new ExpressionSign(actuals, SourceLocation.span(nameToken, sourceEnd));
+      } else if (nameToken.source === 'parseInt') {
+        return new ExpressionParseInt(actuals, SourceLocation.span(nameToken, sourceEnd));
+      } else if (nameToken.source === 'parseFloat') {
+        return new ExpressionParseFloat(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else {
         throw new MessagedException('ack!');
         // return new ExpressionFunctionCall(nameToken, actuals, SourceLocation.span(sourceStart, sourceEnd));

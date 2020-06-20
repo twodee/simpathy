@@ -282,11 +282,18 @@ button:hover {
   position: relative;
 }
 
-#stack-tools {
+.panel-actions {
   position: absolute;
   top: 5px;
   right: 10px;
   z-index: 100;
+}
+
+.output-text {
+}
+
+.input-text {
+  color: purple;
 }
 
 .stack-frame:not(:first-child) {

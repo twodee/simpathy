@@ -4,8 +4,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import StackFrame from './StackFrame';
 
 import {
-  addNewVariableRightly,
-  addNewVariableWrongly,
+  declareVariableRightly,
+  declareVariableWrongly,
   stopShaking,
 } from '../actions';
 
@@ -16,26 +16,27 @@ import {
 const Stack = () => {
   const frames = useSelector(state => state.frames);
   const mode = useSelector(state => state.mode);
-  const isBadAddNewVariable = useSelector(state => state.isBadAddNewVariable);
+  const isBadDeclareVariable = useSelector(state => state.isBadDeclareVariable);
   const dispatch = useDispatch();
 
   let attributes = {
-    className: isBadAddNewVariable ? 'shaking' : '',
+    className: isBadDeclareVariable ? 'shaking' : '',
     onClick: () => {
-      if (mode === Mode.AddingNewVariable) {
-        dispatch(addNewVariableRightly());
+      if (mode === Mode.DeclaringVariable) {
+        dispatch(declareVariableRightly());
       } else {
-        dispatch(addNewVariableWrongly());
+        dispatch(declareVariableWrongly());
       }
     },
     onAnimationEnd: () => dispatch(stopShaking()),
   };
-  const addNewVariableButton = React.createElement('button', attributes, 'add variable');
+  const declareVariableButton = React.createElement('button', attributes, 'declare variable');
+  console.log("mode:", mode);
 
   return (
     <div id="stack-panel">
-      <div id="stack-tools">
-        {addNewVariableButton} &middot; <button>pop frame</button>
+      <div className="panel-actions">
+        {declareVariableButton} &middot; <button>pop frame</button>
       </div>
       <h1>
         Stack

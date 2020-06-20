@@ -4,10 +4,10 @@ import { Action } from './actions';
 import {
   ExpressionAssignment,
   ExpressionInteger,
-  // ExpressionReal,
   ExpressionString,
   ExpressionPrint,
-  ExpressionPrintln,
+  ExpressionPrintLine,
+  ExpressionReadLine,
   ExpressionUnit,
   ExpressionUndefined,
   TreeStepper,
@@ -22,7 +22,7 @@ const initialState = {
 
   expression: null,
   program: null,
-  output: '',
+  output: <></>,
 
   statementStack: [],
   activeStatement: null,
@@ -32,6 +32,8 @@ const initialState = {
   activeElement: null,
   isBadSelection: null,
   isBadInput: null,
+  isBadEnterInput: false,
+  isBadDeclareVariable: false,
   isStatementEvaluated: false,
 
   activeSubexpression: null,
@@ -140,19 +142,58 @@ export default function reducer(state = initialState, action) {
         if (hasVariable) {
           newState.mode = Mode.SelectingMemoryValue;
         } else {
-          newState.mode = Mode.AddingNewVariable;
+          newState.mode = Mode.DeclaringVariable;
         }
       } else {
-        const isPrint = action.payload instanceof ExpressionPrint || action.payload instanceof ExpressionPrintln;
+        const isPrint = action.payload instanceof ExpressionPrint || action.payload instanceof ExpressionPrintLine;
         if (isPrint) {
-          newState.output = state.output + action.payload.output;
-          newState.feedback = <>The <code className="code prompt-code">{action.payload.name}</code> command has sent some output to <span className="panel-name">CONSOLE</span>.</>;
+          newState.output = <>{state.output}<span className="output-text">{action.payload.output}</span></>;
+          newState.feedback = <>The <code className="code prompt-code">{action.payload.name}</code> command has sent its output to <span className="panel-name">CONSOLE</span>.</>;
         }
 
-        newState.objective = <>What is the value of <code className="code prompt-code">{action.payload.promptify(false)}</code>?</>;
-        newState.mode = Mode.EvaluatingSubexpression;
+        const isReadLine = action.payload instanceof ExpressionReadLine;
+        if (isReadLine) {
+          newState.objective = <>The <code className="code prompt-code">readLine</code> command gets text from the user. What text shall the user enter?</>;
+          newState.mode = Mode.EnteringUserInput;
+        } else {
+          newState.objective = <>What is the value of <code className="code prompt-code">{action.payload.promptify(false)}</code>?</>;
+          newState.mode = Mode.EvaluatingSubexpression;
+        }
       }
 
+      return newState;
+    }
+
+    case Action.EnterUserInput: {
+      const simplifiedExpression = state.expression.simplify(state.activeSubexpression, action.payload);
+
+      const newState = {
+        ...state,
+        activeSubexpression: null,
+        currentInput: '',
+        expression: simplifiedExpression,
+        output: <>{state.output}<span className="input-text">{action.payload.value + '\n'}</span></>,
+      };
+
+      if (simplifiedExpression.isSimplified()) {
+        newState.activeStatement = state.astStepper.next(simplifiedExpression);
+        newState.isStatementEvaluated = true;
+      }
+     
+      if (!newState.activeStatement) {
+        newState.mode = Mode.Celebrating;
+        newState.feedback = null;
+        newState.objective = "You are all done!";
+      } else if (simplifiedExpression.isSimplified()) {
+        newState.mode = Mode.SelectingStatement;
+        newState.feedback = <>You've whittled <code className="code prompt-code">{state.activeStatement.promptify(false)}</code> down to <code className="code prompt-code">{simplifiedExpression.promptify(false)}</code>, a primitive.</>;
+        newState.objective = <>What code in <span className="panel-name">PROGRAM</span> is evaluated next?</>;
+      } else {
+        newState.mode = Mode.SelectingSubexpression;
+        newState.feedback = "That's right.";
+        newState.objective = "What subexpression is evaluated next?";
+      }
+      
       return newState;
     }
 
@@ -179,7 +220,7 @@ export default function reducer(state = initialState, action) {
         clickedElement: null,
         isBadSelection: false,
         isBadInput: false,
-        isBadAddNewVariable: false,
+        isBadDeclareVariable: false,
       };
 
     case Action.EnterRightSubexpressionValue: {
@@ -358,7 +399,8 @@ export default function reducer(state = initialState, action) {
         ...state,
         isBadInput: false,
         currentInput: '',
-        feedback: <>That's the right name!</>,
+        feedback: <>Yes, that's the variable's name.</>,
+        objective: <>What happens next to execute this assignment?</>,
         mode: Mode.SelectingMemoryValue,
         frames: [...state.frames.slice(0, state.frames.length - 1), {
           name: topFrame.name,
@@ -386,7 +428,7 @@ export default function reducer(state = initialState, action) {
         isBadInput: true,
       };
 
-    case Action.AddNewVariableRightly:
+    case Action.DeclareVariableRightly:
       const newVariable = {
         name: '',
         current: new ExpressionUndefined(),
@@ -397,19 +439,21 @@ export default function reducer(state = initialState, action) {
 
       return {
         ...state,
-        isBadAddNewVariable: false,
+        isBadDeclareVariable: false,
         mode: Mode.NamingNewVariable,
+        feedback: <>Yes, we declare a new variable.</>,
+        objective: <>What is the variable's name?</>,
         frames: [...state.frames.slice(0, state.frames.length - 1), {
           name: topFrame.name,
           variables: [newVariable, ...topFrame.variables]
         }],
       };
 
-    case Action.AddNewVariableWrongly:
+    case Action.DeclareVariableWrongly:
       return {
         ...state,
         feedback: <>No, we don't need a new variable right now.</>,
-        isBadAddNewVariable: true,
+        isBadDeclareVariable: true,
       };
 
     default:
