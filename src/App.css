@@ -57,6 +57,7 @@ h1 {
 
 #message {
   font-size: 18pt;
+  white-space: pre-wrap;
 }
 
 .panel-name {

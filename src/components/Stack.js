@@ -31,7 +31,6 @@ const Stack = () => {
     onAnimationEnd: () => dispatch(stopShaking()),
   };
   const declareVariableButton = React.createElement('button', attributes, 'declare variable');
-  console.log("mode:", mode);
 
   return (
     <div id="stack-panel">

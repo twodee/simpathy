@@ -96,7 +96,7 @@ const StackFrame = props => {
           }
 
           let nameElement;
-          if (mode === Mode.NamingNewVariable && variable.name === '') {
+          if (mode === Mode.NamingVariable && variable.name === '') {
             let nameAttributes = {
               className: `variable-name-input ${isBadInput ? 'shaking' : ''}`,
               value: currentInput,
@@ -110,7 +110,7 @@ const StackFrame = props => {
                   if (expected === actual) {
                     dispatch(enterRightVariableName());
                   } else {
-                    dispatch(enterWrongVariableName());
+                    dispatch(enterWrongVariableName(actual));
                   }
                 }
               },

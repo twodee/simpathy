@@ -207,8 +207,10 @@ export default function reducer(state = initialState, action) {
 
       if (action.payload.isSimplified()) {
         newState.feedback = <>No, <code className="code prompt-code">{action.payload.promptify(false)}</code> is a primitive and can't be evaluated further.</>;
-      } else {
+      } else if (newState.mode === Mode.SelectingSubexpression) {
         newState.feedback = <>No, we'll evaluate <code className="code prompt-code">{action.payload.promptify(false)}</code> soon, but not yet.</>;
+      } else {
+        newState.feedback = <>No, all work in <span className="panel-name">EVALUATOR</span> is paused until we finish executing <code className="code prompt-code">{action.payload.promptify(false)}</code>.</>;
       }
 
       return newState;
@@ -259,6 +261,7 @@ export default function reducer(state = initialState, action) {
     case Action.EnterWrongSubexpressionValue:
       return {
         ...state,
+        feedback: <>No, that's not the value.</>,
         isBadInput: true,
       };
 
@@ -416,7 +419,7 @@ export default function reducer(state = initialState, action) {
     case Action.EnterWrongVariableName:
       return {
         ...state,
-        feedback: "That's not the right name.",
+        feedback: <>No, <code className="code prompt-code">{action.payload}</code> is not the right name.</>,
         isBadInput: true,
       };
 
@@ -440,7 +443,7 @@ export default function reducer(state = initialState, action) {
       return {
         ...state,
         isBadDeclareVariable: false,
-        mode: Mode.NamingNewVariable,
+        mode: Mode.NamingVariable,
         feedback: <>Yes, we declare a new variable.</>,
         objective: <>What is the variable's name?</>,
         frames: [...state.frames.slice(0, state.frames.length - 1), {

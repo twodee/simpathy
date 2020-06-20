@@ -13,7 +13,7 @@ export const Precedence = Object.freeze({
 });
 
 export const Mode = Object.freeze({
-  SelectingProgramPiece: 'SelectingProgramPiece',
+  SelectingStatement: 'SelectingStatement',
   SelectingSubexpression: 'SelectingSubexpression',
   SelectingMemoryValue: 'SelectingMemoryValue',
   EvaluatingSubexpression: 'EvaluatingSubexpression',
@@ -21,4 +21,5 @@ export const Mode = Object.freeze({
   DeclaringVariable: 'DeclaringVariable',
   NamingVariable: 'NamingVariable',
   EnteringUserInput: 'EnteringUserInput',
+  Celebrating: 'Celebrating',
 });

@@ -183,10 +183,16 @@ export function selectWrongStatement(piece) {
   };
 }
 
+export function enterWrongVariableName(name) {
+  return {
+    type: Action.EnterWrongVariableName,
+    payload: name,
+  };
+}
+
 export const declareVariableRightly = () => ({type: Action.DeclareVariableRightly});
 export const declareVariableWrongly = () => ({type: Action.DeclareVariableWrongly});
 export const enterRightVariableName = () => ({type: Action.EnterRightVariableName});
-export const enterWrongVariableName = () => ({type: Action.EnterWrongVariableName});
 
 // --------------------------------------------------------------------------- 
 

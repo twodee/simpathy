@@ -14,8 +14,7 @@ import { lex } from './lexer';
 import { parse } from './parser';
 
 function getAst() {
-  const source = `e = 7
-d = parseInt(readLine()) + 2
+  const source = `d = parseInt("6") + 2
 printLine(d)`;
   // const source = `while a < 3
   // println(a + 3)

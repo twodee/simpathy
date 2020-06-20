@@ -894,9 +894,9 @@ export class ExpressionAssignment extends Expression {
     const isActive = (
       state.mode === Mode.SelectingMemoryValue ||
       state.mode === Mode.EnteringMemoryValue ||
-      state.mode === Mode.AddingNewVariable ||
+      state.mode === Mode.DeclaringVariable ||
       state.mode === Mode.EnteringMemoryValue ||
-      state.mode === Mode.NamingNewVariable
+      state.mode === Mode.NamingVariable
     ) && state.activeSubexpression === this;
 
     return (
@@ -1337,7 +1337,7 @@ export class ExpressionLiteral extends Expression {
   }
 
   equals(that) {
-    return this.constructor === that.constructor && this.value === that.value;
+    return that && this.constructor === that.constructor && this.value === that.value;
   }
 
   evaluatorify(state, dispatch, callbacks, isParenthesized) {
@@ -1421,7 +1421,7 @@ export class ExpressionUnit extends Expression {
   }
 
   equals(that) {
-    return this.constructor === that.constructor;
+    return that && this.constructor === that.constructor;
   }
 
   evaluatorify(state, dispatch, callbacks, isParenthesized) {
@@ -1461,7 +1461,7 @@ export class ExpressionUndefined extends Expression {
   }
 
   equals(that) {
-    return this.constructor === that.constructor;
+    return that && this.constructor === that.constructor;
   }
 }
 
