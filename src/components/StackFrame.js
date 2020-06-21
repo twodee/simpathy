@@ -56,7 +56,7 @@ const StackFrame = props => {
               onChange={e => dispatch(editInput(e.target.value))}
               onKeyDown={e => {
                 if (e.key === 'Enter') {
-                  const expected = activeSubexpression.value;
+                  const expected = activeSubexpression.rvalue;
                   const actual = parseLiteral(currentInput);
                   if (!actual) {
                     dispatch(enterWrongMemoryValue(<>No, <code className="code prompt-code">{currentInput}</code> is not a legal primitive.</>));

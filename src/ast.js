@@ -874,12 +874,47 @@ export class ExpressionPrintLine extends ExpressionBuiltin {
 
 // --------------------------------------------------------------------------- 
 
+export class ExpressionLValue extends Expression {
+  constructor(identifier) {
+    super(Precedence.LValue, identifier.where);
+    this.identifier = identifier;
+  }
+
+  evaluatorify(state, dispatch, callbacks, isParenthesized) {
+    let attributes = {className: 'evaluatable expression-piece'};
+    this.addSelectable(attributes, state, dispatch, callbacks, state.expression);
+
+    const element = React.createElement('span', attributes, this.identifier.source);
+
+    return (
+      <span className="subexpression">
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        {element}
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+      </span>
+    );
+  }
+
+  promptify(isParenthesized) {
+    return (
+      <span className="subexpression">
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        {this.identifier.source}
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+      </span>
+    );
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
 export class ExpressionAssignment extends Expression {
-  constructor(identifier, value, where) {
+  constructor(identifier, rvalue, where) {
     super(Precedence.Assignment, where);
     this.identifier = identifier;
-    this.value = value;
-    this.value.parent = this;
+    this.lvalue = new ExpressionLValue(this.identifier);
+    this.rvalue = rvalue;
+    this.rvalue.parent = this;
   }
 
   isSimplified() {
@@ -902,11 +937,11 @@ export class ExpressionAssignment extends Expression {
     return (
       <span className={`subexpression ${isActive ? 'active' : ''}`}>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
-        {this.identifier.source}
+        {this.lvalue.evaluatorify(state, dispatch, callbacks, this.precedence > this.lvalue.precedence)}
         <span className="space">{' '}</span>
         {operatorElement}
         <span className="space">{' '}</span>
-        {this.value.evaluatorify(state, dispatch, callbacks, this.precedence > this.value.precedence)}
+        {this.rvalue.evaluatorify(state, dispatch, callbacks, this.precedence > this.rvalue.precedence)}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
         {this.evaluatePopup(state, dispatch, callbacks)}
       </span>
@@ -914,7 +949,7 @@ export class ExpressionAssignment extends Expression {
   }
 
   get nextNonterminal() {
-    let node = this.value.nextNonterminal;
+    let node = this.rvalue.nextNonterminal;
     if (!node) {
       node = this;
     }
@@ -925,12 +960,12 @@ export class ExpressionAssignment extends Expression {
     if (this === expression) {
       return value;
     } else {
-      return new this.constructor(this.identifier, this.value.simplify(expression, value));
+      return new this.constructor(this.identifier, this.rvalue.simplify(expression, value));
     }
   }
 
   clone() {
-    return new this.constructor(this.identifier, this.value.clone(), this.where);
+    return new this.constructor(this.identifier, this.rvalue.clone(), this.where);
   }
 
   programify(state, dispatch, callbacks, isParenthesized, isSelectable, indentation) {
@@ -947,7 +982,7 @@ export class ExpressionAssignment extends Expression {
         <span className="space">{' '}</span>
         <span className="binary-infix-operator expression-piece">=</span>
         <span className="space">{' '}</span>
-        {this.value.programify(state, dispatch, callbacks, this.precedence > this.value.precedence, false, '')}
+        {this.rvalue.programify(state, dispatch, callbacks, this.precedence > this.rvalue.precedence, false, '')}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
       </>
     );
@@ -967,7 +1002,7 @@ export class ExpressionAssignment extends Expression {
         <span className="space">{' '}</span>
         <span className="binary-infix-operator">=</span>
         <span className="space">{' '}</span>
-        {this.value.promptify(this.precedence > this.value.precedence)}
+        {this.rvalue.promptify(this.precedence > this.rvalue.precedence)}
         {isParenthesized ? <span>)</span> : ''}
     </>;
   }

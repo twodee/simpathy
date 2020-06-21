@@ -4,6 +4,7 @@ import { Action } from './actions';
 import {
   ExpressionAssignment,
   ExpressionInteger,
+  ExpressionLValue,
   ExpressionString,
   ExpressionPrint,
   ExpressionPrintLine,
@@ -190,7 +191,7 @@ export default function reducer(state = initialState, action) {
         newState.objective = <>What code in <span className="panel-name">PROGRAM</span> is evaluated next?</>;
       } else {
         newState.mode = Mode.SelectingSubexpression;
-        newState.feedback = "That's right.";
+        newState.feedback = <>Okay, the user entered the string <code className="code prompt-code">"{state.currentInput}"</code>.</>;
         newState.objective = "What subexpression is evaluated next?";
       }
       
@@ -205,12 +206,14 @@ export default function reducer(state = initialState, action) {
         isBadSelection: true,
       };
 
-      if (action.payload.isSimplified()) {
+      if (newState.mode !== Mode.SelectingSubexpression) {
+        newState.feedback = <>No, all work in <span className="panel-name">EVALUATOR</span> is paused until we finish executing <code className="code prompt-code">{action.payload.promptify(false)}</code>.</>;
+      } else if (action.payload instanceof ExpressionLValue) {
+        newState.feedback = <>No, <code className="code prompt-code">{action.payload.promptify(false)}</code> is assigned a value but does not itself get evaluated.</>;
+      } else if (action.payload.isSimplified()) {
         newState.feedback = <>No, <code className="code prompt-code">{action.payload.promptify(false)}</code> is a primitive and can't be evaluated further.</>;
       } else if (newState.mode === Mode.SelectingSubexpression) {
         newState.feedback = <>No, we'll evaluate <code className="code prompt-code">{action.payload.promptify(false)}</code> soon, but not yet.</>;
-      } else {
-        newState.feedback = <>No, all work in <span className="panel-name">EVALUATOR</span> is paused until we finish executing <code className="code prompt-code">{action.payload.promptify(false)}</code>.</>;
       }
 
       return newState;
@@ -349,7 +352,7 @@ export default function reducer(state = initialState, action) {
 
     case Action.EnterRightMemoryValue: {
       const topFrame = state.frames[state.frames.length - 1];
-      const simplifiedExpression = state.expression.simplify(state.activeSubexpression, state.activeSubexpression.value);
+      const simplifiedExpression = state.expression.simplify(state.activeSubexpression, state.activeSubexpression.rvalue);
 
       const newState = {
         ...state,
@@ -362,7 +365,7 @@ export default function reducer(state = initialState, action) {
             if (variable.name === state.activeSubexpression.identifier.source) {
               return {
                 name: variable.name,
-                current: state.activeSubexpression.value,
+                current: state.activeSubexpression.rvalue,
                 history: variable.current instanceof ExpressionUndefined ? variable.history : [variable.current].concat(variable.history),
               };
             } else {
