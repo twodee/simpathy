@@ -18,7 +18,7 @@ function getAst() {
 // while a == 0
   // a = 1`;
 
-  const source = `print(format("%-05d!!%6s!", 3, "foo"))`;
+  const source = `print(format("%05.2f->", 3.785, "foo"))`;
 
   // const source = `parseInt("foo")`;
 

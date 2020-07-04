@@ -786,6 +786,26 @@ export class ExpressionWhile extends Expression {
 
 // --------------------------------------------------------------------------- 
 
+export class ExpressionBlankLine extends Expression {
+  constructor(where = null) {
+    super(Precedence.Atom, where);
+  }
+
+  isSimplified() {
+    return true;
+  }
+  
+  stepper() {
+    return null;
+  }
+
+  programify(state, dispatch, callbacks, isParenthesized, isSelectable, indentation) {
+    return <br/>;
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
 export class ExpressionFunctionDefinition extends Expression {
   constructor(identifier, formals, body, where = null) {
     super(Precedence.Atom, where);
@@ -1051,6 +1071,39 @@ export class ExpressionFormat extends ExpressionBuiltinFunctionCall {
           }
 
           return replacement;
+        } else {
+          let match = placeholder.match(/%(-\d+|\d*)(\.\d+)?f/);
+          if (match) {
+            let isLeftJustified = false;
+            let width = 0;
+            let padCharacter = ' ';
+            let mantissaWidth = 6;
+
+            if (match[1].startsWith('-')) {
+              isLeftJustified = true;
+              width = parseInt(match[1].substring(1));
+            } else if (match[1].length > 0) {
+              if (match[1][0] === '0') {
+                padCharacter = '0';
+              }
+              width = parseInt(match[1]);
+            }
+
+            if (match[2].length > 0) {
+              mantissaWidth = parseInt(match[2].substring(1));
+            }
+
+            let replacement = this.operands[parameterIndex].value.toFixed(mantissaWidth).toString();
+
+            const paddingLength = width - replacement.length;
+            if (paddingLength > 0) {
+              let padding = ''.padStart(paddingLength, ' ').replace(/ /g, padCharacter);
+              replacement = isLeftJustified ? replacement + padding : padding + replacement;
+            }
+            console.log("replacement:", replacement);
+
+            return replacement;
+          }
         }
       }
 

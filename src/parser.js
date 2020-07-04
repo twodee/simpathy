@@ -25,6 +25,7 @@ import {
   ExpressionLeftShift,
   ExpressionLess,
   ExpressionLessEqual,
+  ExpressionBlankLine,
   ExpressionMax,
   ExpressionMin,
   // ExpressionMemberFunctionCall,
@@ -120,9 +121,7 @@ export function parse(tokens) {
     let statements = [];
     while (has(Token.Indentation) && tokens[i].source.length === indentation.source.length) {
       consume(); // eat indentation
-      if (has(Token.Linebreak)) {
-        consume();
-      } else if (!has(Token.EOF)) {
+      if (!has(Token.EOF)) {
         let s = statement();
         statements.push(s);
       }
@@ -150,6 +149,8 @@ export function parse(tokens) {
       const returnToken = consume();
       e = expression();
       e = new ExpressionReturn(e, SourceLocation.span(returnToken, e)); 
+    } else if (has(Token.Linebreak)) {
+      e = new ExpressionBlankLine();
     } else {
       e = expression();
     }
