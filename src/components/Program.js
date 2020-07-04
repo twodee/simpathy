@@ -22,13 +22,15 @@ const Program = () => {
     activeStatement: useSelector(state => state.activeStatement),
     isBadSelection: useSelector(state => state.isBadSelection),
     expression: useSelector(state => state.expression),
+    statements: useSelector(state => state.statements),
+    nextStatement: useSelector(state => state.nextStatement),
   };
 
   const dispatch = useDispatch();
 
   const callbacks = {
-    onClick: (clickedElement, activeElement, program, currentValue) => {
-      if (state.mode === Mode.SelectingStatement && activeElement === clickedElement) {
+    onClick: clickedElement => {
+      if (state.mode === Mode.SelectingStatement && state.nextStatement === clickedElement) {
         dispatch(selectRightStatement(clickedElement));
       } else {
         dispatch(selectWrongStatement(clickedElement));

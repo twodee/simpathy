@@ -6,6 +6,12 @@ export const Action = Object.freeze({
   StopShaking: 'StopShaking',
   DeclareVariableRightly: 'DeclareVariableRightly',
   DeclareVariableWrongly: 'DeclareVariableWrongly',
+  PushFrameRightly: 'PushFrameRightly',
+  PushFrameWrongly: 'PushFrameWrongly',
+  PopFrameRightly: 'PopFrameRightly',
+  PopFrameWrongly: 'PopFrameWrongly',
+  CrashRightly: 'CrashRightly',
+  CrashWrongly: 'CrashWrongly',
 
   SelectRightSubexpression: 'SelectRightSubexpression',
   SelectWrongSubexpression: 'SelectWrongSubexpression',
@@ -13,6 +19,7 @@ export const Action = Object.freeze({
   SelectWrongMemoryValue: 'SelectWrongMemoryValue',
   SelectRightStatement: 'SelectRightStatement',
   SelectWrongStatement: 'SelectWrongStatement',
+  SelectRightFunctionDefinition: 'SelectRightFunctionDefinition',
 
   EnterUserInput: 'EnterUserInput',
   EnterRightSubexpressionValue: 'EnterRightSubexpressionValue',
@@ -123,10 +130,10 @@ export function enterRightSubexpressionValue(value) {
 
 // --------------------------------------------------------------------------- 
 
-export function enterWrongSubexpressionValue(value) {
+export function enterWrongSubexpressionValue(feedback) {
   return {
     type: Action.EnterWrongSubexpressionValue,
-    payload: value,
+    payload: feedback,
   };
 }
 
@@ -193,6 +200,12 @@ export function enterWrongVariableName(name) {
 export const declareVariableRightly = () => ({type: Action.DeclareVariableRightly});
 export const declareVariableWrongly = () => ({type: Action.DeclareVariableWrongly});
 export const enterRightVariableName = () => ({type: Action.EnterRightVariableName});
+export const pushFrameRightly = () => ({type: Action.PushFrameRightly});
+export const pushFrameWrongly = () => ({type: Action.PushFrameWrongly});
+export const popFrameRightly = () => ({type: Action.PopFrameRightly});
+export const popFrameWrongly = () => ({type: Action.PopFrameWrongly});
+export const crashRightly = () => ({type: Action.CrashRightly});
+export const crashWrongly = () => ({type: Action.CrashWrongly});
 
 // --------------------------------------------------------------------------- 
 

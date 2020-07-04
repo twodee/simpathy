@@ -14,11 +14,51 @@ import { lex } from './lexer';
 import { parse } from './parser';
 
 function getAst() {
-  const source = `sum = 0
-x = parseInt(readLine())
-while (x > 0)
-  sum = sum + x
-  x = parseInt(readLine())`;
+  // const source = `a = 0
+// while a == 0
+  // a = 1`;
+
+  const source = `print(format("%-05d!!%6s!", 3, "foo"))`;
+
+  // const source = `parseInt("foo")`;
+
+  // const source = `function gcd(a, b)
+  // big = max(a, b)
+  // small = min(a, b)
+  // while small != 0
+    // tmp = small
+    // small = big % small
+    // big = tmp
+  // return big
+// print(gcd(9, 10))`;
+
+  // const source = `function gcd(a, b)
+  // big = max(a, b)
+  // small = min(a, b)
+  // while small != 0
+    // tmp = small
+    // small = big % small
+    // big = tmp
+  // return big
+// x = parseInt(readLine())
+// y = parseIns(readLine())
+// print(gcd(x, y))`;
+
+  // const source = `a = 5`;
+
+  // const source = `print(5)
+// print(5 - 7)
+// 8 * 9 > 70`;
+
+  // const source = `function double(x)
+  // return 2 * x
+// print(double(5))
+// sum = 5 - (4 + 1)`;
+
+// x = parseInt(readLine())
+// while (x > 0)
+  // sum = sum + x
+  // x = parseInt(readLine())`;
   // const source = `while a < 3
   // println(a + 3)
   // a = a + 1`;

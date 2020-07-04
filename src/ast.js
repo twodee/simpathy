@@ -63,12 +63,16 @@ class ExpressionStepper extends Stepper {
 
 class BlockStepper extends Stepper {
   next(bequest) {
-    super.next(bequest);
-    if (this.i < this.expression.statements.length) {
-      return this.expression.statements[this.i].stepper();
-    } else {
-      return null;
+    let stepper = null;
+
+    while (!stepper && this.i < this.expression.statements.length) {
+      super.next(bequest);
+      if (this.i < this.expression.statements.length) {
+        stepper = this.expression.statements[this.i].stepper();
+      }
     }
+
+    return stepper;
   }
 }
 
@@ -98,7 +102,6 @@ class WhileStepper extends Stepper {
   next(bequest) {
     super.next(bequest);
 
-    console.log("bequest:", bequest);
     if (this.i % 2 === 0) {
       return this.expression.condition.stepper();
     } else if (bequest.value) {
@@ -150,7 +153,7 @@ class Expression {
     }
   }
 
-  addSelectable(attributes, state, dispatch, callbacks, ...extras) {
+  addSelectable(attributes, state, dispatch, callbacks) {
     attributes.onMouseOver = event => {
       event.stopPropagation();
       dispatch(hover(this));
@@ -160,7 +163,7 @@ class Expression {
       dispatch(unhover(this));
     };
 
-    attributes.onClick = () => callbacks.onClick(this, ...extras);
+    attributes.onClick = () => callbacks.onClick(this);
     attributes.onAnimationEnd = () => dispatch(stopShaking());
 
     if (this === state.hoveredElement) {
@@ -173,11 +176,11 @@ class Expression {
   }
 
   addHistory(attributes, state) {
-    if (this === state.statementStack[state.statementStack.length - 1]) {
+    if (this === state.statements.top) {
       attributes.className += ' stack-top';
     } else {
-      const i = state.statementStack.indexOf(this);
-      if (i >= 0 && i < state.statementStack.length - 1) {
+      const i = state.statements.indexOf(this);
+      if (i >= 0 && i < state.statements.size - 1) {
         attributes.className += ' stack-below';
       }
     }
@@ -270,7 +273,7 @@ export class ExpressionIdentifier extends Expression {
 
   evaluatorify(state, dispatch, callbacks, isParenthesized) {
     let attributes = {className: 'subexpression'};
-    this.addSelectable(attributes, state, dispatch, callbacks, state.expression);
+    this.addSelectable(attributes, state, dispatch, callbacks);
 
     const identifierElement = React.createElement('span', attributes, this.id.source);
     return (
@@ -302,7 +305,7 @@ export class ExpressionIdentifier extends Expression {
   programify(state, dispatch, callbacks, isParenthesized, isSelectable, indentation) {
     let attributes = {className: 'subexpression'};
     if (isSelectable) {
-      this.addSelectable(attributes, state, dispatch, callbacks, state.activeStatement, state.program, state.expression);
+      this.addSelectable(attributes, state, dispatch, callbacks);
       this.addHistory(attributes, state);
     }
 
@@ -346,7 +349,7 @@ class ExpressionUnaryOperator extends Expression {
 
   evaluatorify(state, dispatch, callbacks, isParenthesized) {
     let attributes = {className: 'evaluatable unary-prefix-operator expression-piece'};
-    this.addSelectable(attributes, state, dispatch, callbacks, state.expression);
+    this.addSelectable(attributes, state, dispatch, callbacks);
 
     const operatorElement = React.createElement('span', attributes, this.operator);
     return (
@@ -383,7 +386,7 @@ class ExpressionUnaryOperator extends Expression {
   programify(state, dispatch, callbacks, isParenthesized, isSelectable, indentation) {
     let attributes = {className: 'subexpression'};
     if (isSelectable) {
-      this.addSelectable(attributes, state, dispatch, callbacks, state.activeStatement, state.program, state.expression);
+      this.addSelectable(attributes, state, dispatch, callbacks);
       this.addHistory(attributes, state);
     }
 
@@ -426,6 +429,7 @@ class ExpressionBinaryOperator extends Expression {
     this.operator = operator;
     this.a.parent = this;
     this.b.parent = this;
+    this.isLeftAssociative = isLeftAssociative;
   }
 
   isSimplified() {
@@ -434,7 +438,7 @@ class ExpressionBinaryOperator extends Expression {
 
   evaluatorify(state, dispatch, callbacks, isParenthesized) {
     let attributes = {className: 'evaluatable binary-infix-operator expression-piece'};
-    this.addSelectable(attributes, state, dispatch, callbacks, state.expression);
+    this.addSelectable(attributes, state, dispatch, callbacks);
 
     const operatorElement = React.createElement('span', attributes, this.operator);
     return (
@@ -477,7 +481,7 @@ class ExpressionBinaryOperator extends Expression {
   programify(state, dispatch, callbacks, isParenthesized, isSelectable, indentation) {
     let attributes = {className: 'subexpression'};
     if (isSelectable) {
-      this.addSelectable(attributes, state, dispatch, callbacks, state.activeStatement, state.program, state.expression);
+      this.addSelectable(attributes, state, dispatch, callbacks);
       this.addHistory(attributes, state);
     }
 
@@ -518,11 +522,11 @@ class ExpressionBinaryOperator extends Expression {
 
 // --------------------------------------------------------------------------- 
 
-class ExpressionBuiltin extends Expression {
+class ExpressionFunctionCall extends Expression {
   constructor(name, operands, where = null) {
     super(Precedence.Atom, where);
-    this.operands = operands;
     this.name = name;
+    this.operands = operands;
     for (let operand of this.operands) {
       operand.parent = this;
     }
@@ -550,17 +554,23 @@ class ExpressionBuiltin extends Expression {
     }
   }
 
-  clone() {
-    return new this.constructor(this.operands.map(operand => operand.clone()), this.where);
-  }
-
   evaluatorify(state, dispatch, callbacks, isParenthesized) {
     let attributes = {className: 'evaluatable function-call expression-piece'};
-    this.addSelectable(attributes, state, dispatch, callbacks, state.expression);
+    this.addSelectable(attributes, state, dispatch, callbacks);
+
+    const isActive = (
+      state.mode === Mode.PushingFrame ||
+      state.mode === Mode.DeclaringVariable ||
+      state.mode === Mode.NamingVariable ||
+      state.mode === Mode.SelectingMemoryValue ||
+      state.mode === Mode.EnteringMemoryValue ||
+      state.mode === Mode.SelectingStatement ||
+      state.mode === Mode.EvaluatingSubexpression
+    ) && state.activeSubexpression === this;
 
     const callElement = React.createElement('span', attributes, this.name);
     return (
-      <span className={`subexpression ${state.mode === Mode.EvaluatingSubexpression && state.activeSubexpression === this ? 'active' : ''}`}>
+      <span className={`subexpression ${isActive ? 'active' : ''}`}>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
         {callElement}({
           this.operands.map((operand, i) => (
@@ -579,7 +589,7 @@ class ExpressionBuiltin extends Expression {
   programify(state, dispatch, callbacks, isParenthesized, isSelectable, indentation) {
     let attributes = {className: 'subexpression'};
     if (isSelectable) {
-      this.addSelectable(attributes, state, dispatch, callbacks, state.activeStatement, state.program, state.expression);
+      this.addSelectable(attributes, state, dispatch, callbacks);
       this.addHistory(attributes, state);
     }
 
@@ -626,6 +636,112 @@ class ExpressionBuiltin extends Expression {
 
 // --------------------------------------------------------------------------- 
 
+export class ExpressionUserFunctionCall extends ExpressionFunctionCall {
+  constructor(nameToken, actuals, where) {
+    super(nameToken.source, actuals, where);
+    this.nameToken = nameToken;
+  }
+
+  clone() {
+    return new this.constructor(this.nameToken, this.operands.map(operand => operand.clone()), this.where);
+  }
+
+  simplify(expression, value) {
+    if (this === expression) {
+      return value;
+    } else {
+      return new this.constructor(this.nameToken, this.operands.map(operand => operand.simplify(expression, value)));
+    }
+  }
+}
+
+// -------------------------------------------------------------------------- 
+
+class ExpressionBuiltinFunctionCall extends ExpressionFunctionCall {
+  clone() {
+    return new this.constructor(this.operands.map(operand => operand.clone()), this.where);
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionReturn extends Expression {
+  constructor(expression, where = null) {
+    super(Precedence.Atom, where);
+    this.expression = expression;
+  }
+
+  isSimplified() {
+    return false;
+  }
+
+  get nextNonterminal() {
+    return this.expression.nextNonterminal ?? this;
+  }
+
+  simplify(expression, value) {
+    if (this === expression) {
+      return value;
+    } else {
+      return new this.constructor(this.expression.simplify(expression, value));
+    }
+  }
+
+  clone() {
+    return new this.constructor(this.expression.clone(), this.where);
+  }
+
+  evaluatorify(state, dispatch, callbacks, isParenthesized) {
+    let attributes = {className: 'evaluatable function-call expression-piece'};
+    this.addSelectable(attributes, state, dispatch, callbacks);
+
+    const isActive = (
+      state.mode === Mode.EvaluatingSubexpression ||
+      state.mode === Mode.SelectingMemoryValue ||
+      state.mode === Mode.EnteringMemoryValue
+    ) && state.activeSubexpression === this;
+
+    const callElement = React.createElement('span', attributes, 'return');
+    return (
+      <span className={`subexpression ${isActive ? 'active' : ''}`}>
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        {callElement} {this.expression.evaluatorify(state, dispatch, callbacks, false)}
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+        {this.evaluatePopup(state, dispatch, callbacks)}
+      </span>
+    );
+  }
+
+  programify(state, dispatch, callbacks, isParenthesized, isSelectable, indentation) {
+    let attributes = {className: 'subexpression'};
+    if (isSelectable) {
+      this.addSelectable(attributes, state, dispatch, callbacks);
+      this.addHistory(attributes, state);
+    }
+
+    const element = React.createElement('span', attributes, <>
+      {isParenthesized ? <span className="expression-piece">(</span> : ''}
+      return {this.expression.programify(state, dispatch, callbacks, false, '')}
+      {isParenthesized ? <span className="expression-piece">)</span> : ''}
+    </>);
+
+    return (<>
+      <span className="space">{indentation}</span>
+      {element}
+    </>);
+  }
+
+  promptify(isParenthesized) {
+    return <>
+      {isParenthesized ? <span>(</span> : ''}
+      return {this.expression.promptify(false)}
+      {isParenthesized ? <span>)</span> : ''}
+    </>;
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
 export class ExpressionWhile extends Expression {
   constructor(condition, body, where = null) {
     super(Precedence.Atom, where);
@@ -648,8 +764,6 @@ export class ExpressionWhile extends Expression {
   }
 
   getNextStatement(value, afterChild) {
-    console.log("value:", value);
-    console.log("afterChild:", afterChild);
     if (this.condition === afterChild) {
       return this.body.getFirstStatement();
     } else {
@@ -663,6 +777,46 @@ export class ExpressionWhile extends Expression {
         <span className="space">{indentation}</span>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
         while ({this.condition.programify(state, dispatch, callbacks, false, true, '')})
+          {this.body.programify(state, dispatch, callbacks, false, false, indentation + '  ')}
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+      </span>
+    );
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionFunctionDefinition extends Expression {
+  constructor(identifier, formals, body, where = null) {
+    super(Precedence.Atom, where);
+    this.identifier = identifier;
+    this.formals = formals;
+    this.body = body;
+    this.body.parent = this;
+  }
+
+  isSimplified() {
+    return true;
+  }
+
+  programify(state, dispatch, callbacks, isParenthesized, isSelectable, indentation) {
+    let attributes = {className: 'subexpression'};
+    if (isSelectable) {
+      this.addSelectable(attributes, state, dispatch, callbacks);
+      this.addHistory(attributes, state);
+    }
+
+    const element = React.createElement('span', attributes,
+      <>
+        function {this.identifier}({this.formals.join(', ')})
+      </>
+    );
+
+    return (
+      <span>
+        <span className="space">{indentation}</span>
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        {element}
           {this.body.programify(state, dispatch, callbacks, false, false, indentation + '  ')}
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
       </span>
@@ -735,7 +889,7 @@ export class ExpressionIf extends Expression {
 
 // --------------------------------------------------------------------------- 
 
-export class ExpressionMax extends ExpressionBuiltin {
+export class ExpressionMax extends ExpressionBuiltinFunctionCall {
   constructor(operands, where) {
     super('max', operands, where);
   }
@@ -755,7 +909,7 @@ export class ExpressionMax extends ExpressionBuiltin {
 
 // --------------------------------------------------------------------------- 
 
-export class ExpressionMin extends ExpressionBuiltin {
+export class ExpressionMin extends ExpressionBuiltinFunctionCall {
   constructor(operands, where) {
     super('min', operands, where);
   }
@@ -775,7 +929,7 @@ export class ExpressionMin extends ExpressionBuiltin {
 
 // --------------------------------------------------------------------------- 
 
-export class ExpressionSign extends ExpressionBuiltin {
+export class ExpressionSign extends ExpressionBuiltinFunctionCall {
   constructor(operands, where) {
     super('sign', operands, where);
   }
@@ -792,14 +946,14 @@ export class ExpressionSign extends ExpressionBuiltin {
 
 // --------------------------------------------------------------------------- 
 
-export class ExpressionParseInt extends ExpressionBuiltin {
+export class ExpressionParseInt extends ExpressionBuiltinFunctionCall {
   constructor(operands, where) {
     super('parseInt', operands, where);
   }
 
   evaluate(env) {
     const value = this.operands[0].evaluate(env);
-    if (value instanceof ExpressionString) {
+    if (value instanceof ExpressionString && value.value.match(/^\d+$/)) {
       return new ExpressionInteger(parseInt(value.value));
     } else {
       throw new Error('bad types');
@@ -809,7 +963,7 @@ export class ExpressionParseInt extends ExpressionBuiltin {
 
 // --------------------------------------------------------------------------- 
 
-export class ExpressionParseFloat extends ExpressionBuiltin {
+export class ExpressionParseFloat extends ExpressionBuiltinFunctionCall {
   constructor(operands, where) {
     super('parseFloat', operands, where);
   }
@@ -826,7 +980,7 @@ export class ExpressionParseFloat extends ExpressionBuiltin {
 
 // --------------------------------------------------------------------------- 
 
-export class ExpressionReadLine extends ExpressionBuiltin {
+export class ExpressionReadLine extends ExpressionBuiltinFunctionCall {
   constructor(operands, where) {
     super('readLine', operands, where);
   }
@@ -838,14 +992,85 @@ export class ExpressionReadLine extends ExpressionBuiltin {
 
 // --------------------------------------------------------------------------- 
 
-export class ExpressionPrint extends ExpressionBuiltin {
+export class ExpressionFormat extends ExpressionBuiltinFunctionCall {
+  constructor(operands, where) {
+    super('format', operands, where);
+  }
+
+  evaluate(env) {
+    const subject = this.operands[0].value;
+
+    let parameterIndex = 0;
+    const expanded = subject.replace(/%(-\d+|\d*)(d|(\.\d+)?f|s)/g, placeholder => {
+      parameterIndex += 1;
+
+      let match = placeholder.match(/%(-\d+|\d*)d/);
+      if (match) {
+        let isLeftJustified = false;
+        let width = 0;
+        let padCharacter = ' ';
+
+        if (match[1].startsWith('-')) {
+          isLeftJustified = true;
+          width = parseInt(match[1].substring(1));
+        } else if (match[1].length > 0) {
+          if (match[1][0] === '0') {
+            padCharacter = '0';
+          }
+          width = parseInt(match[1]);
+        }
+
+        let replacement = this.operands[parameterIndex].value.toString();
+
+        const paddingLength = width - replacement.length;
+        if (paddingLength > 0) {
+          let padding = ''.padStart(paddingLength, ' ').replace(/ /g, padCharacter);
+          replacement = isLeftJustified ? replacement + padding : padding + replacement;
+        }
+
+        return replacement;
+      } else {
+        match = placeholder.match(/%(-\d+|\d*)s/);
+        if (match) {
+          let isLeftJustified = false;
+          let width = 0;
+
+          if (match[1].startsWith('-')) {
+            isLeftJustified = true;
+            width = parseInt(match[1].substring(1));
+          } else if (match[1].length > 0) {
+            width = parseInt(match[1]);
+          }
+
+          let replacement = this.operands[parameterIndex].value.toString();
+
+          const paddingLength = width - replacement.length;
+          if (paddingLength > 0) {
+            let padding = ''.padStart(paddingLength, ' ');
+            replacement = isLeftJustified ? replacement + padding : padding + replacement;
+          }
+
+          return replacement;
+        }
+      }
+
+      throw new Error('bad % code');
+    });
+
+    return new ExpressionString(expanded);
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionPrint extends ExpressionBuiltinFunctionCall {
   constructor(operands, where) {
     super('print', operands, where);
   }
 
   evaluate(env) {
-    const values = this.operands.map(operand => operand.evaluate(env).value).join(' ');
-    console.log(values);
+    // TODO what is going on here with output?
+    // const values = this.operands.map(operand => operand.evaluate(env).value).join(' ');
     return new ExpressionUnit();
   }
 
@@ -856,14 +1081,13 @@ export class ExpressionPrint extends ExpressionBuiltin {
 
 // --------------------------------------------------------------------------- 
 
-export class ExpressionPrintLine extends ExpressionBuiltin {
+export class ExpressionPrintLine extends ExpressionBuiltinFunctionCall {
   constructor(operands, where) {
     super('printLine', operands, where);
   }
 
   evaluate(env) {
-    const values = this.operands.map(operand => operand.evaluate(env).value).join(' ');
-    console.log(values);
+    // const values = this.operands.map(operand => operand.evaluate(env).value).join(' ');
     return new ExpressionUnit();
   }
 
@@ -882,7 +1106,7 @@ export class ExpressionLValue extends Expression {
 
   evaluatorify(state, dispatch, callbacks, isParenthesized) {
     let attributes = {className: 'evaluatable expression-piece'};
-    this.addSelectable(attributes, state, dispatch, callbacks, state.expression);
+    this.addSelectable(attributes, state, dispatch, callbacks);
 
     const element = React.createElement('span', attributes, this.identifier.source);
 
@@ -923,14 +1147,13 @@ export class ExpressionAssignment extends Expression {
 
   evaluatorify(state, dispatch, callbacks, isParenthesized) {
     let attributes = {className: 'evaluatable binary-infix-operator expression-piece'};
-    this.addSelectable(attributes, state, dispatch, callbacks, state.expression);
+    this.addSelectable(attributes, state, dispatch, callbacks);
 
     const operatorElement = React.createElement('span', attributes, '=');
     const isActive = (
       state.mode === Mode.SelectingMemoryValue ||
       state.mode === Mode.EnteringMemoryValue ||
       state.mode === Mode.DeclaringVariable ||
-      state.mode === Mode.EnteringMemoryValue ||
       state.mode === Mode.NamingVariable
     ) && state.activeSubexpression === this;
 
@@ -971,7 +1194,7 @@ export class ExpressionAssignment extends Expression {
   programify(state, dispatch, callbacks, isParenthesized, isSelectable, indentation) {
     let attributes = {className: 'subexpression'};
     if (isSelectable) {
-      this.addSelectable(attributes, state, dispatch, callbacks, state.activeStatement, state.program, state.expression);
+      this.addSelectable(attributes, state, dispatch, callbacks);
       this.addHistory(attributes, state);
     }
 
@@ -1044,6 +1267,26 @@ export class ExpressionAdd extends ExpressionBinaryOperator {
     } else if ((valueA instanceof ExpressionReal || valueA instanceof ExpressionInteger) &&
                (valueB instanceof ExpressionReal || valueB instanceof ExpressionInteger)) {
       return new ExpressionReal(valueA.value + valueB.value);
+    } else {
+      throw new Error('bad types');
+    }
+  }
+}
+
+export class ExpressionSubtract extends ExpressionBinaryOperator {
+  constructor(a, b, where) {
+    super(Precedence.Additive, '-', true, a, b, where);
+  }
+
+  evaluate(env) {
+    const valueA = this.a.evaluate(env);
+    const valueB = this.b.evaluate(env);
+
+    if (valueA instanceof ExpressionInteger && valueB instanceof ExpressionInteger) {
+      return new ExpressionInteger(valueA.value - valueB.value);
+    } else if ((valueA instanceof ExpressionReal || valueA instanceof ExpressionInteger) &&
+               (valueB instanceof ExpressionReal || valueB instanceof ExpressionInteger)) {
+      return new ExpressionReal(valueA.value - valueB.value);
     } else {
       throw new Error('bad types');
     }
@@ -1377,7 +1620,7 @@ export class ExpressionLiteral extends Expression {
 
   evaluatorify(state, dispatch, callbacks, isParenthesized) {
     let attributes = {className: 'evaluatable subexpression expression-piece literal'};
-    this.addSelectable(attributes, state, dispatch, callbacks, state.expression);
+    this.addSelectable(attributes, state, dispatch, callbacks);
 
     return React.createElement('span', attributes, this.toString());
   }
@@ -1385,7 +1628,7 @@ export class ExpressionLiteral extends Expression {
   programify(state, dispatch, callbacks, isParenthesized, isSelectable, indentation) {
     let attributes = {className: 'subexpression expression-piece literal'};
     if (isSelectable) {
-      this.addSelectable(attributes, state, dispatch, callbacks, state.activeStatement, state.program, state.expression);
+      this.addSelectable(attributes, state, dispatch, callbacks);
       this.addHistory(attributes, state);
     }
 

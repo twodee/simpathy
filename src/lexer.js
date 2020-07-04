@@ -134,8 +134,10 @@ export function lex(source) {
       }
     } else if (tokenSoFar === 'else') {
       emit(Token.Else);
-    } else if (tokenSoFar === 'to') {
-      emit(Token.To);
+    } else if (tokenSoFar === 'function') {
+      emit(Token.Function);
+    } else if (tokenSoFar === 'return') {
+      emit(Token.Return);
     } else if (tokenSoFar === 'in') {
       emit(Token.In);
     } else if (tokenSoFar === 'then') {
@@ -227,7 +229,7 @@ export function lex(source) {
     consume();
     if (has('=')) {
       consume();
-      emit(Token.Same);
+      emit(Token.NotSame);
     } else {
       emit(Token.Not);
     }

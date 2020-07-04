@@ -6,6 +6,9 @@ import {
   enterWrongSubexpressionValue,
   selectRightSubexpression,
   selectWrongSubexpression,
+  crashRightly,
+  crashWrongly,
+  stopShaking,
 } from '../actions';
 
 import {
@@ -27,12 +30,27 @@ const Evaluator = () => {
     activeSubexpression: useSelector(state => state.activeSubexpression),
     isBadSelection: useSelector(state => state.isBadSelection),
     isBadInput: useSelector(state => state.isBadInput),
+    isBadCrash: useSelector(state => state.isBadCrash),
+    isCrashing: useSelector(state => state.isCrashing),
     expression: useSelector(state => state.expression),
     currentInput: useSelector(state => state.currentInput),
-    env: useSelector(state => state.frames[state.frames.length - 1]),
+    expectedValue: useSelector(state => state.expectedValue),
   };
 
   const dispatch = useDispatch();
+
+  let crashAttributes = {
+    className: state.isBadCrash ? 'shaking' : '',
+    onClick: () => {
+      if (state.mode === Mode.EvaluatingSubexpression && state.isCrashing) {
+        dispatch(crashRightly());
+      } else {
+        dispatch(crashWrongly());
+      }
+    },
+    onAnimationEnd: () => dispatch(stopShaking()),
+  };
+  const crashButton = React.createElement('button', crashAttributes, 'crash');
 
   const callbacks = {
     onClick: clickedElement => {
@@ -44,13 +62,18 @@ const Evaluator = () => {
     },
     onKeyDown: e => {
       if (e.key === 'Enter') {
-        const expected = state.activeSubexpression.evaluate(state.env);
-        let actual = parseLiteral(state.currentInput);
+        let actualValue = parseLiteral(state.currentInput);
 
-        if (expected.equals(actual)) {
-          dispatch(enterRightSubexpressionValue(actual));
+        if (state.isCrashing) {
+          dispatch(enterWrongSubexpressionValue(<>No, <code className="code prompt-code">{state.currentInput}</code> is not the right value.</>));
+        } else if (!actualValue) {
+          dispatch(enterWrongSubexpressionValue(<>No, <code className="code prompt-code">{state.currentInput}</code> is not a legal primitive.</>));
+        } else if (state.expectedValue.equals(actualValue)) {
+          dispatch(enterRightSubexpressionValue(actualValue));
+        } else if (state.expectedValue.constructor !== actualValue.constructor) {
+          dispatch(enterWrongSubexpressionValue(<>No, <code className="code prompt-code">{state.currentInput}</code> is not of the right type.</>));
         } else {
-          dispatch(enterWrongSubexpressionValue(actual));
+          dispatch(enterWrongSubexpressionValue(<>No, <code className="code prompt-code">{state.currentInput}</code> is not the right value.</>));
         }
       }
     }
@@ -58,6 +81,9 @@ const Evaluator = () => {
 
   return (
     <div id="evaluator-panel">
+      <div className="panel-actions">
+        {crashButton}
+      </div>
       <h1>Evaluator</h1>
       <div id="evaluator">
         <div id="expression" className="code">

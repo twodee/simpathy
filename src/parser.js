@@ -5,7 +5,7 @@ import {
 
 import {
   LocatedException,
-  MessagedException,
+  // MessagedException,
 } from './types';
 
 import {
@@ -17,8 +17,8 @@ import {
   // ExpressionCharacter,
   ExpressionDivide,
   // ExpressionFor,
-  // ExpressionFunctionCall,
-  // ExpressionFunctionDefinition,
+  ExpressionUserFunctionCall,
+  ExpressionFunctionDefinition,
   ExpressionIdentifier,
   ExpressionIf,
   ExpressionInteger,
@@ -37,6 +37,7 @@ import {
   ExpressionNot,
   ExpressionOr,
   ExpressionPower,
+  ExpressionFormat,
   ExpressionPrint,
   ExpressionPrintLine,
   ExpressionReadLine,
@@ -45,11 +46,12 @@ import {
   ExpressionModulus,
   ExpressionParseInt,
   ExpressionParseFloat,
+  ExpressionReturn,
   ExpressionSame,
   ExpressionSign,
   ExpressionString,
   // ExpressionSubscript,
-  // ExpressionSubtract,
+  ExpressionSubtract,
   // ExpressionVector,
   ExpressionWhile,
 } from './ast';
@@ -111,7 +113,6 @@ export function parse(tokens) {
     let indentation = tokens[i];
 
     if (indentation.source.length <= indents[indents.length - 1]) {
-      console.log("i:", i);
       throw new LocatedException(indentation.where, 'I expected the indentation to increase upon entering a block.');
     }
     indents.push(indentation.source.length);
@@ -144,7 +145,15 @@ export function parse(tokens) {
   }
 
   function statement() {
-    let e = expression();
+    let e;
+    if (has(Token.Return)) {
+      const returnToken = consume();
+      e = expression();
+      e = new ExpressionReturn(e, SourceLocation.span(returnToken, e)); 
+    } else {
+      e = expression();
+    }
+
     if (has(Token.Linebreak)) {
       consume();
       return e;
@@ -244,7 +253,7 @@ export function parse(tokens) {
       if (operator.type === Token.Plus) {
         a = new ExpressionAdd(a, b, SourceLocation.span(a.where, b.where));
       } else {
-        // a = new ExpressionSubtract(a, b, SourceLocation.span(a.where, b.where));
+        a = new ExpressionSubtract(a, b, SourceLocation.span(a.where, b.where));
       }
     }
     return a;
@@ -415,6 +424,8 @@ export function parse(tokens) {
         return new ExpressionMax(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else if (nameToken.source === 'min') {
         return new ExpressionMin(actuals, SourceLocation.span(nameToken, sourceEnd));
+      } else if (nameToken.source === 'format') {
+        return new ExpressionFormat(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else if (nameToken.source === 'print') {
         return new ExpressionPrint(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else if (nameToken.source === 'printLine') {
@@ -428,63 +439,56 @@ export function parse(tokens) {
       } else if (nameToken.source === 'parseFloat') {
         return new ExpressionParseFloat(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else {
-        throw new MessagedException('ack!');
-        // return new ExpressionFunctionCall(nameToken, actuals, SourceLocation.span(sourceStart, sourceEnd));
+        return new ExpressionUserFunctionCall(nameToken, actuals, SourceLocation.span(sourceStart, sourceEnd));
       }
     } else if (has(Token.Identifier)) {
       let where = tokens[i].where;
       let id = consume();
       return new ExpressionIdentifier(id, where);
-    // } else if (has(Token.To)) {
-      // let sourceStart = tokens[i].where;
-      // consume(); // eat if
+    } else if (has(Token.Function)) {
+      let sourceStart = tokens[i].where;
+      consume(); // eat if
 
-      // if (!has(Token.Identifier)) {
-        // throw new LocatedException(tokens[i].where, 'I expected a function name after to.');
-      // }
-      // let idToken = tokens[i];
-      // consume();
+      if (!has(Token.Identifier)) {
+        throw new LocatedException(tokens[i].where, 'I expected a function name after function.');
+      }
+      let idToken = tokens[i];
+      consume();
 
-      // if (!has(Token.LeftParenthesis)) {
-        // throw new LocatedException(tokens[i].where, 'I expected a left parenthesis after a function\'s name.');
-      // }
-      // consume();
+      if (!has(Token.LeftParenthesis)) {
+        throw new LocatedException(tokens[i].where, 'I expected a left parenthesis after a function\'s name.');
+      }
+      consume();
 
       // Parse formals.
-      // let formals = [];
-      // if (has(Token.Identifier)) {
-        // formals.push(tokens[i].source);
-        // consume();
+      let formals = [];
+      if (has(Token.Identifier)) {
+        formals.push(tokens[i].source);
+        consume();
 
-        // while (has(Token.Comma)) {
-          // consume(); // eat comma
-          // if (has(Token.Identifier)) {
-            // formals.push(tokens[i].source);
-            // consume();
-          // } else {
-            // throw new LocatedException(tokens[i].where, 'I expected a parameter name after a comma in the parameter list.');
-          // }
-        // }
-      // }
+        while (has(Token.Comma)) {
+          consume(); // eat comma
+          if (has(Token.Identifier)) {
+            formals.push(tokens[i].source);
+            consume();
+          } else {
+            throw new LocatedException(tokens[i].where, 'I expected a parameter name after a comma in the parameter list.');
+          }
+        }
+      }
 
-      // if (!has(Token.RightParenthesis)) {
-        // throw new LocatedException(tokens[i].where, 'I expected a right parenthesis after a function\'s parameter list.');
-      // }
-      // consume();
+      if (!has(Token.RightParenthesis)) {
+        throw new LocatedException(tokens[i].where, 'I expected a right parenthesis after a function\'s parameter list.');
+      }
+      consume();
 
-      // let body;
-      // if (has(Token.Assign)) {
-        // consume();
-        // body = statement();
-      // } else {
-        // if (!has(Token.Linebreak)) {
-          // throw new LocatedException(tokens[i].where, 'I expected a linebreak after a function header.');
-        // }
-        // consume();
-        // body = block();
-      // }
+      if (!has(Token.Linebreak)) {
+        throw new LocatedException(tokens[i].where, 'I expected a linebreak after a function header.');
+      }
+      consume();
+      const body = block();
 
-      // return new ExpressionFunctionDefinition(idToken.source, formals, body, SourceLocation.span(sourceStart, body.where));
+      return new ExpressionFunctionDefinition(idToken.source, formals, body, SourceLocation.span(sourceStart, body.where));
 
     } else if (has(Token.If)) {
       let sourceStart = tokens[i].where;
