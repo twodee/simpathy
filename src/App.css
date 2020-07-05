@@ -137,6 +137,7 @@ h1 {
 
 .literal {
   color: darkgreen;
+  color: #666666;
 }
 
 .comment {

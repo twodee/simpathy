@@ -14,9 +14,7 @@ import { lex } from './lexer';
 import { parse } from './parser';
 
 function getAst() {
-  // const source = `a = 0
-// while a == 0
-  // a = 1`;
+  const source = `a = b = 3`;
 
   // const source = `// Print a bunch of stuff
 // print(format("%05.2f->", 3.785, "foo"))`;
@@ -33,20 +31,20 @@ function getAst() {
   // return big
 // print(gcd(9, 10))`;
 
-  const source = `function gcd(a, b)
+  // const source = `function gcd(a, b)
   // Order a and b.
-  big = max(a, b)
-  small = min(a, b)
-  while small != 0
-    tmp = small
-    small = big % small
-    big = tmp
-  return big
+  // big = max(a, b)
+  // small = min(a, b)
+  // while small != 0
+    // tmp = small
+    // small = big % small
+    // big = tmp
+  // return big
 
-5 + 7
-x = parseInt(readLine())
-y = parseIns(readLine())
-print(gcd(x, y))`;
+// 5 + 7
+// x = parseInt(readLine())
+// y = parseIns(readLine())
+// print(gcd(x, y))`;
 
   // const source = `a = 5`;
 

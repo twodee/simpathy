@@ -1245,6 +1245,7 @@ export class ExpressionAssignment extends Expression {
       state.mode === Mode.SelectingMemoryValue ||
       state.mode === Mode.EnteringMemoryValue ||
       state.mode === Mode.DeclaringVariable ||
+      state.mode === Mode.EvaluatingSubexpression ||
       state.mode === Mode.NamingVariable
     ) && state.activeSubexpression === this;
 

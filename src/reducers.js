@@ -191,7 +191,6 @@ export default function reducer(state = initialState, action) {
           newState.mode = Mode.DeclaringVariable;
         }
       } else if (action.payload instanceof ExpressionUserFunctionCall) {
-        console.log("state.activeSubexpression:", state.activeSubexpression);
         Object.assign(newState, {
           feedback: <>The code <code className="code prompt-code">{action.payload.promptify(false)}</code> is a function call.</>,
           objective: <>What happens next in memory?</>,
@@ -357,16 +356,6 @@ export default function reducer(state = initialState, action) {
       break;
     }
 
-    case Action.SelectAssignment: {
-      Object.assign(newState, {
-        feedback: null,
-        objective: 'Which value in memory is being assigned?',
-        mode: Mode.SelectingMemoryValue,
-        activeSubexpression: action.payload,
-      });
-      break;
-    }
-
     case Action.SelectRightMemoryValue: {
       const term = state.parameterIndex === null ? 'variable' : 'parameter';
 
@@ -514,7 +503,13 @@ export default function reducer(state = initialState, action) {
         }],
       });
 
-      if (state.parameterIndex === null) {
+      if (state.expression instanceof ExpressionAssignment) {
+        Object.assign(newState, {
+          mode: Mode.EvaluatingSubexpression,
+          objective: <>What value is substituted for <code className="code prompt-code">{state.activeSubexpression.promptify(false)}</code>?</>,
+          feedback: <>The assignment has updated memory.</>,
+        });
+      } else if (state.parameterIndex === null) {
         const simplifiedExpression = state.expression.simplify(state.activeSubexpression, state.expectedValue);
         newState.expression = simplifiedExpression;
 
@@ -532,12 +527,12 @@ export default function reducer(state = initialState, action) {
             statements: state.statements.bottoms,
             steppers: state.steppers.bottoms,
             mode: Mode.EvaluatingSubexpression,
-            feedback: <>The function has finished executing and has returned to the call.</>,
             expression: state.pausedExpressions.top,
             pausedExpressions: state.pausedExpressions.bottom,
             activeSubexpression,
             pausedActiveSubexpressions: state.pausedActiveSubexpressions.bottom,
             objective: <>What value is substituted for <code className="code prompt-code">{activeSubexpression.promptify(false)}</code>?</>,
+            feedback: <>The function has finished executing and has returned to the call.</>,
             isPopNeeded: true,
           });
         } else if (simplifiedExpression.isSimplified() && newState.nextStatement === null) {
