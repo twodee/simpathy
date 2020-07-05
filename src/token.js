@@ -8,6 +8,7 @@ let TokenTypes = Object.freeze({
   Circle: 'Circle',
   Circumflex: 'Circumflex',
   Comma: 'Comma',
+  WholeLineComment: 'WholeLineComment',
   Dot: 'Dot',
   EOF: 'EOF',
   Else: 'Else',

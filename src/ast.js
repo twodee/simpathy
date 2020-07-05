@@ -279,7 +279,7 @@ export class ExpressionIdentifier extends Expression {
     return (
       <span className={`subexpression ${state.mode === Mode.EvaluatingSubexpression && state.activeSubexpression === this ? 'active' : ''}`}>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
-        {identifierElement}
+        <span className="variable-identifier">{identifierElement}</span>
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
         {this.evaluatePopup(state, dispatch, callbacks)}
       </span>
@@ -312,7 +312,7 @@ export class ExpressionIdentifier extends Expression {
     return React.createElement('span', attributes, 
       <>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
-        <span className="expression-piece">{this.id.source}</span>
+        <span className="expression-piece variable-identifier">{this.id.source}</span>
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
       </>
     );
@@ -322,7 +322,7 @@ export class ExpressionIdentifier extends Expression {
     return (
       <>
         {isParenthesized ? <span>(</span> : ''}
-        <span>{this.id.source}</span>
+        <span className="variable-identifier">{this.id.source}</span>
         {isParenthesized ? <span>)</span> : ''}
       </>
     );
@@ -572,7 +572,7 @@ class ExpressionFunctionCall extends Expression {
     return (
       <span className={`subexpression ${isActive ? 'active' : ''}`}>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
-        {callElement}({
+        <span className="function-identifier">{callElement}</span>({
           this.operands.map((operand, i) => (
             <React.Fragment key={`operand-${i}`}>
               {i > 0 ? ', ' : ''}
@@ -596,7 +596,7 @@ class ExpressionFunctionCall extends Expression {
     const element = React.createElement('span', attributes,
       <>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
-        {this.name}({
+        <span className="function-identifier">{this.name}</span>({
           this.operands.map((operand, i) => (
             <React.Fragment key={`operand-${i}`}>
               {i > 0 ? ', ' : ''}
@@ -620,7 +620,7 @@ class ExpressionFunctionCall extends Expression {
     return (
       <>
         {isParenthesized ? <span>(</span> : ''}
-        {this.name}({
+        <span className="function-identifier">{this.name}</span>({
           this.operands.map((operand, i) => (
             <React.Fragment key={`operand-${i}`}>
               {i > 0 ? ', ' : ''}
@@ -806,6 +806,29 @@ export class ExpressionBlankLine extends Expression {
 
 // --------------------------------------------------------------------------- 
 
+export class ExpressionWholeLineComment extends Expression {
+  constructor(source, where = null) {
+    super(Precedence.Atom, where);
+    this.source = source;
+  }
+
+  isSimplified() {
+    return true;
+  }
+  
+  stepper() {
+    return null;
+  }
+
+  programify(state, dispatch, callbacks, isParenthesized, isSelectable, indentation) {
+    return <span className="comment">
+      <span className="space">{indentation}</span>{this.source}
+    </span>;
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
 export class ExpressionFunctionDefinition extends Expression {
   constructor(identifier, formals, body, where = null) {
     super(Precedence.Atom, where);
@@ -828,7 +851,12 @@ export class ExpressionFunctionDefinition extends Expression {
 
     const element = React.createElement('span', attributes,
       <>
-        function {this.identifier}({this.formals.join(', ')})
+        function <span className="function-identifier">{this.identifier}</span>({this.formals.map((formal, index) =>
+          <React.Fragment key={index}>
+            <span className="variable-identifier">{formal}</span>
+            {index < this.formals.length - 1 && ', '}
+          </React.Fragment>
+        )})
       </>
     );
 
@@ -1158,7 +1186,7 @@ export class ExpressionLValue extends Expression {
   }
 
   evaluatorify(state, dispatch, callbacks, isParenthesized) {
-    let attributes = {className: 'evaluatable expression-piece'};
+    let attributes = {className: 'evaluatable expression-piece variable-identifier'};
     this.addSelectable(attributes, state, dispatch, callbacks);
 
     const element = React.createElement('span', attributes, this.identifier.source);
@@ -1176,7 +1204,17 @@ export class ExpressionLValue extends Expression {
     return (
       <span className="subexpression">
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
-        {this.identifier.source}
+        <span className="variable-identifier">{this.identifier.source}</span>
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+      </span>
+    );
+  }
+
+  programify(state, dispatch, callbacks, isParenthesized, isSelectable, indentation) {
+    return (
+      <span className="subexpression">
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        <span className="variable-identifier">{this.identifier.source}</span>
         {isParenthesized ? <span className="expression-piece">)</span> : ''}
       </span>
     );
@@ -1254,7 +1292,7 @@ export class ExpressionAssignment extends Expression {
     const element = React.createElement('span', attributes,
       <>
         {isParenthesized ? <span className="expression-piece">(</span> : ''}
-        {this.identifier.source}
+        {this.lvalue.programify(state, dispatch, callbacks, false, false, '')}
         <span className="space">{' '}</span>
         <span className="binary-infix-operator expression-piece">=</span>
         <span className="space">{' '}</span>
@@ -1274,11 +1312,11 @@ export class ExpressionAssignment extends Expression {
   promptify(isParenthesized) {
     return <>
         {isParenthesized ? <span>(</span> : ''}
-        {this.identifier.source}
+        {this.lvalue.promptify(false)}
         <span className="space">{' '}</span>
         <span className="binary-infix-operator">=</span>
         <span className="space">{' '}</span>
-        {this.rvalue.promptify(this.precedence > this.rvalue.precedence)}
+        {this.rvalue.promptify(false)}
         {isParenthesized ? <span>)</span> : ''}
     </>;
   }
@@ -1697,7 +1735,7 @@ export class ExpressionLiteral extends Expression {
   promptify(isParenthesized) {
     return <>
       {isParenthesized ? <span>(</span> : ''}
-      <span>{this.toString()}</span>
+      <span className="literal">{this.toString()}</span>
       {isParenthesized ? <span>)</span> : ''}
     </>;
   }

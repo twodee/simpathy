@@ -206,12 +206,12 @@ export function lex(source) {
       consume();
     }
 
+    emit(Token.Indentation);
+
     if (has('/') && has('/', 1)) {
       consume();
       consume();
       wholeLineComment();
-    } else {
-      emit(Token.Indentation);
     }
   }
 
@@ -290,8 +290,10 @@ export function lex(source) {
     while (i < source.length && !has('\n')) {
       consume();
     }
+    emit(Token.WholeLineComment);
     consume();
-    resetToken();
+    emit(Token.Linebreak);
+    // resetToken();
     indentation();
   }
 

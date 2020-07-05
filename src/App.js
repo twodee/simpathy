@@ -18,7 +18,8 @@ function getAst() {
 // while a == 0
   // a = 1`;
 
-  const source = `print(format("%05.2f->", 3.785, "foo"))`;
+  // const source = `// Print a bunch of stuff
+// print(format("%05.2f->", 3.785, "foo"))`;
 
   // const source = `parseInt("foo")`;
 
@@ -32,17 +33,20 @@ function getAst() {
   // return big
 // print(gcd(9, 10))`;
 
-  // const source = `function gcd(a, b)
-  // big = max(a, b)
-  // small = min(a, b)
-  // while small != 0
-    // tmp = small
-    // small = big % small
-    // big = tmp
-  // return big
-// x = parseInt(readLine())
-// y = parseIns(readLine())
-// print(gcd(x, y))`;
+  const source = `function gcd(a, b)
+  // Order a and b.
+  big = max(a, b)
+  small = min(a, b)
+  while small != 0
+    tmp = small
+    small = big % small
+    big = tmp
+  return big
+
+5 + 7
+x = parseInt(readLine())
+y = parseIns(readLine())
+print(gcd(x, y))`;
 
   // const source = `a = 5`;
 

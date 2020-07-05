@@ -55,6 +55,7 @@ import {
   ExpressionSubtract,
   // ExpressionVector,
   ExpressionWhile,
+  ExpressionWholeLineComment,
 } from './ast';
 
 // import {
@@ -144,6 +145,9 @@ export function parse(tokens) {
   }
 
   function statement() {
+    // TODO: how are multiple blank lines handled here? I think we're okay
+    // becausing of intervening indentation.
+
     let e;
     if (has(Token.Return)) {
       const returnToken = consume();
@@ -151,6 +155,10 @@ export function parse(tokens) {
       e = new ExpressionReturn(e, SourceLocation.span(returnToken, e)); 
     } else if (has(Token.Linebreak)) {
       e = new ExpressionBlankLine();
+      // No need to consume here because the node is fictitious.
+    } else if (has(Token.WholeLineComment)) {
+      e = new ExpressionWholeLineComment(tokens[i].source, tokens[i].where);
+      consume();
     } else {
       e = expression();
     }

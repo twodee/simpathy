@@ -136,7 +136,19 @@ h1 {
 /* } */
 
 .literal {
+  color: darkgreen;
+}
+
+.comment {
+  color: darkgray;
+}
+
+.variable-identifier {
   color: red;
+}
+
+.function-identifier {
+  color: rebeccapurple;
 }
 
 /* ------------------------------------------------------------------------- */
