@@ -329,7 +329,7 @@ export class ExpressionIdentifier extends Expression {
   }
 
   evaluate(env) {
-    return env.variables.find(variable => variable.name === this.id.source).current;
+    return env.stack[env.stack.length - 1].variables.find(variable => variable.name === this.id.source).current;
   }
 }
 
@@ -989,6 +989,39 @@ export class ExpressionSign extends ExpressionBuiltinFunctionCall {
     } else {
       throw new Error('bad types');
     }
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionArrayConstructor extends ExpressionBuiltinFunctionCall {
+  constructor(operands, where) {
+    super('array', operands, where);
+  }
+
+  evaluate(env) {
+    const elements = this.operands.map(operand => operand.evaluate(env));
+    const array = new ExpressionArray(elements);
+
+    const address = generateUniqueAddress(env.heap);
+    env.heap[address] = array;
+
+    return new ExpressionReference(address);
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+function generateUniqueAddress(heap) {
+  let max = 1000;
+  while (true) {
+    for (let i = 0; i < 500; ++i) {
+      const address = '@' + Math.trunc(Math.random() * max);
+      if (!heap.hasOwnProperty(address)) {
+        return address;
+      }
+    }
+    max *= 10;
   }
 }
 
@@ -1740,6 +1773,10 @@ export class ExpressionLiteral extends Expression {
       {isParenthesized ? <span>)</span> : ''}
     </>;
   }
+
+  heapify() {
+    return <>{this.toString()}</>;
+  }
 }
 
 export class ExpressionInteger extends ExpressionLiteral {
@@ -1837,9 +1874,62 @@ export class ExpressionUndefined extends Expression {
 
 // --------------------------------------------------------------------------- 
 
+export class ExpressionArray extends ExpressionLiteral {
+  // evaluatorify(state, dispatch, callbacks, isParenthesized) {
+    // let attributes = {className: 'evaluatable subexpression expression-piece literal'};
+    // this.addSelectable(attributes, state, dispatch, callbacks);
+
+    // return React.createElement('span', attributes, this.toString());
+  // }
+
+  // programify(state, dispatch, callbacks, isParenthesized, isSelectable, indentation) {
+    // let attributes = {className: 'subexpression expression-piece literal'};
+    // if (isSelectable) {
+      // this.addSelectable(attributes, state, dispatch, callbacks);
+      // this.addHistory(attributes, state);
+    // }
+
+    // const element = React.createElement('span', attributes, this.toString());
+    // return (
+      // <>
+        // <span className="space">{indentation}</span>
+        // {element}
+      // </>
+    // );
+  // }
+
+  // promptify(isParenthesized) {
+    // return <>
+      // {isParenthesized ? <span>(</span> : ''}
+      // <span className="literal">{this.toString()}</span>
+      // {isParenthesized ? <span>)</span> : ''}
+    // </>;
+  // }
+
+  heapify() {
+    return <div className="array">
+      {
+        this.value.map((value, index) => <React.Fragment key={index}>
+          <div className="array-index code">{index}</div>
+          <div className="array-value code">{value.heapify()}</div>
+        </React.Fragment>)
+      }
+    </div>;
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionReference extends ExpressionLiteral {
+}
+
+// --------------------------------------------------------------------------- 
+
 export function parseLiteral(expression) {
   if (expression.match(/^-?\d+$/)) {
     return new ExpressionInteger(parseInt(expression));
+  } else if (expression.match(/^@\d+$/)) {
+    return new ExpressionReference(expression);
   } else if (expression.match(/^-?(\d+\.\d*|\d*.\d+)$/)) {
     return new ExpressionReal(parseFloat(expression));
   } else if (expression.match(/^true$/)) {

@@ -2,15 +2,18 @@ import React from 'react';
 import { Action } from './actions';
 
 import {
+  ExpressionArray,
   ExpressionAssignment,
+  ExpressionBoolean,
   ExpressionFunctionDefinition,
   ExpressionUserFunctionCall,
-  // ExpressionInteger,
+  ExpressionInteger,
   ExpressionLValue,
-  // ExpressionString,
+  ExpressionString,
   ExpressionPrint,
   ExpressionPrintLine,
   ExpressionReadLine,
+  ExpressionReference,
   ExpressionReturn,
   ExpressionUnit,
   ExpressionUndefined,
@@ -92,19 +95,32 @@ const initialState = {
   objective: null,
   feedback: null,
 
-  frames: [
-    {
-      name: 'main',
-      functions: {},
-      variables: [
-        {
-          name: 'return',
-          current: new ExpressionUndefined(),
-          history: [],
-        },
-      ],
+  memory: {
+    stack: [
+      {
+        name: 'main',
+        functions: {},
+        variables: [
+          {
+            name: 'return',
+            current: new ExpressionUndefined(),
+            history: [],
+          },
+        ],
+      },
+    ],
+
+    heap: {
+      '@942': new ExpressionArray([
+        new ExpressionInteger(6),
+        new ExpressionString("dog"),
+        new ExpressionBoolean(true),
+        new ExpressionReference('@500'),
+      ]),
+      '@433': new ExpressionInteger(5),
+      '@301': new ExpressionReference('@491'),
     },
-  ]
+  },
 };
 
 export default function reducer(state = initialState, action) {
@@ -177,7 +193,7 @@ export default function reducer(state = initialState, action) {
 
       const isAssignment = action.payload instanceof ExpressionAssignment;
       if (isAssignment) {
-        const hasVariable = state.frames[state.frames.length - 1].variables.some(variable => variable.name === action.payload.identifier.source);
+        const hasVariable = state.memory.stack[state.memory.stack.length - 1].variables.some(variable => variable.name === action.payload.identifier.source);
 
         Object.assign(newState, {
           expectedName: action.payload.identifier.source,
@@ -198,7 +214,7 @@ export default function reducer(state = initialState, action) {
           pausedActiveSubexpressions: state.pausedActiveSubexpressions.push(action.payload),
           mode: Mode.PushingFrame,
           functionName: action.payload.name,
-          functionDefinition: state.frames[state.frames.length - 1].functions[action.payload.name],
+          functionDefinition: state.memory.stack[state.memory.stack.length - 1].functions[action.payload.name],
         });
       } else if (action.payload instanceof ExpressionReturn) {
         Object.assign(newState, {
@@ -223,7 +239,7 @@ export default function reducer(state = initialState, action) {
         }
 
         try {
-          newState.expectedValue = newState.activeSubexpression.evaluate(state.frames[state.frames.length - 1]);
+          newState.expectedValue = newState.activeSubexpression.evaluate(newState.memory);
         } catch (e) {
           newState.isCrashing = true;
         }
@@ -414,20 +430,23 @@ export default function reducer(state = initialState, action) {
         // If the statement is a function definition, we must make record of
         // the function in the current stack frame.
         if (expression instanceof ExpressionFunctionDefinition) {
-          const topFrame = state.frames[state.frames.length - 1];
+          const topFrame = state.memory.stack[state.memory.stack.length - 1];
 
           Object.assign(newState, {
             feedback: <>The function <code className="code prompt-code">{expression.identifier}</code> is now defined.</>,
-            frames: [
-              ...state.frames.slice(0, state.frames.length - 1),
-              {
-                ...topFrame,
-                functions: {
-                  ...topFrame.functions,
-                  [expression.identifier]: expression,
+            memory: {
+              ...state.memory,
+              stack: [
+                ...state.memory.stack.slice(0, state.memory.stack.length - 1),
+                {
+                  ...topFrame,
+                  functions: {
+                    ...topFrame.functions,
+                    [expression.identifier]: expression,
+                  }
                 }
-              }
-            ],
+              ],
+            },
           });
         }
 
@@ -482,25 +501,28 @@ export default function reducer(state = initialState, action) {
     }
 
     case Action.EnterRightMemoryValue: {
-      const topFrame = state.frames[state.frames.length - 1];
+      const topFrame = state.memory.stack[state.memory.stack.length - 1];
 
       Object.assign(newState, {
         isBadInput: false,
         currentInput: '',
-        frames: [...state.frames.slice(0, state.frames.length - 1), {
-          ...topFrame,
-          variables: topFrame.variables.map(variable => {
-            if (variable.name === state.expectedName) {
-              return {
-                name: variable.name,
-                current: state.expectedValue,
-                history: variable.current instanceof ExpressionUndefined ? variable.history : [variable.current].concat(variable.history),
-              };
-            } else {
-              return variable;
-            }
-          }),
-        }],
+        memory: {
+          ...state.memory,
+          stack: [...state.memory.stack.slice(0, state.memory.stack.length - 1), {
+            ...topFrame,
+            variables: topFrame.variables.map(variable => {
+              if (variable.name === state.expectedName) {
+                return {
+                  name: variable.name,
+                  current: state.expectedValue,
+                  history: variable.current instanceof ExpressionUndefined ? variable.history : [variable.current].concat(variable.history),
+                };
+              } else {
+                return variable;
+              }
+            }),
+          }],
+        },
       });
 
       if (state.expression instanceof ExpressionAssignment) {
@@ -580,21 +602,24 @@ export default function reducer(state = initialState, action) {
     }
 
     case Action.EnterRightVariableName: {
-      const topFrame = state.frames[state.frames.length - 1];
+      const topFrame = state.memory.stack[state.memory.stack.length - 1];
       const term = state.parameterIndex === null ? 'variable' : 'parameter';
       Object.assign(newState, {
         isBadInput: false,
         currentInput: '',
         feedback: <>Yes, that's the {term}'s name.</>,
         mode: Mode.SelectingMemoryValue,
-        frames: [...state.frames.slice(0, state.frames.length - 1), {
-          ...topFrame,
-          variables: [{
-            name: state.expectedName,
-            current: topFrame.variables[0].current,
-            history: topFrame.variables[0].history,
-          }, ...topFrame.variables.slice(1)],
-        }],
+        memory: {
+          ...state.memory,
+          stack: [...state.memory.stack.slice(0, state.memory.stack.length - 1), {
+            ...topFrame,
+            variables: [{
+              name: state.expectedName,
+              current: topFrame.variables[0].current,
+              history: topFrame.variables[0].history,
+            }, ...topFrame.variables.slice(1)],
+          }],
+        },
       });
 
       if (state.parameterIndex === null) {
@@ -632,7 +657,7 @@ export default function reducer(state = initialState, action) {
         history: [],
       };
 
-      const topFrame = state.frames[state.frames.length - 1];
+      const topFrame = state.memory.stack[state.memory.stack.length - 1];
       const term = state.parameterIndex >= 0 ? 'parameter' : 'variable';
 
       Object.assign(newState, {
@@ -640,10 +665,13 @@ export default function reducer(state = initialState, action) {
         mode: Mode.NamingVariable,
         feedback: <>Yes, we declare a new {term}.</>,
         objective: <>What is the {term}'s name?</>,
-        frames: [...state.frames.slice(0, state.frames.length - 1), {
-          ...topFrame,
-          variables: [newVariable, ...topFrame.variables]
-        }],
+        memory: {
+          ...state.memory,
+          stack: [...state.memory.stack.slice(0, state.memory.stack.length - 1), {
+            ...topFrame,
+            variables: [newVariable, ...topFrame.variables]
+          }],
+        },
       });
 
       if (state.parameterIndex !== null) {
@@ -689,20 +717,23 @@ export default function reducer(state = initialState, action) {
         });
       }
 
-      newState.frames = [
-        ...state.frames,
-        {
-          name: state.functionName,
-          variables: [
-            {
-              name: 'return',
-              current: new ExpressionUndefined(),
-              history: [],
-            },
-          ],
-          functions: {},
-        }
-      ];
+      newState.memory = {
+        ...state.memory,
+        stack: [
+          ...state.memory.stack,
+          {
+            name: state.functionName,
+            variables: [
+              {
+                name: 'return',
+                current: new ExpressionUndefined(),
+                history: [],
+              },
+            ],
+            functions: {},
+          }
+        ],
+      };
 
       break;
     }
@@ -713,7 +744,10 @@ export default function reducer(state = initialState, action) {
         isBadPopFrame: false,
       });
 
-      newState.frames = [...state.frames.slice(0, state.frames.length - 1)];
+      newState.memory = {
+        ...state.memory,
+        stack: [...state.memory.stack.slice(0, state.memory.stack.length - 1)],
+      };
 
       if (state.expression.isSimplified() && !newState.nextStatement) {
         newState.mode = Mode.Celebrating;

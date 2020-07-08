@@ -209,6 +209,40 @@ h1 {
   padding: 10px;
 }
 
+#heap-entries {
+  overflow: auto;
+  padding: 10px;
+  font-size: 14pt;
+}
+
+.heap-id {
+  background-color: #ffe067;
+  padding: 5px;
+  position: relative;
+}
+
+.heap-value {
+  background-color: #ffeca2;
+  padding: 5px;
+  margin-bottom: 10px;
+}
+
+.array {
+  display: grid;
+  grid-template-columns: auto 1fr;
+}
+
+.array-index {
+  border-right: 1px solid #ddb723;
+  padding: 5px;
+  padding-right: 10px;
+}
+
+.array-value {
+  padding: 5px;
+  padding-left: 10px;
+}
+
 @keyframes shake {
    10%, 90% { transform: translateX(-1px); }
    20%, 80% { transform: translateX(2px); }

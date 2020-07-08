@@ -7,6 +7,7 @@ import Prompter from './components/Prompter';
 import Program from './components/Program';
 import Evaluator from './components/Evaluator';
 import Stack from './components/Stack';
+import Heap from './components/Heap';
 import Console from './components/Console';
 
 import { loadProgram } from './actions';
@@ -14,7 +15,9 @@ import { lex } from './lexer';
 import { parse } from './parser';
 
 function getAst() {
-  const source = `a = b = 3`;
+  const source = `a = array(10, 20, "dog")
+b = a
+`;
 
   // const source = `// Print a bunch of stuff
 // print(format("%05.2f->", 3.785, "foo"))`;
@@ -180,9 +183,7 @@ const App = () => {
               ref={stackHeapResizer}
               onMouseDown={onStartHorizontalDragging(stackHeapResizer)}
             ></div>
-            <div id="heap-panel">
-              <h1>Heap</h1>
-            </div>
+            <Heap />
           </div>
         </div>
       </div>

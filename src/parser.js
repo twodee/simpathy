@@ -11,6 +11,7 @@ import {
 import {
   ExpressionAdd,
   ExpressionAnd,
+  ExpressionArrayConstructor,
   ExpressionAssignment,
   ExpressionBlock,
   ExpressionBoolean,
@@ -447,6 +448,8 @@ export function parse(tokens) {
         return new ExpressionParseInt(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else if (nameToken.source === 'parseFloat') {
         return new ExpressionParseFloat(actuals, SourceLocation.span(nameToken, sourceEnd));
+      } else if (nameToken.source === 'array') {
+        return new ExpressionArrayConstructor(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else {
         return new ExpressionUserFunctionCall(nameToken, actuals, SourceLocation.span(sourceStart, sourceEnd));
       }

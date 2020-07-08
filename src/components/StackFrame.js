@@ -26,7 +26,7 @@ const StackFrame = props => {
   const dispatch = useDispatch();
 
   // const activeSubexpression = useSelector(state => state.activeSubexpression);
-  const frames = useSelector(state => state.frames);
+  const stack = useSelector(state => state.memory.stack);
   const hoveredElement = useSelector(state => state.hoveredElement);
   const clickedElement = useSelector(state => state.clickedElement);
   const isBadSelection = useSelector(state => state.isBadSelection);
@@ -36,8 +36,8 @@ const StackFrame = props => {
   const expectedName = useSelector(state => state.expectedName);
   const expectedValue = useSelector(state => state.expectedValue);
 
-  const isTopFrame = props.index === frames.length - 1;
-  const frame = frames[props.index];
+  const isTopFrame = props.index === stack.length - 1;
+  const frame = stack[props.index];
 
   const onExpandEllipse = event => {
     const element = event.target;

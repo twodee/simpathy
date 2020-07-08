@@ -18,7 +18,7 @@ import {
 } from '../constants';
 
 const Stack = () => {
-  const frames = useSelector(state => state.frames);
+  const stack = useSelector(state => state.memory.stack);
   const mode = useSelector(state => state.mode);
   const isBadDeclareVariable = useSelector(state => state.isBadDeclareVariable);
   const isBadPushFrame = useSelector(state => state.isBadPushFrame);
@@ -73,7 +73,7 @@ const Stack = () => {
         Stack
       </h1>
       <div id="stack-frames">
-        { frames.map((frame, i) => <StackFrame key={`${frame.name}-${i}`} index={frames.length - 1 - i} />) }
+        { stack.map((frame, i) => <StackFrame key={`${frame.name}-${i}`} index={stack.length - 1 - i} />) }
       </div>
     </div>
   );
