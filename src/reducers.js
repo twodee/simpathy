@@ -101,6 +101,11 @@ const initialState = {
         name: 'main',
         functions: {},
         variables: [
+          // {
+            // name: 'b',
+            // current: new ExpressionReference('@942'),
+            // history: [],
+          // },
           {
             name: 'return',
             current: new ExpressionUndefined(),
@@ -117,8 +122,8 @@ const initialState = {
         new ExpressionBoolean(true),
         new ExpressionReference('@500'),
       ]),
-      '@433': new ExpressionInteger(5),
-      '@301': new ExpressionReference('@491'),
+      // '@433': new ExpressionInteger(5),
+      // '@301': new ExpressionReference('@491'),
     },
   },
 };

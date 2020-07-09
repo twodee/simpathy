@@ -38,6 +38,7 @@ let TokenTypes = Object.freeze({
   Power: 'Power',
   Range: 'Range',
   Real: 'Real',
+  Reference: 'Reference',
   Repeat: 'Repeat',
   Return: 'Return',
   RightArrow: 'RightArrow',

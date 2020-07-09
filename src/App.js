@@ -15,9 +15,14 @@ import { lex } from './lexer';
 import { parse } from './parser';
 
 function getAst() {
-  const source = `a = array(10, 20, "dog")
-b = a
-`;
+  const source = `print(@942[0])
+print(@942[1])
+print(@942[2])
+print(@942[3])`;
+// a = array(10, 20, "dog")
+// print(a[0])
+// print(a.length())
+// `;
 
   // const source = `// Print a bunch of stuff
 // print(format("%05.2f->", 3.785, "foo"))`;
@@ -86,6 +91,7 @@ b = a
   // 9 + 2
 // a = 7 << 1`;
   const tokens = lex(source);
+  // console.log("tokens:", tokens);
   const ast = parse(tokens);
   return ast;
 }

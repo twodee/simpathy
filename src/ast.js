@@ -663,6 +663,256 @@ class ExpressionBuiltinFunctionCall extends ExpressionFunctionCall {
   }
 }
 
+// -------------------------------------------------------------------------- 
+
+export class ExpressionSubscript extends Expression {
+  constructor(host, index, where = null) {
+    super(Precedence.Atom, where);
+    this.host = host;
+    this.index = index;
+  }
+
+  evaluate(env) {
+    return env.heap[this.host.value].value[this.index.value];
+  }
+
+  clone() {
+    return new ExpressionSubscript(this.host.clone(), this.index.clone(), this.where);
+  }
+
+  isSimplified() {
+    return false;
+  }
+
+  get nextNonterminal() {
+    let node = this.host.nextNonterminal;
+    if (node) {
+      return node;
+    }
+
+    node = this.index.nextNonterminal;
+    if (node) {
+      return node;
+    }
+
+    return this;
+  }
+
+  simplify(expression, value) {
+    if (this === expression) {
+      return value;
+    } else {
+      return new this.constructor(this.host.simplify(expression, value), this.index.simplify(expression, value));
+    }
+  }
+
+  evaluatorify(state, dispatch, callbacks, isParenthesized) {
+    let attributes = {className: 'evaluatable function-call expression-piece'};
+    this.addSelectable(attributes, state, dispatch, callbacks);
+
+    const isActive = (
+      state.mode === Mode.PushingFrame ||
+      state.mode === Mode.DeclaringVariable ||
+      state.mode === Mode.NamingVariable ||
+      state.mode === Mode.SelectingMemoryValue ||
+      state.mode === Mode.EnteringMemoryValue ||
+      state.mode === Mode.SelectingStatement ||
+      state.mode === Mode.EvaluatingSubexpression
+    ) && state.activeSubexpression === this;
+
+    const leftBracket = React.createElement('span', attributes, '[');
+    const rightBracket = React.createElement('span', attributes, ']');
+
+    return (
+      <span className={`subexpression ${isActive ? 'active' : ''}`}>
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        {this.host.evaluatorify(state, dispatch, callbacks, false)}{leftBracket}{this.index.evaluatorify(state, dispatch, callbacks, false)}{rightBracket}
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+        {this.evaluatePopup(state, dispatch, callbacks)}
+      </span>
+    )
+  }
+
+  programify(state, dispatch, callbacks, isParenthesized, isSelectable, indentation) {
+    let attributes = {className: 'subexpression'};
+    if (isSelectable) {
+      this.addSelectable(attributes, state, dispatch, callbacks);
+      this.addHistory(attributes, state);
+    }
+
+    const element = React.createElement('span', attributes,
+      <>
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        {this.host.programify(state, dispatch, callbacks, false, '')}[{this.index.programify(state, dispatch, callbacks, false, '')}]
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+      </>
+    );
+
+    return (
+      <>
+        <span className="space">{indentation}</span>
+        {element}
+      </>
+    );
+  }
+
+  promptify(isParenthesized) {
+    return (
+      <>
+        {isParenthesized ? <span>(</span> : ''}
+        {this.host.promptify(false)}[{this.index.promptify(false)}]
+        {isParenthesized ? <span>)</span> : ''}
+      </>
+    );
+  }
+}
+
+// -------------------------------------------------------------------------- 
+
+class ExpressionMemberFunctionCall extends Expression {
+  constructor(name, host, operands, where = null) {
+    super(Precedence.Atom, where);
+    this.name = name;
+    this.host = host;
+    this.operands = operands;
+    for (let operand of this.operands) {
+      operand.parent = this;
+    }
+  }
+
+  isSimplified() {
+    return false;
+  }
+
+  get nextNonterminal() {
+    let node = this.host.nextNonterminal;
+    if (node) {
+      return node;
+    }
+
+    for (let operand of this.operands) {
+      node = operand.nextNonterminal;
+      if (node) {
+        return node;
+      }
+    }
+
+    return this;
+  }
+
+  simplify(expression, value) {
+    if (this === expression) {
+      return value;
+    } else {
+      return new this.constructor(this.host.simplify(expression, value), this.operands.map(operand => operand.simplify(expression, value)));
+    }
+  }
+
+  evaluatorify(state, dispatch, callbacks, isParenthesized) {
+    let attributes = {className: 'evaluatable function-call expression-piece'};
+    this.addSelectable(attributes, state, dispatch, callbacks);
+
+    const isActive = (
+      state.mode === Mode.PushingFrame ||
+      state.mode === Mode.DeclaringVariable ||
+      state.mode === Mode.NamingVariable ||
+      state.mode === Mode.SelectingMemoryValue ||
+      state.mode === Mode.EnteringMemoryValue ||
+      state.mode === Mode.SelectingStatement ||
+      state.mode === Mode.EvaluatingSubexpression
+    ) && state.activeSubexpression === this;
+
+    const callElement = React.createElement('span', attributes, this.name);
+    return (
+      <span className={`subexpression ${isActive ? 'active' : ''}`}>
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        {this.host.evaluatorify(state, dispatch, callbacks, false)}.<span className="function-identifier">{callElement}</span>({
+          this.operands.map((operand, i) => (
+            <React.Fragment key={`operand-${i}`}>
+              {i > 0 ? ', ' : ''}
+              {operand.evaluatorify(state, dispatch, callbacks, false)}
+            </React.Fragment>
+          ))
+        })
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+        {this.evaluatePopup(state, dispatch, callbacks)}
+      </span>
+    )
+  }
+
+  programify(state, dispatch, callbacks, isParenthesized, isSelectable, indentation) {
+    let attributes = {className: 'subexpression'};
+    if (isSelectable) {
+      this.addSelectable(attributes, state, dispatch, callbacks);
+      this.addHistory(attributes, state);
+    }
+
+    const element = React.createElement('span', attributes,
+      <>
+        {isParenthesized ? <span className="expression-piece">(</span> : ''}
+        {this.host.programify(state, dispatch, callbacks, false, '')}.<span className="function-identifier">{this.name}</span>({
+          this.operands.map((operand, i) => (
+            <React.Fragment key={`operand-${i}`}>
+              {i > 0 ? ', ' : ''}
+              {operand.programify(state, dispatch, callbacks, false, '')}
+            </React.Fragment>
+          ))
+        })
+        {isParenthesized ? <span className="expression-piece">)</span> : ''}
+      </>
+    );
+
+    return (
+      <>
+        <span className="space">{indentation}</span>
+        {element}
+      </>
+    );
+  }
+
+  promptify(isParenthesized) {
+    return (
+      <>
+        {isParenthesized ? <span>(</span> : ''}
+        {this.host.promptify(false)}.<span className="function-identifier">{this.name}</span>({
+          this.operands.map((operand, i) => (
+            <React.Fragment key={`operand-${i}`}>
+              {i > 0 ? ', ' : ''}
+              {operand.promptify(false)}
+            </React.Fragment>
+          ))
+        })
+        {isParenthesized ? <span>)</span> : ''}
+      </>
+    );
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+class ExpressionBuiltinMemberFunctionCall extends ExpressionMemberFunctionCall {
+  clone() {
+    return new this.constructor(this.host, this.operands.map(operand => operand.clone()), this.where);
+  }
+}
+
+// -------------------------------------------------------------------------- 
+
+export class ExpressionArrayLength extends ExpressionBuiltinMemberFunctionCall {
+  constructor(host, operands, where) {
+    super('length', host, operands, where);
+  }
+  
+  evaluate(env) {
+    // TODO crash if host not a reference.
+    const address = this.host.value;
+    const array = env.heap[address];
+    // TODO crash if not in heap
+    // TODO crash if not an array
+    return new ExpressionInteger(array.value.length);
+  }
+}
+
 // --------------------------------------------------------------------------- 
 
 export class ExpressionReturn extends Expression {

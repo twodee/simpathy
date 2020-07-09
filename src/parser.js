@@ -12,6 +12,7 @@ import {
   ExpressionAdd,
   ExpressionAnd,
   ExpressionArrayConstructor,
+  ExpressionArrayLength,
   ExpressionAssignment,
   ExpressionBlock,
   ExpressionBoolean,
@@ -29,7 +30,7 @@ import {
   ExpressionBlankLine,
   ExpressionMax,
   ExpressionMin,
-  // ExpressionMemberFunctionCall,
+  ExpressionMemberFunctionCall,
   // ExpressionMemberIdentifier,
   ExpressionMore,
   ExpressionMoreEqual,
@@ -44,6 +45,7 @@ import {
   ExpressionPrintLine,
   ExpressionReadLine,
   ExpressionReal,
+  ExpressionReference,
   ExpressionRightShift,
   ExpressionModulus,
   ExpressionParseInt,
@@ -52,7 +54,7 @@ import {
   ExpressionSame,
   ExpressionSign,
   ExpressionString,
-  // ExpressionSubscript,
+  ExpressionSubscript,
   ExpressionSubtract,
   // ExpressionVector,
   ExpressionWhile,
@@ -302,8 +304,7 @@ export function parse(tokens) {
   }
 
   function expressionPower() {
-    let a = atom();
-    // let a = expressionMember();
+    let a = expressionMember();
     while (has(Token.Power)) {
       consume(); // eat **
       let b = expressionPower();
@@ -312,61 +313,61 @@ export function parse(tokens) {
     return a;
   }
 
-  // function expressionMember() {
-    // let base = atom();
-    // while (has(Token.Dot) || has(Token.LeftSquareBracket)) {
-      // if (has(Token.Dot)) {
-        // let dotToken = consume(); // eat .
+  function expressionMember() {
+    let base = atom();
+    while (has(Token.Dot) || has(Token.LeftSquareBracket)) {
+      if (has(Token.Dot)) {
+        let dotToken = consume(); // eat .
 
-        // if (!has(Token.Identifier)) {
-          // throw new LocatedException(dotToken.where, `expected ID`);
-        // }
+        if (!has(Token.Identifier)) {
+          throw new LocatedException(dotToken.where, `expected ID`);
+        }
 
-        // let nameToken = consume();
+        let nameToken = consume();
 
-        // if (has(Token.LeftParenthesis)) {
-          // consume(); // eat (
+        if (has(Token.LeftParenthesis)) {
+          consume(); // eat (
 
-          // let actuals = [];
-          // if (isFirstOfExpression()) {
-            // actuals.push(expression());
-            // while (has(Token.Comma) && isFirstOfExpression(1)) {
-              // consume(); // eat ,
-              // actuals.push(expression());
-            // }
-          // }
+          let actuals = [];
+          if (isFirstOfExpression()) {
+            actuals.push(expression());
+            while (has(Token.Comma) && isFirstOfExpression(1)) {
+              consume(); // eat ,
+              actuals.push(expression());
+            }
+          }
 
-          // let sourceEnd = tokens[i].where;
-          // if (!has(Token.RightParenthesis)) {
-            // throw new LocatedException(SourceLocation.span(sourceStart, sourceEnd), `I expected a right parenthesis to close the function call, but I encountered "${tokens[i].source}" (${tokens[i].type}) instead.`);
-          // }
-          // consume();
+          let sourceEnd = tokens[i].where;
+          if (!has(Token.RightParenthesis)) {
+            throw new LocatedException(SourceLocation.span(base.where, sourceEnd), `I expected a right parenthesis to close the function call, but I encountered "${tokens[i].source}" (${tokens[i].type}) instead.`);
+          }
+          consume();
 
-          // base = new ExpressionMemberFunctionCall(base, nameToken, actuals, SourceLocation.span(base.where, sourceEnd));
+          if (nameToken.source === 'length') {
+            console.log("length");
+            base = new ExpressionArrayLength(base, actuals, SourceLocation.span(base.where, sourceEnd));
+          } else {
+            console.log("not length");
+            // base = new ExpressionMemberFunctionCall(nameToken, base, actuals, SourceLocation.span(base.where, sourceEnd));
+          }
+        }
+      } else {
+        consume(); // eat [
+        let index = expression();
+        if (!has(Token.RightSquareBracket)) {
+          throw new LocatedException(index.where, `I expected a ] after this subscript.`);
+        }
+        let rightBracketToken = consume(); // eat ]
+        base = new ExpressionSubscript(base, index, SourceLocation.span(base.where, rightBracketToken.where));
+      }
+    }
+    return base;
+  }
+
         // } else {
           // base = new ExpressionMemberIdentifier(base, nameToken, SourceLocation.span(base.where, nameToken.where));
-        // }
-      // } else if (has(Token.Distribute)) {
-        // let hashToken = consume(); // eat #
-
-        // if (!has(Token.Identifier)) {
-          // throw new LocatedException(hashToken.where, `expected ID`);
-        // }
-
-        // let nameToken = consume();
-        // base = new ExpressionDistributedIdentifier(base, nameToken, SourceLocation.span(base.where, nameToken.where));
       // } else {
-        // consume(); // eat [
-        // let index = expression();
-        // if (!has(Token.RightSquareBracket)) {
-          // throw new LocatedException(index.where, `I expected a ] after this subscript.`);
-        // }
-        // let rightBracketToken = consume(); // eat ]
-        // base = new ExpressionSubscript(base, index, SourceLocation.span(base.where, rightBracketToken.where));
       // }
-    // }
-    // return base;
-  // }
 
   function isFirstOfExpression(offset = 0) {
     return has(Token.Integer, offset) ||
@@ -375,6 +376,7 @@ export function parse(tokens) {
            has(Token.Boolean, offset) ||
            has(Token.String, offset) ||
            has(Token.Identifier, offset) ||
+           has(Token.Reference, offset) ||
            has(Token.LeftSquareBracket, offset) ||
            has(Token.LeftParenthesis, offset) ||
            has(Token.Repeat, offset) ||
@@ -405,6 +407,10 @@ export function parse(tokens) {
     } else if (has(Token.Real)) {
       let token = consume();
       return new ExpressionReal(Number(token.source), token.where);
+    } else if (has(Token.Reference)) {
+      let token = consume();
+      console.log("token:", token);
+      return new ExpressionReference(token.source, token.where);
     } else if (has(Token.Boolean)) {
       let token = consume();
       return new ExpressionBoolean(token.source === 'true', token.where);
@@ -601,16 +607,6 @@ export function parse(tokens) {
       consume(); // eat linebreak
       let body = block();
       return new ExpressionWhile(condition, body, SourceLocation.span(sourceStart, body.where));
-    // } else if (has(Token.Repeat)) {
-      // let sourceStart = tokens[i].where;
-      // consume(); // eat repeat
-      // let count = expression();
-      // if (!has(Token.Linebreak)) {
-        // throw new LocatedException(SourceLocation.span(sourceStart, count.where), 'I expected a linebreak after this repeat\'s count.');
-      // }
-      // consume(); // eat linebreak
-      // let body = block();
-      // return new ExpressionRepeat(count, body, SourceLocation.span(sourceStart, body.where));
     // } else if (has(Token.For)) {
       // let sourceStart = tokens[i].where;
       // consume();

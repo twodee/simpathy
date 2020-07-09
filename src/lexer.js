@@ -235,6 +235,16 @@ export function lex(source) {
     }
   }
 
+  function at() {
+    consume();
+    if (has(/\d/)) {
+      while (has(/\d/)) {
+        consume();
+      }
+      emit(Token.Reference);
+    }
+  }
+
   function ampersand() {
     consume();
     if (has('&')) {
@@ -325,6 +335,8 @@ export function lex(source) {
       more();
     } else if (has('!')) {
       bang();
+    } else if (has('@')) {
+      at();
     } else if (has(',')) {
       consume();
       emit(Token.Comma);
