@@ -227,6 +227,10 @@ h1 {
   margin-bottom: 10px;
 }
 
+.error-message {
+  color: red;
+}
+
 .array {
   display: grid;
   grid-template-columns: auto 1fr;

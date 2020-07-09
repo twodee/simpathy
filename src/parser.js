@@ -12,7 +12,8 @@ import {
   ExpressionAdd,
   ExpressionAnd,
   ExpressionArrayConstructor,
-  ExpressionArrayLength,
+  ExpressionLength,
+  ExpressionPush,
   ExpressionAssignment,
   ExpressionBlock,
   ExpressionBoolean,
@@ -344,8 +345,9 @@ export function parse(tokens) {
           consume();
 
           if (nameToken.source === 'length') {
-            console.log("length");
-            base = new ExpressionArrayLength(base, actuals, SourceLocation.span(base.where, sourceEnd));
+            base = new ExpressionLength(base, actuals, SourceLocation.span(base.where, sourceEnd));
+          } else if (nameToken.source === 'push') {
+            base = new ExpressionPush(base, actuals, SourceLocation.span(base.where, sourceEnd));
           } else {
             console.log("not length");
             // base = new ExpressionMemberFunctionCall(nameToken, base, actuals, SourceLocation.span(base.where, sourceEnd));

@@ -122,7 +122,7 @@ const initialState = {
         new ExpressionBoolean(true),
         new ExpressionReference('@500'),
       ]),
-      // '@433': new ExpressionInteger(5),
+      '@433': new ExpressionInteger(5),
       // '@301': new ExpressionReference('@491'),
     },
   },
@@ -246,6 +246,7 @@ export default function reducer(state = initialState, action) {
         try {
           newState.expectedValue = newState.activeSubexpression.evaluate(newState.memory);
         } catch (e) {
+          newState.crashMessage = e.structure;
           newState.isCrashing = true;
         }
       }
@@ -791,7 +792,7 @@ export default function reducer(state = initialState, action) {
 
     case Action.CrashRightly: {
       Object.assign(newState, {
-        feedback: <>Yes, the program crashes.</>,
+        feedback: <>Yes, the program crashes with this message: <span className="error-message">{state.crashMessage}</span></>,
         objective: <>You are all done!</>,
         isBadCrash: false,
         mode: Mode.Celebrating,

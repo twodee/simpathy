@@ -14,6 +14,13 @@ import {
 
 // --------------------------------------------------------------------------- 
 
+class StructuredError extends Error {
+  constructor(structure) {
+    super('uh oh');
+    this.structure = structure;
+  }
+}
+
 export class TreeStepper {
   constructor(tree) {
     this.tree = tree;
@@ -898,18 +905,50 @@ class ExpressionBuiltinMemberFunctionCall extends ExpressionMemberFunctionCall {
 
 // -------------------------------------------------------------------------- 
 
-export class ExpressionArrayLength extends ExpressionBuiltinMemberFunctionCall {
+export class ExpressionLength extends ExpressionBuiltinMemberFunctionCall {
   constructor(host, operands, where) {
     super('length', host, operands, where);
   }
   
   evaluate(env) {
+    if (this.host instanceof ExpressionReference) {
+      const address = this.host.value;
+
+      if (!env.heap.hasOwnProperty(address)) {
+        throw new StructuredError(<>Bad pointer. There's no value in the heap at address <code className="code prompt-code">{address}</code>.</>);
+      }
+
+      const array = env.heap[address];
+
+      if (!(array instanceof ExpressionArray)) {
+        throw new StructuredError(<>The subscript operator <code className="code prompt-code">[]</code> can only be applied to array references and strings. <code className="code prompt-code">{address}</code> points to something else.</>);
+      }
+
+      return new ExpressionInteger(array.value.length);
+    } else if (this.host instanceof ExpressionString) {
+      return new ExpressionInteger(this.host.value.length);
+    } else {
+      throw new StructuredError(<>The subscript operator <code className="code prompt-code">[]</code> can only be applied to array references and strings. <code className="code prompt-code">{this.host.value}</code> is something else.</>);
+    }
+  }
+}
+
+// -------------------------------------------------------------------------- 
+
+export class ExpressionPush extends ExpressionBuiltinMemberFunctionCall {
+  constructor(host, operands, where) {
+    super('push', host, operands, where);
+  }
+  
+  evaluate(env) {
     // TODO crash if host not a reference.
+    // TODO fail compile if wrong parameters
     const address = this.host.value;
     const array = env.heap[address];
+    array.value.push(this.operands[0]);
     // TODO crash if not in heap
     // TODO crash if not an array
-    return new ExpressionInteger(array.value.length);
+    return new ExpressionUnit();
   }
 }
 
@@ -2157,6 +2196,7 @@ export class ExpressionArray extends ExpressionLiteral {
   // }
 
   heapify() {
+    console.log("this.value:", this.value);
     return <div className="array">
       {
         this.value.map((value, index) => <React.Fragment key={index}>

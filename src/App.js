@@ -15,10 +15,14 @@ import { lex } from './lexer';
 import { parse } from './parser';
 
 function getAst() {
-  const source = `print(@942[0])
-print(@942[1])
-print(@942[2])
-print(@942[3])`;
+  const source = `a = 10
+a.length()`;
+
+  // const source = `print(@942[0])
+// print(@942[1])
+// print(@942[2])
+// print(@942[3])`;
+
 // a = array(10, 20, "dog")
 // print(a[0])
 // print(a.length())
@@ -93,6 +97,7 @@ print(@942[3])`;
   const tokens = lex(source);
   // console.log("tokens:", tokens);
   const ast = parse(tokens);
+  console.log("ast:", ast);
   return ast;
 }
 
