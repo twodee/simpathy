@@ -810,6 +810,14 @@ export default function reducer(state = initialState, action) {
       break;
     }
 
+    case Action.FailCompile: {
+      Object.assign(newState, {
+        feedback: <span className="error-message">I encountered an error when compiling <span className="panel-name">PROGRAM</span>. {action.payload}</span>,
+      });
+
+      break;
+    }
+
     default:
   }
 

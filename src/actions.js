@@ -1,4 +1,5 @@
 export const Action = Object.freeze({
+  FailCompile: 'FailCompile',
   Hover: 'Hover',
   Unhover: 'Unhover',
   LoadProgram: 'LoadProgram',
@@ -194,6 +195,13 @@ export function enterWrongVariableName(name) {
   return {
     type: Action.EnterWrongVariableName,
     payload: name,
+  };
+}
+
+export function failCompile(message) {
+  return {
+    type: Action.FailCompile,
+    payload: message,
   };
 }
 

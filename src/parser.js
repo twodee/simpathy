@@ -47,6 +47,7 @@ import {
   ExpressionReadLine,
   ExpressionReal,
   ExpressionReference,
+  ExpressionRemoveIndex,
   ExpressionRightShift,
   ExpressionModulus,
   ExpressionParseInt,
@@ -344,12 +345,15 @@ export function parse(tokens) {
           }
           consume();
 
+          // TODO: assert arity
           if (nameToken.source === 'length') {
             base = new ExpressionLength(base, actuals, SourceLocation.span(base.where, sourceEnd));
           } else if (nameToken.source === 'push') {
             base = new ExpressionPush(base, actuals, SourceLocation.span(base.where, sourceEnd));
+          } else if (nameToken.source === 'removeIndex') {
+            base = new ExpressionRemoveIndex(base, actuals, SourceLocation.span(base.where, sourceEnd));
           } else {
-            console.log("not length");
+            throw new LocatedException(SourceLocation.span(base.where, sourceEnd), 'I encountered an unknown function.');
             // base = new ExpressionMemberFunctionCall(nameToken, base, actuals, SourceLocation.span(base.where, sourceEnd));
           }
         }

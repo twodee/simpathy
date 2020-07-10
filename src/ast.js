@@ -6,6 +6,11 @@ import {
 } from './constants';
 
 import {
+  LocatedException,
+  // MessagedException,
+} from './types';
+
+import {
   editInput,
   hover,
   unhover,
@@ -908,6 +913,9 @@ class ExpressionBuiltinMemberFunctionCall extends ExpressionMemberFunctionCall {
 export class ExpressionLength extends ExpressionBuiltinMemberFunctionCall {
   constructor(host, operands, where) {
     super('length', host, operands, where);
+    if (this.operands.length !== 0) {
+      throw new LocatedException(where, `I expected function length to be called with 0 parameters.`);
+    }
   }
   
   evaluate(env) {
@@ -921,7 +929,7 @@ export class ExpressionLength extends ExpressionBuiltinMemberFunctionCall {
       const array = env.heap[address];
 
       if (!(array instanceof ExpressionArray)) {
-        throw new StructuredError(<>The subscript operator <code className="code prompt-code">[]</code> can only be applied to array references and strings. <code className="code prompt-code">{address}</code> points to something else.</>);
+        throw new StructuredError(<>The subscript operator <code className="code prompt-code">[]</code> can only be applied to array references and strings. <code className="code prompt-code">{address}</code> doesn't point to an array.</>);
       }
 
       return new ExpressionInteger(array.value.length);
@@ -938,16 +946,72 @@ export class ExpressionLength extends ExpressionBuiltinMemberFunctionCall {
 export class ExpressionPush extends ExpressionBuiltinMemberFunctionCall {
   constructor(host, operands, where) {
     super('push', host, operands, where);
+    if (this.operands.length !== 1) {
+      throw new LocatedException(where, `I expected function push to be called with 1 parameter.`);
+    }
   }
   
   evaluate(env) {
-    // TODO crash if host not a reference.
-    // TODO fail compile if wrong parameters
+    if (!(this.host instanceof ExpressionReference)) {
+      throw new StructuredError(<>The <code className="code prompt-code function-identifier">push</code> function can only be applied to an array reference. <code className="code prompt-code">{this.host.value}</code> is something else.</>);
+    }
+
     const address = this.host.value;
+
+    if (!env.heap.hasOwnProperty(address)) {
+      throw new StructuredError(<>Bad pointer. There's no value in the heap at address <code className="code prompt-code">{address}</code>.</>);
+    }
+
     const array = env.heap[address];
+
+    if (!(array instanceof ExpressionArray)) {
+      throw new StructuredError(<>The <code className="code prompt-code function-identifier">push</code> function can only be applied to an array reference. <code className="code prompt-code">{address}</code> doesn't point to an array.</>);
+    }
+
     array.value.push(this.operands[0]);
-    // TODO crash if not in heap
-    // TODO crash if not an array
+    return new ExpressionUnit();
+  }
+}
+
+// -------------------------------------------------------------------------- 
+
+export class ExpressionRemoveIndex extends ExpressionBuiltinMemberFunctionCall {
+  constructor(host, operands, where) {
+    super('removeIndex', host, operands, where);
+    if (this.operands.length !== 1) {
+      throw new LocatedException(where, `I expected function removeIndex to be called with 1 parameter.`);
+    }
+  }
+  
+  evaluate(env) {
+    if (!(this.host instanceof ExpressionReference)) {
+      throw new StructuredError(<>The <code className="code prompt-code function-identifier">removeIndex</code> function can only be applied to an array reference. <code className="code prompt-code">{this.host.value}</code> is something else.</>);
+    }
+
+    const address = this.host.value;
+
+    if (!env.heap.hasOwnProperty(address)) {
+      throw new StructuredError(<>Bad pointer. There's no value in the heap at address <code className="code prompt-code">{address}</code>.</>);
+    }
+
+    const array = env.heap[address];
+
+    if (!(array instanceof ExpressionArray)) {
+      throw new StructuredError(<>The <code className="code prompt-code function-identifier">removeIndex</code> function can only be applied to an array reference. <code className="code prompt-code">{address}</code> doesn't point to an array.</>);
+    }
+
+    if (!(this.operands[0] instanceof ExpressionInteger)) {
+      throw new StructuredError(<>The <code className="code prompt-code function-identifier">removeIndex</code> function expects its index parameter to be an integer. <code className="code prompt-code">{this.operands[0].toString()}</code> isn't an integer.</>);
+    }
+
+    const index = this.operands[0].value;
+
+    if (index < 0 || index >= array.value.length) {
+      throw new StructuredError(<>The <code className="code prompt-code function-identifier">removeIndex</code> function expects its parameter to be a valid index. <code className="code prompt-code">{this.operands[0].toString()}</code> is out-of-bounds for an array of length {array.value.length}.</>);
+    }
+
+    array.value.splice(index, 1);
+
     return new ExpressionUnit();
   }
 }

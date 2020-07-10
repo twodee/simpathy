@@ -10,13 +10,16 @@ import Stack from './components/Stack';
 import Heap from './components/Heap';
 import Console from './components/Console';
 
-import { loadProgram } from './actions';
+import {
+  loadProgram,
+  failCompile,
+} from './actions';
+
 import { lex } from './lexer';
 import { parse } from './parser';
 
 function getAst() {
-  const source = `a = 10
-a.length()`;
+  const source = `@942.removeIndex(4, "dog")`;
 
   // const source = `print(@942[0])
 // print(@942[1])
@@ -104,7 +107,11 @@ a.length()`;
 const App = () => {
   const dispatch = useDispatch();
   useEffect(() => {
-    dispatch(loadProgram(getAst()));
+    try {
+      dispatch(loadProgram(getAst()));
+    } catch (e) {
+      dispatch(failCompile(e.message));
+    }
   }, [dispatch]);
 
   const programConsoleResizer = React.createRef();
