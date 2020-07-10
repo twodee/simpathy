@@ -63,6 +63,8 @@ const Evaluator = () => {
     onKeyDown: e => {
       if (e.key === 'Enter') {
         let actualValue = parseLiteral(state.currentInput);
+        console.log("expectedValue:", state.expectedValue);
+        console.log("actualValue:", actualValue);
 
         if (state.isCrashing) {
           dispatch(enterWrongSubexpressionValue(<>No, <code className="code prompt-code">{state.currentInput}</code> is not the right value.</>));

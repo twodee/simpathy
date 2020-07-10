@@ -234,6 +234,7 @@ h1 {
 .array {
   display: grid;
   grid-template-columns: auto 1fr;
+  margin: -5px 0;
 }
 
 .array-index {

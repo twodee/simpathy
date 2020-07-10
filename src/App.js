@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-
+import React, {useEffect} from 'react';
+import {useDispatch} from 'react-redux';
 import './App.css';
+import {useParams} from 'react-router-dom';
 
 import Prompter from './components/Prompter';
 import Program from './components/Program';
@@ -15,11 +15,54 @@ import {
   failCompile,
 } from './actions';
 
-import { lex } from './lexer';
-import { parse } from './parser';
+import {lex} from './lexer';
+import {parse} from './parser';
 
-function getAst() {
-  const source = `@942.removeIndex(4, "dog")`;
+const corpus = {
+
+  // ------------------------------------------------------------------------- 
+
+  'test-array1': `array(1, 2, 3)`,
+
+  // ------------------------------------------------------------------------- 
+
+  'test-read': `a = readLine()
+print(a)`,
+
+  // ------------------------------------------------------------------------- 
+
+  'test-gcd': `function gcd(a, b)
+  // Order a and b.
+  big = max(a, b)
+  small = min(a, b)
+  while small != 0
+    tmp = small
+    small = big % small
+    big = tmp
+  return big
+
+5 + 7
+x = parseInt(readLine())
+y = parseIns(readLine())
+print(gcd(x, y))`,
+
+  // ------------------------------------------------------------------------- 
+
+  'test-double': `function double(x)
+  return 2 * x
+print(double(5))`,
+
+  // ------------------------------------------------------------------------- 
+
+};
+
+function getAst(programId) {
+  let source;
+  if (programId) {
+    source = corpus[programId];
+  } else {
+    source = `readLine("dog")`;
+  }
 
   // const source = `print(@942[0])
 // print(@942[1])
@@ -46,30 +89,12 @@ function getAst() {
   // return big
 // print(gcd(9, 10))`;
 
-  // const source = `function gcd(a, b)
-  // Order a and b.
-  // big = max(a, b)
-  // small = min(a, b)
-  // while small != 0
-    // tmp = small
-    // small = big % small
-    // big = tmp
-  // return big
-
-// 5 + 7
-// x = parseInt(readLine())
-// y = parseIns(readLine())
-// print(gcd(x, y))`;
-
   // const source = `a = 5`;
 
   // const source = `print(5)
 // print(5 - 7)
 // 8 * 9 > 70`;
 
-  // const source = `function double(x)
-  // return 2 * x
-// print(double(5))
 // sum = 5 - (4 + 1)`;
 
 // x = parseInt(readLine())
@@ -98,17 +123,17 @@ function getAst() {
   // 9 + 2
 // a = 7 << 1`;
   const tokens = lex(source);
-  // console.log("tokens:", tokens);
   const ast = parse(tokens);
-  console.log("ast:", ast);
   return ast;
 }
 
 const App = () => {
+  const {programId} = useParams();
+
   const dispatch = useDispatch();
   useEffect(() => {
     try {
-      dispatch(loadProgram(getAst()));
+      dispatch(loadProgram(getAst(programId)));
     } catch (e) {
       dispatch(failCompile(e.message));
     }
@@ -162,7 +187,6 @@ const App = () => {
 
     return onMouseDown;
   }
-
 
   return (
     <div className="App">

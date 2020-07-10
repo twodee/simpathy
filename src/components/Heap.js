@@ -14,6 +14,8 @@ const Heap = () => {
   const heap = useSelector(state => state.memory.heap);
   const dispatch = useDispatch();
 
+  const addresses = Object.keys(heap).map(key => parseInt(key)).sort((a, b) => a - b);
+
   return (
     <div id="heap-panel">
       <h1>
@@ -21,11 +23,11 @@ const Heap = () => {
       </h1>
       <div id="heap-entries">
         {
-          [...Object.keys(heap)].sort().map(id => {
+          addresses.map(id => {
             const value = heap[id];
             return <div className="heap-entry" key={id}>
               <div className="heap-id code">
-                {id}
+                @{id.toString().padStart(3, '0')}
                 <div className="panel-actions">
                   <button>free</button>
                 </div>

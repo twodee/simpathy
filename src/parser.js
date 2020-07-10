@@ -415,7 +415,6 @@ export function parse(tokens) {
       return new ExpressionReal(Number(token.source), token.where);
     } else if (has(Token.Reference)) {
       let token = consume();
-      console.log("token:", token);
       return new ExpressionReference(token.source, token.where);
     } else if (has(Token.Boolean)) {
       let token = consume();

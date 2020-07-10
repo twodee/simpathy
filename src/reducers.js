@@ -103,7 +103,7 @@ const initialState = {
         variables: [
           // {
             // name: 'b',
-            // current: new ExpressionReference('@942'),
+            // current: new ExpressionReference(942),
             // history: [],
           // },
           {
@@ -116,14 +116,14 @@ const initialState = {
     ],
 
     heap: {
-      '@942': new ExpressionArray([
+      '942': new ExpressionArray([
         new ExpressionInteger(6),
         new ExpressionString("dog"),
         new ExpressionBoolean(true),
-        new ExpressionReference('@500'),
+        new ExpressionReference(500),
       ]),
-      '@433': new ExpressionInteger(5),
-      // '@301': new ExpressionReference('@491'),
+      '433': new ExpressionInteger(5),
+      // '301': new ExpressionReference(491),
     },
   },
 };
