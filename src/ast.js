@@ -914,7 +914,7 @@ export class ExpressionLength extends ExpressionBuiltinMemberFunctionCall {
   constructor(host, operands, where) {
     super('length', host, operands, where);
     if (this.operands.length !== 0) {
-      throw new LocatedException(where, `I expect function length to be called with 0 parameters.`);
+      throw new LocatedException(where, `I expect function ${this.name} to be called with 0 parameters.`);
     }
   }
   
@@ -1586,6 +1586,32 @@ export class ExpressionPrintLine extends ExpressionBuiltinFunctionCall {
 
   get output() {
     return this.operands[0].value.toString() + '\n';
+  }
+}
+
+// -------------------------------------------------------------------------- 
+
+export class ExpressionFree extends ExpressionBuiltinFunctionCall {
+  constructor(host, operands, where) {
+    super('free', host, operands, where);
+    if (this.operands.length !== 1) {
+      throw new LocatedException(where, `I expect function ${this.name} to be called with 1 parameter.`);
+    }
+  }
+  
+  evaluate(env) {
+    if (this.operands[0] instanceof ExpressionReference) {
+      const address = this.operands[0].value.toString();
+
+      if (!env.heap.hasOwnProperty(address)) {
+        throw new StructuredError(<>Bad pointer. There's no value in the heap at address <code className="code prompt-code">@{address}</code>.</>);
+      }
+
+      delete env.heap[address];
+      return new ExpressionUnit();
+    } else {
+      throw new StructuredError(<>The <code className="code prompt-code">free</code> function can only be applied to references. <code className="code prompt-code">{this.operands[0].promptify(false)}</code> is something else.</>);
+    }
   }
 }
 

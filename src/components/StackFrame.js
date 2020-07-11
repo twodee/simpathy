@@ -12,6 +12,10 @@ import {
   selectWrongMemoryValue,
   stopShaking,
   unhover,
+  declareRightly,
+  declareWrongly,
+  popFrameRightly,
+  popFrameWrongly,
 } from '../actions';
 
 import {
@@ -35,6 +39,9 @@ const StackFrame = props => {
   const currentInput = useSelector(state => state.currentInput);
   const expectedName = useSelector(state => state.expectedName);
   const expectedValue = useSelector(state => state.expectedValue);
+  const isBadDeclare = useSelector(state => state.isBadDeclare);
+  const isBadPopFrame = useSelector(state => state.isBadPopFrame);
+  const activeFrameIndex = useSelector(state => state.activeFrameIndex);
 
   const isTopFrame = props.index === stack.length - 1;
   const frame = stack[props.index];
@@ -60,12 +67,41 @@ const StackFrame = props => {
     element.parentNode.classList.remove('expanded');
   };
 
+  let declareAttributes = {
+    className: (isBadDeclare && activeFrameIndex === props.index) ? 'shaking' : '',
+    onClick: () => {
+      if (mode === Mode.Declaring && isTopFrame) {
+        dispatch(declareRightly());
+      } else {
+        dispatch(declareWrongly(props.index));
+      }
+    },
+    onAnimationEnd: () => dispatch(stopShaking()),
+  };
+  const declareButton = React.createElement('button', declareAttributes, 'declare');
+
+  let popFrameAttributes = {
+    className: (isBadPopFrame && activeFrameIndex === props.index) ? 'shaking' : '',
+    onClick: () => {
+      if (mode === Mode.PoppingFrame && isTopFrame) {
+        dispatch(popFrameRightly());
+      } else {
+        dispatch(popFrameWrongly(props.index));
+      }
+    },
+    onAnimationEnd: () => dispatch(stopShaking()),
+  };
+  const popFrameButton = React.createElement('button', popFrameAttributes, 'pop');
+
   return (
     <>
       <div className="stack-frame">
         <div className="code cell function-name-cell ellipsize" onMouseOver={onExpandEllipse} onMouseLeave={onContractEllipse}>
           {frame.name}
           <div className="expanded-tooltip" onMouseLeave={onContractParentEllipse}>{frame.name}</div>
+          <div className="panel-actions">
+            {declareButton} &middot; {popFrameButton}
+          </div>
         </div>
         {
           frame.variables.map((variable, i) => {
@@ -121,7 +157,7 @@ const StackFrame = props => {
             }
 
             let nameElement;
-            if (mode === Mode.NamingVariable && variable.name === '') {
+            if (mode === Mode.Naming && variable.name === '') {
               let nameAttributes = {
                 className: `variable-name-input ${isBadInput ? 'shaking' : ''}`,
                 value: currentInput,

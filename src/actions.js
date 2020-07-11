@@ -5,8 +5,8 @@ export const Action = Object.freeze({
   LoadProgram: 'LoadProgram',
   EditInput: 'EditInput',
   StopShaking: 'StopShaking',
-  DeclareVariableRightly: 'DeclareVariableRightly',
-  DeclareVariableWrongly: 'DeclareVariableWrongly',
+  DeclareRightly: 'DeclareVariableRightly',
+  DeclareWrongly: 'DeclareVariableWrongly',
   PushFrameRightly: 'PushFrameRightly',
   PushFrameWrongly: 'PushFrameWrongly',
   PopFrameRightly: 'PopFrameRightly',
@@ -205,13 +205,25 @@ export function failCompile(message) {
   };
 }
 
-export const declareVariableRightly = () => ({type: Action.DeclareVariableRightly});
-export const declareVariableWrongly = () => ({type: Action.DeclareVariableWrongly});
+export function declareWrongly(frameIndex) {
+  return {
+    type: Action.DeclareWrongly,
+    payload: frameIndex,
+  };
+}
+
+export function popFrameWrongly(frameIndex) {
+  return {
+    type: Action.PopFrameWrongly,
+    payload: frameIndex,
+  };
+}
+
+export const declareRightly = () => ({type: Action.DeclareRightly});
 export const enterRightVariableName = () => ({type: Action.EnterRightVariableName});
 export const pushFrameRightly = () => ({type: Action.PushFrameRightly});
 export const pushFrameWrongly = () => ({type: Action.PushFrameWrongly});
 export const popFrameRightly = () => ({type: Action.PopFrameRightly});
-export const popFrameWrongly = () => ({type: Action.PopFrameWrongly});
 export const crashRightly = () => ({type: Action.CrashRightly});
 export const crashWrongly = () => ({type: Action.CrashWrongly});
 

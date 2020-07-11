@@ -21,7 +21,7 @@ const Console = () => {
   const currentInput = useSelector(state => state.currentInput);
 
   const attributes = {
-    className: 'user-input',
+    className: 'user-input-box',
     type: 'text',
     autoFocus: true,
     value: currentInput,

@@ -21,8 +21,8 @@ export const Mode = Object.freeze({
   PushingParameters: 'PushingParameters',
   EvaluatingSubexpression: 'EvaluatingSubexpression',
   EnteringMemoryValue: 'EnteringMemoryValue',
-  DeclaringVariable: 'DeclaringVariable',
-  NamingVariable: 'NamingVariable',
+  Declaring: 'Declaring',
+  Naming: 'Naming',
   EnteringUserInput: 'EnteringUserInput',
   Celebrating: 'Celebrating',
 });

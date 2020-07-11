@@ -80,7 +80,7 @@ const initialState = {
   isBadSelection: null,
   isBadInput: null,
   isBadEnterInput: false,
-  isBadDeclareVariable: false,
+  isBadDeclare: false,
   isBadCrash: false,
   isStatementEvaluated: false,
   isCrashing: false,
@@ -209,7 +209,7 @@ export default function reducer(state = initialState, action) {
         if (hasVariable) {
           newState.mode = Mode.SelectingMemoryValue;
         } else {
-          newState.mode = Mode.DeclaringVariable;
+          newState.mode = Mode.Declaring;
         }
       } else if (action.payload instanceof ExpressionUserFunctionCall) {
         Object.assign(newState, {
@@ -321,7 +321,7 @@ export default function reducer(state = initialState, action) {
         clickedElement: null,
         isBadSelection: false,
         isBadInput: false,
-        isBadDeclareVariable: false,
+        isBadDeclare: false,
         isBadPushFrame: false,
         isBadPopFrame: false,
         isBadCrash: false,
@@ -585,7 +585,7 @@ export default function reducer(state = initialState, action) {
       } else {
         if (state.parameterIndex + 1 < state.functionDefinition.formals.length) {
           Object.assign(newState, {
-            mode: Mode.DeclaringVariable,
+            mode: Mode.Declaring,
             parameterIndex: state.parameterIndex + 1,
             feedback: null,
             objective: "What happens next to execute this function call?",
@@ -656,7 +656,7 @@ export default function reducer(state = initialState, action) {
       break;
     }
 
-    case Action.DeclareVariableRightly: {
+    case Action.DeclareRightly: {
       const newVariable = {
         name: '',
         current: new ExpressionUndefined(),
@@ -667,8 +667,8 @@ export default function reducer(state = initialState, action) {
       const term = state.parameterIndex >= 0 ? 'parameter' : 'variable';
 
       Object.assign(newState, {
-        isBadDeclareVariable: false,
-        mode: Mode.NamingVariable,
+        isBadDeclare: false,
+        mode: Mode.Naming,
         feedback: <>Yes, we declare a new {term}.</>,
         objective: <>What is the {term}'s name?</>,
         memory: {
@@ -695,10 +695,11 @@ export default function reducer(state = initialState, action) {
       break;
     }
 
-    case Action.DeclareVariableWrongly: {
+    case Action.DeclareWrongly: {
       Object.assign(newState, {
-        feedback: <>No, we don't need a new variable right now.</>,
-        isBadDeclareVariable: true,
+        feedback: <>No, we don't need a new variable in that stack frame right now.</>,
+        isBadDeclare: true,
+        activeFrameIndex: action.payload,
       });
 
       break;
@@ -713,7 +714,7 @@ export default function reducer(state = initialState, action) {
       if (state.functionDefinition.formals.length > 0) {
         Object.assign(newState, {
           objective: <>What happens next in <span className="panel-name">STACK</span>?</>,
-          mode: Mode.DeclaringVariable,
+          mode: Mode.Declaring,
           parameterIndex: 0,
         });
       } else {
@@ -776,6 +777,7 @@ export default function reducer(state = initialState, action) {
       Object.assign(newState, {
         feedback: <>No, we don't need a new stack frame right now.</>,
         isBadPushFrame: true,
+        activeFrameIndex: action.payload,
       });
 
       break;
@@ -783,8 +785,9 @@ export default function reducer(state = initialState, action) {
 
     case Action.PopFrameWrongly: {
       Object.assign(newState, {
-        feedback: <>No, we're not ready to pop the stack frame yet.</>,
+        feedback: <>No, we're not ready to pop that stack frame yet.</>,
         isBadPopFrame: true,
+        activeFrameIndex: action.payload,
       });
 
       break;

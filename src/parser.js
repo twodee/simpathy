@@ -21,6 +21,7 @@ import {
   ExpressionDivide,
   // ExpressionFor,
   ExpressionUserFunctionCall,
+  ExpressionFree,
   ExpressionFunctionDefinition,
   ExpressionIdentifier,
   ExpressionIf,
@@ -415,7 +416,7 @@ export function parse(tokens) {
       return new ExpressionReal(Number(token.source), token.where);
     } else if (has(Token.Reference)) {
       let token = consume();
-      return new ExpressionReference(token.source, token.where);
+      return new ExpressionReference(parseInt(token.source.substring(1)), token.where);
     } else if (has(Token.Boolean)) {
       let token = consume();
       return new ExpressionBoolean(token.source === 'true', token.where);
@@ -451,6 +452,8 @@ export function parse(tokens) {
         return new ExpressionPrint(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else if (nameToken.source === 'printLine') {
         return new ExpressionPrintLine(actuals, SourceLocation.span(nameToken, sourceEnd));
+      } else if (nameToken.source === 'free') {
+        return new ExpressionFree(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else if (nameToken.source === 'readLine') {
         return new ExpressionReadLine(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else if (nameToken.source === 'sign') {
