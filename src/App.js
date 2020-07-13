@@ -22,6 +22,19 @@ const corpus = {
 
   // ------------------------------------------------------------------------- 
 
+  'test-substring': `"abcdef".substring(3, 5)`,
+
+  // ------------------------------------------------------------------------- 
+
+  'test-prefixes': `"abc".contains("d")`,
+
+  // ------------------------------------------------------------------------- 
+
+  'test-char': `@434[5]
+c = "boo! "[4]`,
+
+  // ------------------------------------------------------------------------- 
+
   'test-free': `free(@433)
 free(@942)
 free(@367)`,
@@ -56,7 +69,8 @@ print(gcd(x, y))`,
 
   'test-double': `function double(x)
   return 2 * x
-print(double(5))`,
+number = parseInt(readLine())
+print(double(number))`,
 
   // ------------------------------------------------------------------------- 
 
@@ -143,7 +157,7 @@ const App = () => {
     } catch (e) {
       dispatch(failCompile(e.message));
     }
-  }, [dispatch]);
+  }, [dispatch, programId]);
 
   const programConsoleResizer = React.createRef();
   const evaluatorMemoryResizer = React.createRef();

@@ -572,8 +572,8 @@ class ExpressionFunctionCall extends Expression {
 
     const isActive = (
       state.mode === Mode.PushingFrame ||
-      state.mode === Mode.DeclaringVariable ||
-      state.mode === Mode.NamingVariable ||
+      state.mode === Mode.Declaring ||
+      state.mode === Mode.Naming ||
       state.mode === Mode.SelectingMemoryValue ||
       state.mode === Mode.EnteringMemoryValue ||
       state.mode === Mode.SelectingStatement ||
@@ -685,7 +685,28 @@ export class ExpressionSubscript extends Expression {
   }
 
   evaluate(env) {
-    return env.heap[this.host.value].value[this.index.value];
+    if (this.host instanceof ExpressionReference) {
+      const address = this.host.value.toString();
+
+      if (!env.heap.hasOwnProperty(address)) {
+        throw new StructuredError(<>I found a bad pointer. There's no value in the heap at address <code className="code prompt-code">@{address}</code>.</>);
+      }
+
+      const array = env.heap[address];
+
+      if (!(array instanceof ExpressionArray)) {
+        throw new StructuredError(<>The subscript operator <code className="code prompt-code">[]</code> can only be applied to array references and strings. <code className="code prompt-code">@{address}</code> is a reference, but it doesn't point to an array.</>);
+      }
+
+      return env.heap[this.host.value].value[this.index.value];
+    } else if (this.host instanceof ExpressionString) {
+      if (this.index.value < 0 || this.index.value >= this.host.value.length) {
+        throw new StructuredError(<>The subscript operator <code className="code prompt-code">[]</code> expects its parameter to be a valid index. The index {this.index.toString()} is out-of-bounds for a string of length {this.host.value.length}.</>);
+      } else {
+        return new ExpressionCharacter(this.host.value[this.index.value]);
+      }
+    } else {
+    }
   }
 
   clone() {
@@ -724,8 +745,8 @@ export class ExpressionSubscript extends Expression {
 
     const isActive = (
       state.mode === Mode.PushingFrame ||
-      state.mode === Mode.DeclaringVariable ||
-      state.mode === Mode.NamingVariable ||
+      state.mode === Mode.Declaring ||
+      state.mode === Mode.Naming ||
       state.mode === Mode.SelectingMemoryValue ||
       state.mode === Mode.EnteringMemoryValue ||
       state.mode === Mode.SelectingStatement ||
@@ -826,8 +847,8 @@ class ExpressionMemberFunctionCall extends Expression {
 
     const isActive = (
       state.mode === Mode.PushingFrame ||
-      state.mode === Mode.DeclaringVariable ||
-      state.mode === Mode.NamingVariable ||
+      state.mode === Mode.Declaring ||
+      state.mode === Mode.Naming ||
       state.mode === Mode.SelectingMemoryValue ||
       state.mode === Mode.EnteringMemoryValue ||
       state.mode === Mode.SelectingStatement ||
@@ -923,20 +944,20 @@ export class ExpressionLength extends ExpressionBuiltinMemberFunctionCall {
       const address = this.host.value.toString();
 
       if (!env.heap.hasOwnProperty(address)) {
-        throw new StructuredError(<>Bad pointer. There's no value in the heap at address <code className="code prompt-code">@{address}</code>.</>);
+        throw new StructuredError(<>I found a bad pointer. There's no value in the heap at address <code className="code prompt-code">@{address}</code>.</>);
       }
 
       const array = env.heap[address];
 
       if (!(array instanceof ExpressionArray)) {
-        throw new StructuredError(<>The subscript operator <code className="code prompt-code">[]</code> can only be applied to array references and strings. <code className="code prompt-code">@{address}</code> doesn't point to an array.</>);
+        throw new StructuredError(<>The function <code className="code prompt-code function-identifier">{this.name}</code> can only be applied to array references and strings. <code className="code prompt-code">@{address}</code> is a reference, but it doesn't point to an array.</>);
       }
 
       return new ExpressionInteger(array.value.length);
     } else if (this.host instanceof ExpressionString) {
       return new ExpressionInteger(this.host.value.length);
     } else {
-      throw new StructuredError(<>The subscript operator <code className="code prompt-code">[]</code> can only be applied to array references and strings. <code className="code prompt-code">{this.host.value}</code> is something else.</>);
+      throw new StructuredError(<>The function <code className="code prompt-code function-identifier">{this.name}</code> can only be applied to array references and strings. <code className="code prompt-code">{this.host.value}</code> is something else.</>);
     }
   }
 }
@@ -953,19 +974,19 @@ export class ExpressionPush extends ExpressionBuiltinMemberFunctionCall {
   
   evaluate(env) {
     if (!(this.host instanceof ExpressionReference)) {
-      throw new StructuredError(<>The <code className="code prompt-code function-identifier">push</code> function can only be applied to an array reference. <code className="code prompt-code">{this.host.value}</code> is something else.</>);
+      throw new StructuredError(<>The <code className="code prompt-code function-identifier">{this.name}</code> function can only be applied to an array reference. <code className="code prompt-code">{this.host.value}</code> is something else.</>);
     }
 
     const address = this.host.value;
 
     if (!env.heap.hasOwnProperty(address)) {
-      throw new StructuredError(<>Bad pointer. There's no value in the heap at address <code className="code prompt-code">@{address}</code>.</>);
+      throw new StructuredError(<>I found a bad pointer. There's no value in the heap at address <code className="code prompt-code">@{address}</code>.</>);
     }
 
     const array = env.heap[address];
 
     if (!(array instanceof ExpressionArray)) {
-      throw new StructuredError(<>The <code className="code prompt-code function-identifier">push</code> function can only be applied to an array reference. <code className="code prompt-code">@{address}</code> doesn't point to an array.</>);
+      throw new StructuredError(<>The <code className="code prompt-code function-identifier">{this.name}</code> function can only be applied to an array reference. <code className="code prompt-code">@{address}</code> doesn't point to an array.</>);
     }
 
     array.value.push(this.operands[0]);
@@ -985,34 +1006,146 @@ export class ExpressionRemoveIndex extends ExpressionBuiltinMemberFunctionCall {
   
   evaluate(env) {
     if (!(this.host instanceof ExpressionReference)) {
-      throw new StructuredError(<>The <code className="code prompt-code function-identifier">removeIndex</code> function can only be applied to an array reference. <code className="code prompt-code">{this.host.value}</code> is something else.</>);
+      throw new StructuredError(<>The <code className="code prompt-code function-identifier">{this.name}</code> function can only be applied to an array reference. <code className="code prompt-code">{this.host.value}</code> is something else.</>);
     }
 
     const address = this.host.value;
 
     if (!env.heap.hasOwnProperty(address)) {
-      throw new StructuredError(<>Bad pointer. There's no value in the heap at address <code className="code prompt-code">@{address}</code>.</>);
+      throw new StructuredError(<>I found a bad pointer. There's no value in the heap at address <code className="code prompt-code">@{address}</code>.</>);
     }
 
     const array = env.heap[address];
 
     if (!(array instanceof ExpressionArray)) {
-      throw new StructuredError(<>The <code className="code prompt-code function-identifier">removeIndex</code> function can only be applied to an array reference. <code className="code prompt-code">@{address}</code> doesn't point to an array.</>);
+      throw new StructuredError(<>The <code className="code prompt-code function-identifier">{this.name}</code> function can only be applied to an array reference. <code className="code prompt-code">@{address}</code> doesn't point to an array.</>);
     }
 
     if (!(this.operands[0] instanceof ExpressionInteger)) {
-      throw new StructuredError(<>The <code className="code prompt-code function-identifier">removeIndex</code> function expects its index parameter to be an integer. <code className="code prompt-code">{this.operands[0].toString()}</code> isn't an integer.</>);
+      throw new StructuredError(<>The <code className="code prompt-code function-identifier">{this.name}</code> function expects its index parameter to be an integer. <code className="code prompt-code">{this.operands[0].toString()}</code> isn't an integer.</>);
     }
 
     const index = this.operands[0].value;
 
     if (index < 0 || index >= array.value.length) {
-      throw new StructuredError(<>The <code className="code prompt-code function-identifier">removeIndex</code> function expects its parameter to be a valid index. <code className="code prompt-code">{this.operands[0].toString()}</code> is out-of-bounds for an array of length {array.value.length}.</>);
+      throw new StructuredError(<>The <code className="code prompt-code function-identifier">{this.name}</code> function expects its parameter to be a valid index. The index {this.operands[0].toString()} is out-of-bounds for an array of length {array.value.length}.</>);
     }
 
     array.value.splice(index, 1);
 
     return new ExpressionUnit();
+  }
+}
+
+// -------------------------------------------------------------------------- 
+
+export class ExpressionStartsWith extends ExpressionBuiltinMemberFunctionCall {
+  constructor(host, operands, where) {
+    super('startsWith', host, operands, where);
+    if (this.operands.length !== 1) {
+      throw new LocatedException(where, `I expect function ${this.name} to be called with 1 parameter.`);
+    }
+  }
+  
+  evaluate(env) {
+    if (!(this.host instanceof ExpressionString)) {
+      throw new StructuredError(<>The <code className="code prompt-code function-identifier">{this.name}</code> method can only be applied to a string. The value <code className="code prompt-code">{this.host.toString()}</code> is not a string.</>);
+    }
+
+    if (!(this.operands[0] instanceof ExpressionString)) {
+      throw new StructuredError(<>I expect function <code className="code prompt-code function-identifier">{this.name}</code> to be given a string parameter. The value <code className="code prompt-code">{this.operands[0].toString()}</code> is not a string.</>);
+    }
+
+    return new ExpressionBoolean(this.host.value.startsWith(this.operands[0].value));
+  }
+}
+
+// -------------------------------------------------------------------------- 
+
+export class ExpressionEndsWith extends ExpressionBuiltinMemberFunctionCall {
+  constructor(host, operands, where) {
+    super('endsWith', host, operands, where);
+    if (this.operands.length !== 1) {
+      throw new LocatedException(where, `I expect function ${this.name} to be called with 1 parameter.`);
+    }
+  }
+  
+  evaluate(env) {
+    if (!(this.host instanceof ExpressionString)) {
+      throw new StructuredError(<>The <code className="code prompt-code function-identifier">{this.name}</code> method can only be applied to a string. The value <code className="code prompt-code">{this.host.toString()}</code> is not a string.</>);
+    }
+
+    if (!(this.operands[0] instanceof ExpressionString)) {
+      throw new StructuredError(<>I expect function <code className="code prompt-code function-identifier">{this.name}</code> to be given a string parameter. The value <code className="code prompt-code">{this.operands[0].toString()}</code> is not a string.</>);
+    }
+
+    return new ExpressionBoolean(this.host.value.endsWith(this.operands[0].value));
+  }
+}
+
+// -------------------------------------------------------------------------- 
+
+export class ExpressionContains extends ExpressionBuiltinMemberFunctionCall {
+  constructor(host, operands, where) {
+    super('contains', host, operands, where);
+    if (this.operands.length !== 1) {
+      throw new LocatedException(where, `I expect function ${this.name} to be called with 1 parameter.`);
+    }
+  }
+  
+  evaluate(env) {
+    if (!(this.host instanceof ExpressionString)) {
+      throw new StructuredError(<>The <code className="code prompt-code function-identifier">{this.name}</code> method can only be applied to a string. The value <code className="code prompt-code">{this.host.toString()}</code> is not a string.</>);
+    }
+
+    if (!(this.operands[0] instanceof ExpressionString)) {
+      throw new StructuredError(<>I expect function <code className="code prompt-code function-identifier">{this.name}</code> to be given a string parameter. The value <code className="code prompt-code">{this.operands[0].toString()}</code> is not a string.</>);
+    }
+
+    return new ExpressionBoolean(this.host.value.includes(this.operands[0].value));
+  }
+}
+
+// -------------------------------------------------------------------------- 
+
+export class ExpressionSubstring extends ExpressionBuiltinMemberFunctionCall {
+  constructor(host, operands, where) {
+    super('substring', host, operands, where);
+    if (this.operands.length !== 1 && this.operands.length !== 2) {
+      throw new LocatedException(where, `I expect function ${this.name} to be called with 1 or 2 parameters.`);
+    }
+  }
+  
+  evaluate(env) {
+    if (!(this.host instanceof ExpressionString)) {
+      throw new StructuredError(<>The <code className="code prompt-code function-identifier">{this.name}</code> method can only be applied to a string. The value <code className="code prompt-code">{this.host.toString()}</code> is not a string.</>);
+    }
+
+    if (!(this.operands[0] instanceof ExpressionInteger)) {
+      throw new StructuredError(<>I expect the first parameter of function <code className="code prompt-code function-identifier">{this.name}</code> to be an integer. The value <code className="code prompt-code">{this.operands[0].toString()}</code> is not an integer.</>);
+    }
+
+    const startIndex = this.operands[0].value;
+
+    if (startIndex < 0 || startIndex >= this.host.value.length) {
+      throw new StructuredError(<>I expect function <code className="code prompt-code">{this.name}</code> to given a valid index for its first parameter. The index {this.operands[0].toString()} is out-of-bounds for a string of length {this.host.value.length}.</>);
+    }
+
+    if (this.operands.length === 1) {
+      return new ExpressionString(this.host.value.substring(startIndex));
+    } else {
+      if (!(this.operands[1] instanceof ExpressionInteger)) {
+        throw new StructuredError(<>I expect the second parameter of function <code className="code prompt-code function-identifier">{this.name}</code> to be an integer. The value <code className="code prompt-code">{this.operands[1].toString()}</code> is not an integer.</>);
+      }
+
+      const endIndex = this.operands[1].value;
+
+      if (endIndex < 0 || endIndex > this.host.value.length) {
+        throw new StructuredError(<>I expect function <code className="code prompt-code">{this.name}</code> to given a valid exclusive index for its second parameter. The index {this.operands[1].toString()} is out-of-bounds for a string of length {this.host.value.length}.</>);
+      }
+
+      return new ExpressionString(this.host.value.substring(startIndex, endIndex));
+    }
   }
 }
 
@@ -1604,7 +1737,7 @@ export class ExpressionFree extends ExpressionBuiltinFunctionCall {
       const address = this.operands[0].value.toString();
 
       if (!env.heap.hasOwnProperty(address)) {
-        throw new StructuredError(<>Bad pointer. There's no value in the heap at address <code className="code prompt-code">@{address}</code>.</>);
+        throw new StructuredError(<>I found a bad pointer. There's no value in the heap at address <code className="code prompt-code">@{address}</code>.</>);
       }
 
       delete env.heap[address];
@@ -1682,9 +1815,9 @@ export class ExpressionAssignment extends Expression {
     const isActive = (
       state.mode === Mode.SelectingMemoryValue ||
       state.mode === Mode.EnteringMemoryValue ||
-      state.mode === Mode.DeclaringVariable ||
+      state.mode === Mode.Declaring ||
       state.mode === Mode.EvaluatingSubexpression ||
-      state.mode === Mode.NamingVariable
+      state.mode === Mode.Naming
     ) && state.activeSubexpression === this;
 
     return (

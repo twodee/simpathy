@@ -98,14 +98,20 @@ const initialState = {
   memory: {
     stack: [
       {
+        name: 'foo',
+        functions: {},
+        variables: [
+          {
+            name: 'return',
+            current: new ExpressionUndefined(),
+            history: [],
+          },
+        ],
+      },
+      {
         name: 'main',
         functions: {},
         variables: [
-          // {
-            // name: 'b',
-            // current: new ExpressionReference(942),
-            // history: [],
-          // },
           {
             name: 'return',
             current: new ExpressionUndefined(),
@@ -697,9 +703,9 @@ export default function reducer(state = initialState, action) {
 
     case Action.DeclareWrongly: {
       Object.assign(newState, {
-        feedback: <>No, we don't need a new variable in that stack frame right now.</>,
+        feedback: action.payload.feedback,
         isBadDeclare: true,
-        activeFrameIndex: action.payload,
+        activeFrameIndex: action.payload.frameIndex,
       });
 
       break;
@@ -785,9 +791,9 @@ export default function reducer(state = initialState, action) {
 
     case Action.PopFrameWrongly: {
       Object.assign(newState, {
-        feedback: <>No, we're not ready to pop that stack frame yet.</>,
+        feedback: action.payload.feedback,
         isBadPopFrame: true,
-        activeFrameIndex: action.payload,
+        activeFrameIndex: action.payload.frameIndex,
       });
 
       break;

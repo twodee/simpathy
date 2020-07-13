@@ -205,17 +205,23 @@ export function failCompile(message) {
   };
 }
 
-export function declareWrongly(frameIndex) {
+export function declareWrongly(feedback, frameIndex) {
   return {
     type: Action.DeclareWrongly,
-    payload: frameIndex,
+    payload: {
+      feedback,
+      frameIndex,
+    },
   };
 }
 
-export function popFrameWrongly(frameIndex) {
+export function popFrameWrongly(feedback, frameIndex) {
   return {
     type: Action.PopFrameWrongly,
-    payload: frameIndex,
+    payload: {
+      frameIndex,
+      feedback, 
+    },
   };
 }
 

@@ -1,18 +1,18 @@
 import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, /*useDispatch*/ } from 'react-redux';
 
-import {
-  stopShaking,
-} from '../actions';
+// import {
+  // stopShaking,
+// } from '../actions';
 
-import {
-  Mode,
-} from '../constants';
+// import {
+  // Mode,
+// } from '../constants';
 
 const Heap = () => {
-  const mode = useSelector(state => state.mode);
+  // const mode = useSelector(state => state.mode);
   const heap = useSelector(state => state.memory.heap);
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
 
   const addresses = Object.keys(heap).map(key => parseInt(key)).sort((a, b) => a - b);
 

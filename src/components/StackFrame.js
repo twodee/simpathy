@@ -70,10 +70,14 @@ const StackFrame = props => {
   let declareAttributes = {
     className: (isBadDeclare && activeFrameIndex === props.index) ? 'shaking' : '',
     onClick: () => {
-      if (mode === Mode.Declaring && isTopFrame) {
-        dispatch(declareRightly());
+      if (mode === Mode.Declaring) {
+        if (isTopFrame) {
+          dispatch(declareRightly());
+        } else {
+          dispatch(declareWrongly(<>No, that stack frame isn't active right right now.</>, props.index));
+        }
       } else {
-        dispatch(declareWrongly(props.index));
+        dispatch(declareWrongly(<>No, we don't need a new declaration right now.</>, props.index));
       }
     },
     onAnimationEnd: () => dispatch(stopShaking()),
@@ -83,10 +87,15 @@ const StackFrame = props => {
   let popFrameAttributes = {
     className: (isBadPopFrame && activeFrameIndex === props.index) ? 'shaking' : '',
     onClick: () => {
-      if (mode === Mode.PoppingFrame && isTopFrame) {
-        dispatch(popFrameRightly());
+      if (mode === Mode.PoppingFrame) {
+        if (isTopFrame) {
+          dispatch(popFrameRightly());
+        } else {
+          dispatch(popFrameWrongly(<>No, that stack frame isn't active right right now.</>, props.index));
+        }
       } else {
-        dispatch(popFrameWrongly(props.index));
+        // dispatch(popFrameWrongly(<>No, we don't need a new declaration right now.</>, props.index));
+        dispatch(popFrameWrongly(<>No, we don't want to pop a stack frame right now.</>, props.index));
       }
     },
     onAnimationEnd: () => dispatch(stopShaking()),

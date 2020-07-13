@@ -14,10 +14,14 @@ import {
   ExpressionArrayConstructor,
   ExpressionLength,
   ExpressionPush,
+  ExpressionStartsWith,
+  ExpressionEndsWith,
+  ExpressionContains,
+  ExpressionSubstring,
   ExpressionAssignment,
   ExpressionBlock,
   ExpressionBoolean,
-  // ExpressionCharacter,
+  ExpressionCharacter,
   ExpressionDivide,
   // ExpressionFor,
   ExpressionUserFunctionCall,
@@ -32,7 +36,7 @@ import {
   ExpressionBlankLine,
   ExpressionMax,
   ExpressionMin,
-  ExpressionMemberFunctionCall,
+  // ExpressionMemberFunctionCall,
   // ExpressionMemberIdentifier,
   ExpressionMore,
   ExpressionMoreEqual,
@@ -351,6 +355,14 @@ export function parse(tokens) {
             base = new ExpressionLength(base, actuals, SourceLocation.span(base.where, sourceEnd));
           } else if (nameToken.source === 'push') {
             base = new ExpressionPush(base, actuals, SourceLocation.span(base.where, sourceEnd));
+          } else if (nameToken.source === 'startsWith') {
+            base = new ExpressionStartsWith(base, actuals, SourceLocation.span(base.where, sourceEnd));
+          } else if (nameToken.source === 'endsWith') {
+            base = new ExpressionEndsWith(base, actuals, SourceLocation.span(base.where, sourceEnd));
+          } else if (nameToken.source === 'contains') {
+            base = new ExpressionContains(base, actuals, SourceLocation.span(base.where, sourceEnd));
+          } else if (nameToken.source === 'substring') {
+            base = new ExpressionSubstring(base, actuals, SourceLocation.span(base.where, sourceEnd));
           } else if (nameToken.source === 'removeIndex') {
             base = new ExpressionRemoveIndex(base, actuals, SourceLocation.span(base.where, sourceEnd));
           } else {
@@ -408,9 +420,9 @@ export function parse(tokens) {
     } else if (has(Token.String)) {
       let token = consume();
       return new ExpressionString(token.source, token.where);
-    // } else if (has(Token.Character)) {
-      // let token = consume();
-      // return new ExpressionCharacter(token.source, token.where);
+    } else if (has(Token.Character)) {
+      let token = consume();
+      return new ExpressionCharacter(token.source, token.where);
     } else if (has(Token.Real)) {
       let token = consume();
       return new ExpressionReal(Number(token.source), token.where);
