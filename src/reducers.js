@@ -98,17 +98,6 @@ const initialState = {
   memory: {
     stack: [
       {
-        name: 'foo',
-        functions: {},
-        variables: [
-          {
-            name: 'return',
-            current: new ExpressionUndefined(),
-            history: [],
-          },
-        ],
-      },
-      {
         name: 'main',
         functions: {},
         variables: [
@@ -122,13 +111,13 @@ const initialState = {
     ],
 
     heap: {
-      '942': new ExpressionArray([
-        new ExpressionInteger(6),
-        new ExpressionString("dog"),
-        new ExpressionBoolean(true),
-        new ExpressionReference(500),
-      ]),
-      '433': new ExpressionInteger(5),
+      // '942': new ExpressionArray([
+        // new ExpressionInteger(6),
+        // new ExpressionString("dog"),
+        // new ExpressionBoolean(true),
+        // new ExpressionReference(500),
+      // ]),
+      // '433': new ExpressionInteger(5),
       // '301': new ExpressionReference(491),
     },
   },
@@ -230,7 +219,7 @@ export default function reducer(state = initialState, action) {
       } else if (action.payload instanceof ExpressionReturn) {
         Object.assign(newState, {
           feedback: null,
-          objective: <>What happens in <span className="panel-name">STACK</span> to execute this return statement?</>,
+          objective: <>What happens in <span className="panel-name">STACK</span> to execute the <code className="code prompt-code">return</code> statement?</>,
           mode: Mode.SelectingMemoryValue,
           expectedName: 'return',
           expectedValue: action.payload.expression,
@@ -242,7 +231,7 @@ export default function reducer(state = initialState, action) {
         }
 
         if (action.payload instanceof ExpressionReadLine) {
-          newState.objective = <>The <code className="code prompt-code">readLine</code> command gets text from the user. What text shall the user enter?</>;
+          newState.objective = <>The <code className="code prompt-code">{action.payload.name}</code> command gets text from the user. What text shall the user enter?</>;
           newState.mode = Mode.EnteringUserInput;
         } else {
           newState.objective = <>What is the value of <code className="code prompt-code">{action.payload.promptify(false)}</code>?</>;
@@ -355,7 +344,7 @@ export default function reducer(state = initialState, action) {
       if (state.isPopNeeded) {
         Object.assign(newState, {
           feedback: "The function call is nearly complete.",
-          objective: <>What happens in <span className="panel-name">STACK</span> to finish it off?</>,
+          objective: <>What happens in <span className="panel-name">STACK</span> to finish off the function call?</>,
           mode: Mode.PoppingFrame,
           isPopNeeded: false,
         });
@@ -566,7 +555,7 @@ export default function reducer(state = initialState, action) {
             activeSubexpression,
             pausedActiveSubexpressions: state.pausedActiveSubexpressions.bottom,
             objective: <>What value is substituted for <code className="code prompt-code">{activeSubexpression.promptify(false)}</code>?</>,
-            feedback: <>The function has finished executing and has returned to the call.</>,
+            feedback: <>The function has finished executing and returned to the call.</>,
             isPopNeeded: true,
           });
         } else if (simplifiedExpression.isSimplified() && newState.nextStatement === null) {
@@ -582,6 +571,7 @@ export default function reducer(state = initialState, action) {
             objective: <>What code in <span className="panel-name">PROGRAM</span> is evaluated next?</>,
           });
         } else {
+          // TODO does this ever happen?
           Object.assign(newState, {
             mode: Mode.SelectingSubexpression,
             feedback: null,

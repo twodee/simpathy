@@ -94,7 +94,6 @@ const StackFrame = props => {
           dispatch(popFrameWrongly(<>No, that stack frame isn't active right right now.</>, props.index));
         }
       } else {
-        // dispatch(popFrameWrongly(<>No, we don't need a new declaration right now.</>, props.index));
         dispatch(popFrameWrongly(<>No, we don't want to pop a stack frame right now.</>, props.index));
       }
     },
@@ -206,9 +205,6 @@ const StackFrame = props => {
       </div>
     </>
   );
-      // <div className="code cell variable-name-cell">return value</div>
-      // <div className={`cell arrow-cell`}>&rarr;</div>
-      // <div className="code cell variable-value-cell">{frame.returnValue.toString()}</div>
 };
 
 export default StackFrame;

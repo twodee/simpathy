@@ -2470,9 +2470,7 @@ export function parseLiteral(expression) {
   if (expression.match(/^-?\d+$/)) {
     return new ExpressionInteger(parseInt(expression));
   } else if (expression.match(/^@\d+$/)) {
-    const e = new ExpressionReference(parseInt(expression.substring(1)));
-    console.log("e:", e);
-    return e;
+    return new ExpressionReference(parseInt(expression.substring(1)));
   } else if (expression.match(/^-?(\d+\.\d*|\d*.\d+)$/)) {
     return new ExpressionReal(parseFloat(expression));
   } else if (expression.match(/^true$/)) {
