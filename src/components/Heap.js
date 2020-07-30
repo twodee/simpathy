@@ -13,6 +13,7 @@ const Heap = () => {
   // const mode = useSelector(state => state.mode);
   const heap = useSelector(state => state.memory.heap);
   // const dispatch = useDispatch();
+  console.log("heap:", heap);
 
   const addresses = Object.keys(heap).map(key => parseInt(key)).sort((a, b) => a - b);
 

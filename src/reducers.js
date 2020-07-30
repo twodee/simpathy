@@ -117,7 +117,7 @@ const initialState = {
         // new ExpressionBoolean(true),
         // new ExpressionReference(500),
       // ]),
-      // '433': new ExpressionInteger(5),
+      '433': new ExpressionInteger(5),
       // '301': new ExpressionReference(491),
     },
   },
@@ -126,6 +126,10 @@ const initialState = {
 export default function reducer(state = initialState, action) {
   const newState = {
     ...state,
+    memory: {
+      stack: [...state.memory.stack],
+      heap: {...state.memory.heap},
+    },
   };
 
   switch (action.type) {

@@ -2217,6 +2217,30 @@ export class ExpressionNot extends ExpressionUnaryOperator {
 
 // --------------------------------------------------------------------------- 
 
+export class ExpressionDereference extends ExpressionUnaryOperator {
+  constructor(a, where) {
+    super(Precedence.Dereference, '*', a, where);
+  }
+
+  evaluate(env) {
+    const address = this.a.evaluate(env);
+
+    if (!(address instanceof ExpressionReference)) {
+      throw new Error('bad types');
+    }
+
+    console.log("address:", address);
+    const object = env.heap[address.value];
+    console.log("object:", object);
+
+    // TODO can't be array
+
+    return object;
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
 export class ExpressionSame extends ExpressionBinaryOperator {
   constructor(a, b, where) {
     super(Precedence.Equality, '==', true, a, b, where);
@@ -2461,6 +2485,22 @@ export class ExpressionArray extends ExpressionLiteral {
 export class ExpressionReference extends ExpressionLiteral {
   toString() {
     return '@' + this.value.toString().padStart(3, '0');
+  }
+}
+
+// --------------------------------------------------------------------------- 
+
+export class ExpressionReserve extends ExpressionBuiltinFunctionCall {
+  constructor(operands, where) {
+    super('reserve', operands, where);
+  }
+
+  evaluate(env) {
+    const object = this.operands[0].evaluate(env);
+    const address = generateUniqueAddress(env.heap);
+    env.heap[address] = object;
+
+    return new ExpressionReference(address);
   }
 }
 

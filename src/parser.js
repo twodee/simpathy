@@ -12,6 +12,7 @@ import {
   ExpressionAdd,
   ExpressionAnd,
   ExpressionArrayConstructor,
+  ExpressionDereference,
   ExpressionLength,
   ExpressionPush,
   ExpressionStartsWith,
@@ -53,6 +54,7 @@ import {
   ExpressionReal,
   ExpressionReference,
   ExpressionRemoveIndex,
+  ExpressionReserve,
   ExpressionRightShift,
   ExpressionModulus,
   ExpressionParseInt,
@@ -297,13 +299,17 @@ export function parse(tokens) {
   function expressionUnary() {
     let a;
     if (has(Token.Minus)) {
-      consume(); // eat operator
+      consume(); // eat -
       a = expressionUnary();
       // a = new ExpressionNegative(a, a.where);
     } else if (has(Token.Not)) {
-      consume(); // eat operator
+      consume(); // eat !
       a = expressionUnary();
       a = new ExpressionNot(a, a.where);
+    } else if (has(Token.Asterisk)) {
+      consume(); // eat *
+      a = expressionUnary();
+      a = new ExpressionDereference(a, a.where);
     } else {
       a = expressionPower();
     }
@@ -401,6 +407,7 @@ export function parse(tokens) {
            has(Token.Repeat, offset) ||
            has(Token.While, offset) ||
            has(Token.For, offset) ||
+           has(Token.Asterisk, offset) ||
            has(Token.If, offset);
   }
 
@@ -468,6 +475,8 @@ export function parse(tokens) {
         return new ExpressionFree(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else if (nameToken.source === 'readLine') {
         return new ExpressionReadLine(actuals, SourceLocation.span(nameToken, sourceEnd));
+      } else if (nameToken.source === 'reserve') {
+        return new ExpressionReserve(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else if (nameToken.source === 'sign') {
         return new ExpressionSign(actuals, SourceLocation.span(nameToken, sourceEnd));
       } else if (nameToken.source === 'parseInt') {
