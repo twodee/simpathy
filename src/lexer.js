@@ -245,22 +245,6 @@ export function lex(source) {
     }
   }
 
-  function ampersand() {
-    consume();
-    if (has('&')) {
-      consume();
-      emit(Token.And);
-    }
-  }
-
-  function pipe() {
-    consume();
-    if (has('|')) {
-      consume();
-      emit(Token.Or);
-    }
-  }
-
   function less() {
     consume();
     if (has('=')) {
